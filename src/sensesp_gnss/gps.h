@@ -13,9 +13,9 @@ namespace sensesp {
  * @param rx_stream Pointer to the Stream of incoming GPS data over
  * a serial connection. 
  **/ 
-class GPSInput : public Sensor {
+class NMEA0183Input : public Sensor {
  public:
-  GPSInput(Stream* rx_stream);
+  NMEA0183Input(Stream* rx_stream);
   virtual void start() override final;
   NMEAData nmea_data_;
  private:

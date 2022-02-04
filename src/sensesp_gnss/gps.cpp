@@ -6,7 +6,7 @@
 
 namespace sensesp {
 
-GPSInput::GPSInput(Stream* rx_stream)
+NMEA0183Input::NMEA0183Input(Stream* rx_stream)
     : Sensor() {
   rx_stream_ = rx_stream;
 
@@ -19,7 +19,7 @@ GPSInput::GPSInput(Stream* rx_stream)
 
 }
 
-void GPSInput::start() {
+void NMEA0183Input::start() {
   // enable reading the serial port
   ReactESP::app->onAvailable(*rx_stream_, [this]() {
     while (rx_stream_->available()) {

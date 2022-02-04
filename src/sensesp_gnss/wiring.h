@@ -4,6 +4,6 @@
 
 namespace sensesp {
 
-GPSInput* setup_gps(Stream* rx_stream);
+NMEA0183Input* setup_gps(Stream* rx_stream);
 
 }  // namespace sensesp
