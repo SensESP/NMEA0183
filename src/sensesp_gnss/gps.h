@@ -7,13 +7,12 @@
 namespace sensesp {
 
 /**
- * @brief Support for a GPS module communicating with NMEA-0183
+ * @brief Support for a GPS module communicating with NMEA 0183
  * messages over a serial interface.
  * 
  * @param rx_stream Pointer to the Stream of incoming GPS data over
  * a serial connection. 
  **/ 
-
 class GPSInput : public Sensor {
  public:
   GPSInput(Stream* rx_stream);

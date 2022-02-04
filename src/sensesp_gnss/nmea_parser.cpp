@@ -33,7 +33,7 @@ String gnssQualityStrings[] = {"no GPS",
                                "Simulator mode",
                                "Error"};
 
-// reconstruct the original NMEA sentence for debugging purposes
+/// Reconstruct the original NMEA sentence for debugging purposes.
 void reconstruct_nmea_sentence(char* sentence, const char* buffer,
                                int term_offsets[], int num_terms) {
   // get the total length of the sentence
@@ -475,7 +475,7 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
   float baseline_length;
   float baseline_course;
 
-  char reconstruction[INPUT_BUFFER_LENGTH];
+  char reconstruction[kNMEA0183InputBufferLength];
   reconstruct_nmea_sentence(reconstruction, buffer, term_offsets, num_terms);
   debugD("%s", reconstruction);
 
@@ -576,14 +576,14 @@ void NMEAParser::state_in_term(char c) {
   switch (c) {
     case ',':
     case '*':
-      if (cur_offset < INPUT_BUFFER_LENGTH) {
+      if (cur_offset < kNMEA0183InputBufferLength) {
         // split terms with 0 to help further processing
         buffer[cur_offset++] = 0;
       } else {
         current_state = &NMEAParser::state_start;
         break;
       }
-      if (cur_term < MAX_TERMS) {
+      if (cur_term < kNMEA0183MaxTerms) {
         // advance term offset
         term_offsets[++cur_term] = cur_offset;
       } else {

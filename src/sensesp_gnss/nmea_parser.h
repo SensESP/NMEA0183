@@ -11,9 +11,14 @@
 
 namespace sensesp {
 
-constexpr int INPUT_BUFFER_LENGTH = 250;
-constexpr int MAX_TERMS = 25;
+/// Maximum length of a single NMEA sentence.
+constexpr int kNMEA0183InputBufferLength = 250;
+/// Maximum number of comma-separated terms in one NMEA sentence.
+constexpr int kNMEA0183MaxTerms = 25;
 
+/**
+ * @brief Container for all NMEA 0183 parsed data.
+ */
 struct NMEAData {
   ObservableValue<Position> position;
   ObservableValue<String> gnss_quality;
@@ -34,6 +39,9 @@ struct NMEAData {
   ObservableValue<float> baseline_course;
 };
 
+/**
+ * @brief NMEA 0183 sentence parser base class.
+ */
 class SentenceParser {
  public:
   SentenceParser(NMEAData* nmea_data);
@@ -114,6 +122,15 @@ class PSTI032SentenceParser : public SentenceParser {
  private:
 };
 
+/**
+ * @brief NMEA 0183 parser class.
+ * 
+ * Data from an input stream is fed to the parse one character at a time.
+ * 
+ * At initialization, the parser registers a set of sentence parsers.
+ * When input data matches a sentence, the parser calls the appropriate
+ * sentence parser.
+ */
 class NMEAParser {
  public:
   NMEAParser();
@@ -126,9 +143,9 @@ class NMEAParser {
   void state_in_term(char c);
   void state_in_checksum(char c);
   // current sentence
-  char buffer[INPUT_BUFFER_LENGTH];
+  char buffer[kNMEA0183InputBufferLength];
   // offset for each sentence term in the buffer
-  int term_offsets[MAX_TERMS];
+  int term_offsets[kNMEA0183MaxTerms];
   // pointer for the next character in buffer
   int cur_offset;
   // pointer for the current term in buffer
