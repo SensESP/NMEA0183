@@ -17,7 +17,7 @@ class NMEA0183Input : public Sensor {
  public:
   NMEA0183Input(Stream* rx_stream);
   virtual void start() override final;
-  NMEAData nmea_data_;
+  NMEALocationData nmea_data_;
  private:
   Stream* rx_stream_;
   NMEAParser nmea_parser_;

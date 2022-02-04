@@ -242,16 +242,16 @@ void GPGGASentenceParser::parse(char* buffer, int term_offsets[],
 
   // notify relevant observers
 
-  nmea_data->position.set(position);
-  nmea_data->gnss_quality.set(gnssQualityStrings[quality]);
-  nmea_data->num_satellites.set(num_satellites);
-  nmea_data->horizontal_dilution.set(horizontal_dilution);
-  nmea_data->geoidal_separation.set(geoidal_separation);
+  nmea_data_->position.set(position);
+  nmea_data_->gnss_quality.set(gnssQualityStrings[quality]);
+  nmea_data_->num_satellites.set(num_satellites);
+  nmea_data_->horizontal_dilution.set(horizontal_dilution);
+  nmea_data_->geoidal_separation.set(geoidal_separation);
   if (dgps_age_defined) {
-    nmea_data->dgps_age.set(dgps_age);
+    nmea_data_->dgps_age.set(dgps_age);
   }
   if (dgps_id_defined) {
-    nmea_data->dgps_id.set(dgps_id);
+    nmea_data_->dgps_id.set(dgps_id);
   }
 }
 
@@ -280,7 +280,7 @@ void GPGLLSentenceParser::parse(char* buffer, int term_offsets[],
 
   // notify relevant observers
 
-  nmea_data->position.set(position);
+  nmea_data_->position.set(position);
 }
 
 void GPRMCSentenceParser::parse(char* buffer, int term_offsets[],
@@ -339,12 +339,12 @@ void GPRMCSentenceParser::parse(char* buffer, int term_offsets[],
   // notify relevant observers
 
   if (is_valid) {
-    nmea_data->position.set(position);
-    nmea_data->datetime.set(mktime(&time));
-    nmea_data->speed.set(1852. * speed / 3600.);
-    nmea_data->true_course.set(2 * PI * true_course / 360.);
+    nmea_data_->position.set(position);
+    nmea_data_->datetime.set(mktime(&time));
+    nmea_data_->speed.set(1852. * speed / 3600.);
+    nmea_data_->true_course.set(2 * PI * true_course / 360.);
     if (variation_defined) {
-      nmea_data->variation.set(2 * PI * variation / 360.);
+      nmea_data_->variation.set(2 * PI * variation / 360.);
     }
   }
 }
@@ -452,14 +452,14 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
 
   // notify relevant observers
 
-  nmea_data->gnss_quality.set(gnssQualityStrings[quality]);
-  nmea_data->rtk_age.set(rtk_age);
-  nmea_data->rtk_ratio.set(rtk_ratio);
+  nmea_data_->gnss_quality.set(gnssQualityStrings[quality]);
+  nmea_data_->rtk_age.set(rtk_age);
+  nmea_data_->rtk_ratio.set(rtk_ratio);
 
   if (is_valid) {
-    nmea_data->position.set(position);
-    nmea_data->datetime.set(mktime(&time));
-    nmea_data->enu_velocity.set(velocity);
+    nmea_data_->position.set(position);
+    nmea_data_->datetime.set(mktime(&time));
+    nmea_data_->enu_velocity.set(velocity);
   }
 }
 
@@ -536,15 +536,15 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
   time.tm_isdst = 0;
 
   if (is_valid) {
-    nmea_data->datetime.set(mktime(&time));
-    nmea_data->baseline_projection.set(projection);
-    nmea_data->baseline_length.set(baseline_length);
-    nmea_data->baseline_course.set(2 * PI * baseline_course / 360.);
-    nmea_data->gnss_quality.set(gnssQualityStrings[quality]);
+    nmea_data_->datetime.set(mktime(&time));
+    nmea_data_->baseline_projection.set(projection);
+    nmea_data_->baseline_length.set(baseline_length);
+    nmea_data_->baseline_course.set(2 * PI * baseline_course / 360.);
+    nmea_data_->gnss_quality.set(gnssQualityStrings[quality]);
   }
 }
 
-SentenceParser::SentenceParser(NMEAData* nmea_data) : nmea_data{nmea_data} {}
+SentenceParser::SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
 
 NMEAParser::NMEAParser() {
   term_offsets[0] = 0;
