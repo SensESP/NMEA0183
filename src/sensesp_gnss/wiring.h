@@ -4,6 +4,13 @@
 
 namespace sensesp {
 
-NMEA0183Input* setup_gps(Stream* rx_stream);
+/**
+ * @brief Wire the NMEALocationData observable members to SK outputs.
+ * 
+ * 
+ * 
+ * @param nmea_input 
+ */
+void ConnectLocationSKOutputs(NMEA0183Input* nmea_input);
 
 }  // namespace sensesp

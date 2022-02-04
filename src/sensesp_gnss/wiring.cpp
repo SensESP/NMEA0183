@@ -6,8 +6,7 @@
 
 namespace sensesp {
 
-NMEA0183Input* setup_gps(Stream* rx_stream) {
-  NMEA0183Input* nmea_input = new NMEA0183Input(rx_stream);
+void ConnectLocationSKOutputs(NMEA0183Input* nmea_input) {
   nmea_input->nmea_data_.position.connect_to(
       new SKOutputPosition("navigation.position", ""));
   nmea_input->nmea_data_.gnss_quality.connect_to(
@@ -40,8 +39,6 @@ NMEA0183Input* setup_gps(Stream* rx_stream) {
       .connect_to(new SKOutputFloat("navigation.rtkBaselineCourse"))
       ->connect_to(new AngleCorrection(0, 0, "/sensors/heading/correction"))
       ->connect_to(new SKOutputFloat("navigation.headingTrue", ""));
-
-  return nmea_input;
 }
 
-} // namespace sensesp
+}  // namespace sensesp
