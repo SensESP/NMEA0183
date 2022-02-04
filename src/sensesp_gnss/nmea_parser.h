@@ -58,6 +58,7 @@ class SentenceParser {
  private:
 };
 
+/// Parser for GPGGA - Global Positioning System Fix Data.
 class GPGGASentenceParser : public SentenceParser {
  public:
   GPGGASentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
@@ -67,6 +68,7 @@ class GPGGASentenceParser : public SentenceParser {
  private:
 };
 
+/// Parser for GPGLL - Geographic position, latitude / longitude
 class GPGLLSentenceParser : public SentenceParser {
  public:
   GPGLLSentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
@@ -76,6 +78,7 @@ class GPGLLSentenceParser : public SentenceParser {
  private:
 };
 
+/// Parser for GPRMC - Recommended minimum specific GPS/Transit data
 class GPRMCSentenceParser : public SentenceParser {
  public:
   GPRMCSentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
@@ -93,6 +96,7 @@ class GPRMCSentenceParser : public SentenceParser {
 // private:
 //};
 
+/// Top-level parser for PSTI* sentences.
 class PSTISentenceParser : public SentenceParser {
  public:
   PSTISentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
@@ -104,6 +108,7 @@ class PSTISentenceParser : public SentenceParser {
  private:
 };
 
+/// Parser for STI,030 - Recommended Minimum 3D GNSS Data
 class PSTI030SentenceParser : public SentenceParser {
  public:
   PSTI030SentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
@@ -113,6 +118,7 @@ class PSTI030SentenceParser : public SentenceParser {
  private:
 };
 
+/// Parser for STI,032 - RTK Baseline Data
 class PSTI032SentenceParser : public SentenceParser {
  public:
   PSTI032SentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
