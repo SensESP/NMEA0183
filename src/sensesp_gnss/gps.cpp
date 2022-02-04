@@ -10,13 +10,13 @@ NMEA0183Input::NMEA0183Input(Stream* rx_stream)
     : Startable() {
   rx_stream_ = rx_stream;
 
-  nmea_parser_.add_sentence_parser(new GPGGASentenceParser(&nmea_data_));
-  nmea_parser_.add_sentence_parser(new GPGLLSentenceParser(&nmea_data_));
-  nmea_parser_.add_sentence_parser(new GPRMCSentenceParser(&nmea_data_));
-  nmea_parser_.add_sentence_parser(new PSTISentenceParser(&nmea_data_));
-  nmea_parser_.add_sentence_parser(new PSTI030SentenceParser(&nmea_data_));
-  nmea_parser_.add_sentence_parser(new PSTI032SentenceParser(&nmea_data_));
-
+  // add the built-in sentence parsers
+  add_sentence_parser(new GPGGASentenceParser(&nmea_data_));
+  add_sentence_parser(new GPGLLSentenceParser(&nmea_data_));
+  add_sentence_parser(new GPRMCSentenceParser(&nmea_data_));
+  add_sentence_parser(new PSTISentenceParser(&nmea_data_));
+  add_sentence_parser(new PSTI030SentenceParser(&nmea_data_));
+  add_sentence_parser(new PSTI032SentenceParser(&nmea_data_));
 }
 
 void NMEA0183Input::start() {
