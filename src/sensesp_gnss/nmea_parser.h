@@ -5,8 +5,8 @@
 
 #include "sensesp/system/observablevalue.h"
 
-#include "sensesp_gnss/position.h"
-#include "sensesp_gnss/signalk_position.h"
+#include "sensesp/types/position.h"
+#include "sensesp/signalk/signalk_position.h"
 
 
 namespace sensesp {
