@@ -7,7 +7,7 @@
 namespace sensesp {
 
 NMEA0183Input::NMEA0183Input(Stream* rx_stream)
-    : Sensor() {
+    : Startable() {
   rx_stream_ = rx_stream;
 
   nmea_parser_.add_sentence_parser(new GPGGASentenceParser(&nmea_data_));

@@ -9,11 +9,11 @@ namespace sensesp {
 /**
  * @brief Support for a GPS module communicating with NMEA 0183
  * messages over a serial interface.
- * 
+ *
  * @param rx_stream Pointer to the Stream of incoming GPS data over
- * a serial connection. 
- **/ 
-class NMEA0183Input : public Sensor {
+ * a serial connection.
+ **/
+class NMEA0183Input : public Startable {
  public:
   NMEA0183Input(Stream* rx_stream);
   virtual void start() override final;
