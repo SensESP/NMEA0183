@@ -544,8 +544,6 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
   }
 }
 
-SentenceParser::SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
-
 NMEAParser::NMEAParser() {
   term_offsets[0] = 0;
   current_state = &NMEAParser::state_start;

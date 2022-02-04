@@ -41,10 +41,18 @@ struct NMEALocationData {
 
 /**
  * @brief NMEA 0183 sentence parser base class.
+ * 
+ * This class is responsible for parsing NMEA 0183 sentences.
+ *  
+ * Note: For the sake of convenience, all built-in SentenceParser children
+ * take a reference to a NMEALocationData object. If you want to
+ * provide your own SentenceParser children, you need to maintain their
+ * target `ObservableValue` objects separately and feed those objects (or a
+ * container class) to your parsers manually.
+ *
  */
 class SentenceParser {
  public:
-  SentenceParser(NMEALocationData* nmea_data);
   virtual void parse(char* buffer, int term_offsets[], int num_terms) = 0;
   virtual void parse(char* buffer, int term_offsets[], int num_terms,
                      std::map<String, SentenceParser*>& sentence_parsers) {
@@ -53,7 +61,6 @@ class SentenceParser {
   virtual const char* sentence() = 0;
 
  protected:
-  NMEALocationData* nmea_data_;
 
  private:
 };
@@ -61,31 +68,34 @@ class SentenceParser {
 /// Parser for GPGGA - Global Positioning System Fix Data.
 class GPGGASentenceParser : public SentenceParser {
  public:
-  GPGGASentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
+  GPGGASentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
   const char* sentence() { return "GPGGA"; }
 
  private:
+  NMEALocationData* nmea_data_;
 };
 
 /// Parser for GPGLL - Geographic position, latitude / longitude
 class GPGLLSentenceParser : public SentenceParser {
  public:
-  GPGLLSentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
+  GPGLLSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
   const char* sentence() { return "GPGLL"; }
 
  private:
+  NMEALocationData* nmea_data_;
 };
 
 /// Parser for GPRMC - Recommended minimum specific GPS/Transit data
 class GPRMCSentenceParser : public SentenceParser {
  public:
-  GPRMCSentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
+  GPRMCSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
   const char* sentence() { return "GPRMC"; }
 
  private:
+  NMEALocationData* nmea_data_;
 };
 
 // class GPVTGSentenceParser : public SentenceParser {
@@ -99,33 +109,36 @@ class GPRMCSentenceParser : public SentenceParser {
 /// Top-level parser for PSTI* sentences.
 class PSTISentenceParser : public SentenceParser {
  public:
-  PSTISentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
+  PSTISentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final {}
   void parse(char* buffer, int term_offsets[], int num_terms,
              std::map<String, SentenceParser*>& sentence_parsers);
   const char* sentence() { return "PSTI"; }
 
  private:
+  NMEALocationData* nmea_data_;
 };
 
 /// Parser for STI,030 - Recommended Minimum 3D GNSS Data
 class PSTI030SentenceParser : public SentenceParser {
  public:
-  PSTI030SentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
+  PSTI030SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
   const char* sentence() { return "PSTI,030"; }
 
  private:
+  NMEALocationData* nmea_data_;
 };
 
 /// Parser for STI,032 - RTK Baseline Data
 class PSTI032SentenceParser : public SentenceParser {
  public:
-  PSTI032SentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
+  PSTI032SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
   const char* sentence() { return "PSTI,032"; }
 
  private:
+  NMEALocationData* nmea_data_;
 };
 
 /**
