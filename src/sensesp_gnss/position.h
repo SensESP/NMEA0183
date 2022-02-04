@@ -1,5 +1,11 @@
 #pragma once
 
+#include <limits>
+
+namespace sensesp {
+
+/// Value used to indicate an invalid or missing altitude
+constexpr float kPositionInvalidAltitude = std::numeric_limits<float>::lowest();
 
 /**
  * @brief Position data container.
@@ -11,7 +17,7 @@
 struct Position {
   double latitude;
   double longitude;
-  float altitude;
+  float altitude = kPositionInvalidAltitude;
 };
 
 /**
@@ -24,5 +30,7 @@ struct Position {
 struct ENUVector {
   float east;
   float north;
-  float up;
+  float up = kPositionInvalidAltitude;
 };
+
+}

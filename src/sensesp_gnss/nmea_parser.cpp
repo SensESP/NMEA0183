@@ -276,7 +276,7 @@ void GPGLLSentenceParser::parse(char* buffer, int term_offsets[],
     return;
   }
 
-  position.altitude = -99999;
+  position.altitude = -kPositionInvalidAltitude;
 
   // notify relevant observers
 
@@ -332,7 +332,7 @@ void GPRMCSentenceParser::parse(char* buffer, int term_offsets[],
     return;
   }
 
-  position.altitude = -99999;
+  position.altitude = -kPositionInvalidAltitude;
   time.tm_sec = (int)second;
   time.tm_isdst = 0;
 

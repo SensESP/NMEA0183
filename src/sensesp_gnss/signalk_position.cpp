@@ -12,7 +12,7 @@ String SKOutput<Position>::as_signalk() {
   JsonObject value = root.createNestedObject("value");
   value["latitude"] = output.latitude;
   value["longitude"] = output.longitude;
-  if (output.altitude > -10000) {
+  if (output.altitude != kPositionInvalidAltitude) {
     value["altitude"] = output.altitude;
   }
   serializeJson(root, json);
