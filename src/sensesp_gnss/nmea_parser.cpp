@@ -494,7 +494,7 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   ok &= ParseFloat(&velocity.up, buffer + term_offsets[11]);
   // 11  UTC Date  180915  UTC date of position fix, ddmmyy format
   ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                   buffer + term_offsets[12]);
+                  buffer + term_offsets[12]);
   // 12  Mode indicator  R  Mode indicator
   // ‘N’ = Data not valid
   // ‘A’ = Autonomous mode
@@ -567,7 +567,7 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
       ParseTime(&time.tm_hour, &time.tm_min, &second, buffer + term_offsets[2]);
   // 2  UTC Date  170316  UTC date of position fix, ddmmyy format
   ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                   buffer + term_offsets[3]);
+                  buffer + term_offsets[3]);
   // 3  Status  A
   // Status
   // ‘V’ = Void
@@ -685,6 +685,9 @@ void NMEAParser::state_in_term(char c) {
 
 void NMEAParser::state_in_checksum(char c) {
   char* sentence_id;
+  char reconstructed_sentence[kNMEA0183InputBufferLength];
+
+  int num_terms = cur_term + 1;
 
   switch (c) {
     case ',':
@@ -704,7 +707,6 @@ void NMEAParser::state_in_checksum(char c) {
 
       // If the first letter is "P", it's a proprietary sentence.
       if (buffer[0] == 'P') {
-        debugD("Parsing proprietary sentence %s\n", buffer);
         // proprietary sentences have no talker ID. We'll consider the initial
         // "P" as part of the sentence ID.
         sentence_id = buffer;
@@ -716,10 +718,12 @@ void NMEAParser::state_in_checksum(char c) {
 
       // call the relevant sentence parser
       if (sentence_parsers.find(sentence_id) == sentence_parsers.end()) {
-        debugD("Parser not found for sentence %s", sentence_id);
+        // print out the reconstructed sentence for debugging purposes
+        ReconstructNMEASentence(reconstructed_sentence, buffer, term_offsets,
+                                num_terms);
+        debugD("No parser for sentence: %s", reconstructed_sentence);
       } else {
-        debugD("Parsing sentence %s", sentence_id);
-        sentence_parsers[sentence_id]->parse(buffer, term_offsets, cur_term + 1,
+        sentence_parsers[sentence_id]->parse(buffer, term_offsets, num_terms,
                                              sentence_parsers);
       }
       current_state = &NMEAParser::state_start;
