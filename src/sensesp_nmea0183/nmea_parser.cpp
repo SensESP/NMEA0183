@@ -1,11 +1,11 @@
 
 #include "nmea_parser.h"
 
-#include <stdlib.h>
-
 #include <ctime>
 
 #include "sensesp.h"
+
+#include "field_parsers.h"
 
 namespace sensesp {
 
@@ -53,106 +53,6 @@ static void ReconstructNMEASentence(char* sentence, const char* buffer,
   }
   // the final gap has an asterisk
   sentence[field_offsets[num_fields - 1]] = '*';
-}
-
-static bool ParseInt(int* value, char* s, bool allow_empty = false) {
-  if (s[0] == 0) {
-    *value = kInvalidInt;
-    return allow_empty;
-  }
-  int retval = sscanf(s, "%d", value);
-  return retval == 1;
-}
-
-static bool ParseFloat(float* value, char* s, bool allow_empty = false) {
-  if (s[0] == 0) {
-    *value = kInvalidFloat;
-    return allow_empty;
-  }
-  int retval = sscanf(s, "%f", value);
-  return retval == 1;
-}
-
-static bool ParseLatLon(double* value, char* s, bool allow_empty = false) {
-  double degmin;
-  if (s[0] == 0) {
-    *value = kInvalidDouble;
-    return allow_empty;
-  }
-  int retval = sscanf(s, "%lf", &degmin);
-  if (retval == 1) {
-    int degrees = degmin / 100;
-    double minutes = degmin - 100 * degrees;
-    *value = degrees + minutes / 60;
-    return true;
-  } else {
-    return false;
-  }
-}
-
-static bool ParseNS(double* value, char* s, bool allow_empty = false) {
-  if (s[0] == 0) {
-    return allow_empty;
-  }
-
-  switch (*s) {
-    case 'N':
-      break;
-    case 'S':
-      *value *= -1;
-      break;
-    default:
-      return false;
-  }
-  return true;
-}
-
-static bool ParseEW(double* value, char* s, bool allow_empty = false) {
-  if (s[0] == 0) {
-    return allow_empty;
-  }
-  switch (*s) {
-    case 'E':
-      break;
-    case 'W':
-      *value *= -1;
-      break;
-    default:
-      return false;
-  }
-  return true;
-}
-
-static bool ParseEW(float* value, char* s, bool allow_empty = false) {
-  if (s[0] == 0) {
-    return allow_empty;
-  }
-  switch (*s) {
-    case 'E':
-      break;
-    case 'W':
-      *value *= -1;
-      break;
-    default:
-      return false;
-  }
-  return true;
-}
-
-static bool ParseChar(char* s, char expected) { return (*s == expected); }
-
-static bool ParseAV(bool* is_valid, char* s) {
-  switch (*s) {
-    case 'A':
-      *is_valid = true;
-      break;
-    case 'V':
-      *is_valid = false;
-      break;
-    default:
-      return false;
-  }
-  return true;
 }
 
 static bool ParsePSTI030Mode(GNSSQuality* quality, char* s) {

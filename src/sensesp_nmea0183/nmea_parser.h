@@ -1,7 +1,6 @@
 #ifndef _nmea_parser_H_
 #define _nmea_parser_H_
 
-#include <limits>
 #include <map>
 
 #include "sensesp/signalk/signalk_position.h"
@@ -15,11 +14,6 @@ namespace sensesp {
 constexpr int kNMEA0183InputBufferLength = 164;
 /// Maximum number of comma-separated fields in one NMEA sentence.
 constexpr int kNMEA0183MaxFields = 25;
-
-// magic values for invalid data
-constexpr float kInvalidFloat = std::numeric_limits<float>::lowest();
-constexpr double kInvalidDouble = std::numeric_limits<double>::lowest();
-constexpr int kInvalidInt = std::numeric_limits<int>::lowest();
 
 /**
  * @brief Container for all decoded NMEA 0183 location data.
