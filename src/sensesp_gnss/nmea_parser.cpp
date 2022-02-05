@@ -34,8 +34,8 @@ String gnssQualityStrings[] = {"no GPS",
                                "Error"};
 
 /// Reconstruct the original NMEA sentence for debugging purposes.
-void reconstruct_nmea_sentence(char* sentence, const char* buffer,
-                               int term_offsets[], int num_terms) {
+void ReconstructNMEASentence(char* sentence, const char* buffer,
+                             int term_offsets[], int num_terms) {
   // get the total length of the sentence
   int last_term_loc = term_offsets[num_terms - 1];
   int last_term_len = strlen(buffer + term_offsets[num_terms - 1]);
@@ -55,22 +55,22 @@ void reconstruct_nmea_sentence(char* sentence, const char* buffer,
   sentence[term_offsets[num_terms - 1]] = '*';
 }
 
-bool parse_int(int* value, char* s) {
+bool ParseInt(int* value, char* s) {
   int retval = sscanf(s, "%d", value);
   return retval == 1;
 }
 
-bool parse_float(float* value, char* s) {
+bool ParseFloat(float* value, char* s) {
   int retval = sscanf(s, "%f", value);
   return retval == 1;
 }
 
-bool parse_double(double* value, char* s) {
+bool ParseDouble(double* value, char* s) {
   int retval = sscanf(s, "%lf", value);
   return retval == 1;
 }
 
-bool parse_latlon(double* value, char* s) {
+bool ParseLatLon(double* value, char* s) {
   double degmin;
   int retval = sscanf(s, "%lf", &degmin);
   if (retval == 1) {
@@ -83,7 +83,7 @@ bool parse_latlon(double* value, char* s) {
   }
 }
 
-bool parse_NS(double* value, char* s) {
+bool ParseNS(double* value, char* s) {
   switch (*s) {
     case 'N':
       break;
@@ -96,7 +96,7 @@ bool parse_NS(double* value, char* s) {
   return true;
 }
 
-bool parse_EW(double* value, char* s) {
+bool ParseEW(double* value, char* s) {
   switch (*s) {
     case 'E':
       break;
@@ -109,9 +109,9 @@ bool parse_EW(double* value, char* s) {
   return true;
 }
 
-bool parse_M(char* s) { return (*s == 'M'); }
+bool ParseM(char* s) { return (*s == 'M'); }
 
-bool parse_AV(bool* is_valid, char* s) {
+bool ParseAV(bool* is_valid, char* s) {
   switch (*s) {
     case 'A':
       *is_valid = true;
@@ -125,7 +125,7 @@ bool parse_AV(bool* is_valid, char* s) {
   return true;
 }
 
-bool parse_PSTI030_mode(GNSSQuality* quality, char* s) {
+bool ParsePSTI030Mode(GNSSQuality* quality, char* s) {
   switch (*s) {
     case 'N':
       *quality = GNSSQuality::no_gps;
@@ -157,12 +157,12 @@ bool parse_PSTI030_mode(GNSSQuality* quality, char* s) {
   return true;
 }
 
-bool parse_time(int* hour, int* minute, float* second, char* s) {
+bool ParseTime(int* hour, int* minute, float* second, char* s) {
   int retval = sscanf(s, "%2d%2d%f", hour, minute, second);
   return retval == 3;
 }
 
-bool parse_date(int* year, int* month, int* day, char* s) {
+bool ParseDate(int* year, int* month, int* day, char* s) {
   int retval = sscanf(s, "%2d%2d%2d", day, month, year);
   // date expressed as C struct tm
   *year += 100;
@@ -170,7 +170,7 @@ bool parse_date(int* year, int* month, int* day, char* s) {
   return retval == 3;
 }
 
-void report_success(bool ok, const char* sentence) {
+void ReportSuccess(bool ok, const char* sentence) {
   if (!ok) {
     debugI("Failed to parse %s", sentence);
     return;
@@ -198,44 +198,44 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[],
 
   // eg3. $GPGGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
   // 1    = UTC of Position
-  ok &= parse_time(&hour, &minute, &second, buffer + term_offsets[1]);
+  ok &= ParseTime(&hour, &minute, &second, buffer + term_offsets[1]);
   // 2    = Latitude
-  ok &= parse_latlon(&position.latitude, buffer + term_offsets[2]);
+  ok &= ParseLatLon(&position.latitude, buffer + term_offsets[2]);
   // 3    = N or S
-  ok &= parse_NS(&position.latitude, buffer + term_offsets[3]);
+  ok &= ParseNS(&position.latitude, buffer + term_offsets[3]);
   // 4    = Longitude
-  ok &= parse_latlon(&position.longitude, buffer + term_offsets[4]);
+  ok &= ParseLatLon(&position.longitude, buffer + term_offsets[4]);
   // 5    = E or W
-  ok &= parse_EW(&position.longitude, buffer + term_offsets[5]);
+  ok &= ParseEW(&position.longitude, buffer + term_offsets[5]);
   // 6    = GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
-  ok &= parse_int(&quality, buffer + term_offsets[6]);
+  ok &= ParseInt(&quality, buffer + term_offsets[6]);
   // 7    = Number of satellites in use [not those in view]
-  ok &= parse_int(&num_satellites, buffer + term_offsets[7]);
+  ok &= ParseInt(&num_satellites, buffer + term_offsets[7]);
   // 8    = Horizontal dilution of position
-  ok &= parse_float(&horizontal_dilution, buffer + term_offsets[8]);
+  ok &= ParseFloat(&horizontal_dilution, buffer + term_offsets[8]);
   // 9    = Antenna altitude above/below mean sea level (geoid)
-  ok &= parse_float(&position.altitude, buffer + term_offsets[9]);
+  ok &= ParseFloat(&position.altitude, buffer + term_offsets[9]);
   // 10   = Meters  (Antenna height unit)
-  ok &= parse_M(buffer + term_offsets[10]);
+  ok &= ParseM(buffer + term_offsets[10]);
   // 11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
   //        mean sea level.  -=geoid is below WGS-84 ellipsoid)
-  ok &= parse_float(&geoidal_separation, buffer + term_offsets[11]);
+  ok &= ParseFloat(&geoidal_separation, buffer + term_offsets[11]);
   // 12   = Meters  (Units of geoidal separation)
-  ok &= parse_M(buffer + term_offsets[12]);
+  ok &= ParseM(buffer + term_offsets[12]);
   // 13   = Age in seconds since last update from diff. reference station
   if (*(buffer + term_offsets[13]) != 0) {
-    ok &= parse_float(&dgps_age, buffer + term_offsets[13]);
+    ok &= ParseFloat(&dgps_age, buffer + term_offsets[13]);
     dgps_age_defined = true;
   }
   // 14   = Diff. reference station ID#
   if (*(buffer + term_offsets[14]) != 0) {
-    ok &= parse_int(&dgps_id, buffer + term_offsets[14]);
+    ok &= ParseInt(&dgps_id, buffer + term_offsets[14]);
     dgps_id_defined = true;
   }
   // 15   = Checksum
   // (validated already earlier)
 
-  report_success(ok, sentence());
+  ReportSuccess(ok, sentence());
   if (!ok) {
     return;
   }
@@ -255,23 +255,22 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[],
   }
 }
 
-void GLLSentenceParser::parse(char* buffer, int term_offsets[],
-                                int num_terms) {
+void GLLSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   bool ok = true;
 
   Position position;
 
   // eg3. $GPGLL,5133.81,N,00042.25,W*75
   //       1    5133.81   Current latitude
-  ok &= parse_latlon(&position.latitude, buffer + term_offsets[1]);
+  ok &= ParseLatLon(&position.latitude, buffer + term_offsets[1]);
   //       2    N         North/South
-  ok &= parse_NS(&position.latitude, buffer + term_offsets[2]);
+  ok &= ParseNS(&position.latitude, buffer + term_offsets[2]);
   //       3    00042.25  Current longitude
-  ok &= parse_latlon(&position.longitude, buffer + term_offsets[3]);
+  ok &= ParseLatLon(&position.longitude, buffer + term_offsets[3]);
   //       4    W         East/West
-  ok &= parse_EW(&position.longitude, buffer + term_offsets[4]);
+  ok &= ParseEW(&position.longitude, buffer + term_offsets[4]);
 
-  report_success(ok, sentence());
+  ReportSuccess(ok, sentence());
   if (!ok) {
     return;
   }
@@ -283,8 +282,7 @@ void GLLSentenceParser::parse(char* buffer, int term_offsets[],
   nmea_data_->position.set(position);
 }
 
-void RMCSentenceParser::parse(char* buffer, int term_offsets[],
-                                int num_terms) {
+void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   bool ok = true;
 
   struct tm time;
@@ -298,36 +296,36 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[],
 
   // eg3. $GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70
   // 1   220516     Time Stamp
-  ok &= parse_time(&time.tm_hour, &time.tm_min, &second,
+  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
                    buffer + term_offsets[1]);
   // 2   A          validity - A-ok, V-invalid
-  ok &= parse_AV(&is_valid, buffer + term_offsets[2]);
+  ok &= ParseAV(&is_valid, buffer + term_offsets[2]);
   // 3   5133.82    current Latitude
-  ok &= parse_latlon(&position.latitude, buffer + term_offsets[3]);
+  ok &= ParseLatLon(&position.latitude, buffer + term_offsets[3]);
   // 4   N          North/South
-  ok &= parse_NS(&position.latitude, buffer + term_offsets[4]);
+  ok &= ParseNS(&position.latitude, buffer + term_offsets[4]);
   // 5   00042.24   current Longitude
-  ok &= parse_latlon(&position.longitude, buffer + term_offsets[5]);
+  ok &= ParseLatLon(&position.longitude, buffer + term_offsets[5]);
   // 6   W          East/West
-  ok &= parse_EW(&position.longitude, buffer + term_offsets[6]);
+  ok &= ParseEW(&position.longitude, buffer + term_offsets[6]);
   // 7   173.8      Speed in knots
-  ok &= parse_float(&speed, buffer + term_offsets[7]);
+  ok &= ParseFloat(&speed, buffer + term_offsets[7]);
   // 8   231.8      True course
-  ok &= parse_float(&true_course, buffer + term_offsets[8]);
+  ok &= ParseFloat(&true_course, buffer + term_offsets[8]);
   // 9   130694     Date Stamp
-  ok &= parse_date(&time.tm_year, &time.tm_mon, &time.tm_mday,
+  ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
                    buffer + term_offsets[9]);
   // 10  004.2      Variation
   if (*(buffer + term_offsets[10]) != 0) {
-    ok &= parse_double(&variation, buffer + term_offsets[10]);
+    ok &= ParseDouble(&variation, buffer + term_offsets[10]);
   }
   // 11  W          East/West
   if (*(buffer + term_offsets[11]) != 0) {
-    ok &= parse_EW(&variation, buffer + term_offsets[11]);
+    ok &= ParseEW(&variation, buffer + term_offsets[11]);
     variation_defined = true;
   }
 
-  report_success(ok, sentence());
+  ReportSuccess(ok, sentence());
   if (!ok) {
     return;
   }
@@ -355,9 +353,9 @@ void PSTISentenceParser::parse(
   bool ok = true;
   int subsentence;
 
-  ok &= parse_int(&subsentence, buffer + term_offsets[1]);
+  ok &= ParseInt(&subsentence, buffer + term_offsets[1]);
 
-  report_success(ok, sentence());
+  ReportSuccess(ok, sentence());
   if (!ok) {
     return;
   }
@@ -394,36 +392,36 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   // Field  Name  Example  Description
   // 1  UTC time  044606.000  UTC time in hhmmss.sss format (000000.00 ~
   // 235959.999)
-  ok &= parse_time(&time.tm_hour, &time.tm_min, &second,
+  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
                    buffer + term_offsets[2]);
   // 2  Status  A  Status
   // ‘V’ = Navigation receiver warning
   // ‘A’ = Data Valid
-  ok &= parse_AV(&is_valid, buffer + term_offsets[3]);
+  ok &= ParseAV(&is_valid, buffer + term_offsets[3]);
   // 3  Latitude  2447.0924110  Latitude in dddmm.mmmmmmm format
   // Leading zeros transmitted
-  ok &= parse_latlon(&position.latitude, buffer + term_offsets[4]);
+  ok &= ParseLatLon(&position.latitude, buffer + term_offsets[4]);
   // 4  N/S indicator  N  Latitude hemisphere indicator
   // ‘N’ = North
   // ‘S’ = South
-  ok &= parse_NS(&position.latitude, buffer + term_offsets[5]);
+  ok &= ParseNS(&position.latitude, buffer + term_offsets[5]);
   // 5  Longitude  12100.5227860 Longitude in dddmm.mmmmmmm format
   // Leading zeros transmitted
-  ok &= parse_latlon(&position.longitude, buffer + term_offsets[6]);
+  ok &= ParseLatLon(&position.longitude, buffer + term_offsets[6]);
   // 6  E/W Indicator  E  Longitude hemisphere indicator
   // 'E' = East
   // 'W' = West
-  ok &= parse_EW(&position.longitude, buffer + term_offsets[7]);
+  ok &= ParseEW(&position.longitude, buffer + term_offsets[7]);
   // 7  Altitude  103.323  mean sea level (geoid), (‐9999.999 ~ 17999.999)
-  ok &= parse_float(&position.altitude, buffer + term_offsets[8]);
+  ok &= ParseFloat(&position.altitude, buffer + term_offsets[8]);
   // 8  East Velocity  0.00  ‘East’ component of ENU velocity (m/s)
-  ok &= parse_float(&velocity.east, buffer + term_offsets[9]);
+  ok &= ParseFloat(&velocity.east, buffer + term_offsets[9]);
   // 9  North Velocity  0.00  ‘North’ component of ENU velocity (m/s)
-  ok &= parse_float(&velocity.north, buffer + term_offsets[10]);
+  ok &= ParseFloat(&velocity.north, buffer + term_offsets[10]);
   // 10  Up Velocity  0.00  ‘Up’ component of ENU velocity (m/s)
-  ok &= parse_float(&velocity.up, buffer + term_offsets[11]);
+  ok &= ParseFloat(&velocity.up, buffer + term_offsets[11]);
   // 11  UTC Date  180915  UTC date of position fix, ddmmyy format
-  ok &= parse_date(&time.tm_year, &time.tm_mon, &time.tm_mday,
+  ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
                    buffer + term_offsets[12]);
   // 12  Mode indicator  R  Mode indicator
   // ‘N’ = Data not valid
@@ -436,13 +434,13 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   // integers
   // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
   // integers
-  ok &= parse_PSTI030_mode(&quality, buffer + term_offsets[13]);
+  ok &= ParsePSTI030Mode(&quality, buffer + term_offsets[13]);
   // 13  RTK Age  1.2  Age of differential
-  ok &= parse_float(&rtk_age, buffer + term_offsets[14]);
+  ok &= ParseFloat(&rtk_age, buffer + term_offsets[14]);
   // 14  RTK Ratio  4.2  AR ratio factor for validation
-  ok &= parse_float(&rtk_ratio, buffer + term_offsets[15]);
+  ok &= ParseFloat(&rtk_ratio, buffer + term_offsets[15]);
 
-  report_success(ok, sentence());
+  ReportSuccess(ok, sentence());
   if (!ok) {
     return;
   }
@@ -476,7 +474,7 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
   float baseline_course;
 
   char reconstruction[kNMEA0183InputBufferLength];
-  reconstruct_nmea_sentence(reconstruction, buffer, term_offsets, num_terms);
+  ReconstructNMEASentence(reconstruction, buffer, term_offsets, num_terms);
   debugD("%s", reconstruction);
 
   // Example:
@@ -488,38 +486,38 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
   // Field  Name  Example  Description
   // 1  UTC time  041457.000  UTC time in hhmmss.sss format
   // (000000.000~235959.999)
-  ok &= parse_time(&time.tm_hour, &time.tm_min, &second,
+  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
                    buffer + term_offsets[2]);
   // 2  UTC Date  170316  UTC date of position fix, ddmmyy format
-  ok &= parse_date(&time.tm_year, &time.tm_mon, &time.tm_mday,
+  ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
                    buffer + term_offsets[3]);
   // 3  Status  A
   // Status
   // ‘V’ = Void
   // ‘A’ = Active
-  ok &= parse_AV(&is_valid, buffer + term_offsets[4]);
+  ok &= ParseAV(&is_valid, buffer + term_offsets[4]);
   if (is_valid) {
     // 4  Mode indicator  R
     // Mode indicator
     // ‘F’ = Float RTK. System used in RTK mode with float ambiguity
     // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
     // ambiguity
-    ok &= parse_PSTI030_mode(&quality, buffer + term_offsets[5]);
+    ok &= ParsePSTI030Mode(&quality, buffer + term_offsets[5]);
     // 5  East‐projection of
     // baseline  0.603  East‐projection of baseline, meters
-    ok &= parse_float(&projection.east, buffer + term_offsets[6]);
+    ok &= ParseFloat(&projection.east, buffer + term_offsets[6]);
     // 6  North‐projection of
     // baseline  ‐0.837  North‐projection of baseline, meters
-    ok &= parse_float(&projection.north, buffer + term_offsets[7]);
+    ok &= ParseFloat(&projection.north, buffer + term_offsets[7]);
     // 7  Up‐projection of
     // baseline  ‐0.089  Up‐projection of baseline, meters
-    ok &= parse_float(&projection.up, buffer + term_offsets[8]);
+    ok &= ParseFloat(&projection.up, buffer + term_offsets[8]);
     // 8  Baseline length  1.036  Baseline length, meters
-    ok &= parse_float(&baseline_length, buffer + term_offsets[9]);
+    ok &= ParseFloat(&baseline_length, buffer + term_offsets[9]);
     // 9  Baseline course  144.22
     // Baseline course (angle between baseline vector and north
     // direction), degrees
-    ok &= parse_float(&baseline_course, buffer + term_offsets[10]);
+    ok &= ParseFloat(&baseline_course, buffer + term_offsets[10]);
     // 10  Reserve    Reserve
     // 11  Reserve    Reserve
     // 12  Reserve    Reserve
@@ -527,7 +525,7 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
     // 14  Reserve    Reserve
   }
 
-  report_success(ok, sentence());
+  ReportSuccess(ok, sentence());
   if (!ok) {
     return;
   }
