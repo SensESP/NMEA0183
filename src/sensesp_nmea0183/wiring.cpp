@@ -29,14 +29,25 @@ void ConnectLocationSKOutputs(NMEA0183Input* nmea_input) {
       new SKOutputFloat("navigation.courseOverGroundTrue", ""));
   nmea_input->nmea_data_.variation.connect_to(
       new SKOutputFloat("navigation.magneticVariation", ""));
-  nmea_input->nmea_data_.rtk_age.connect_to(
-      new SKOutputFloat("navigation.rtkAge", ""));
-  nmea_input->nmea_data_.rtk_ratio.connect_to(
-      new SKOutputFloat("navigation.rtkRatio", ""));
+  nmea_input->nmea_data_.rtk_age.connect_to(new SKOutputFloat(
+      "navigation.rtkAge", "",
+      new SKMetadata("s", "RTK Solution Age", "The age of the RTK solution",
+                     "RTK Age", 30)));
+  nmea_input->nmea_data_.rtk_ratio.connect_to(new SKOutputFloat(
+      "navigation.rtkRatio", "",
+      new SKMetadata("", "RTK Ratio", "RTK solution quality indicator",
+                     "RTK Ratio", 30)));
   nmea_input->nmea_data_.baseline_length.connect_to(
-      new SKOutputFloat("navigation.rtkBaselineLength", ""));
+      new SKOutputFloat("navigation.rtkBaselineLength", "",
+                        new SKMetadata("m", "RTK Baseline Length",
+                                       "Distance between the RTK antennas",
+                                       "RTK Baseline Length", 30)));
   nmea_input->nmea_data_.baseline_course
-      .connect_to(new SKOutputFloat("navigation.rtkBaselineCourse"))
+      .connect_to(new SKOutputFloat(
+          "navigation.rtkBaselineCourse",
+          new SKMetadata("deg", "RTK Baseline Course",
+                         "Angle between baseline vector and north",
+                         "RTK Baseline Course", 30)))
       ->connect_to(new AngleCorrection(0, 0, "/sensors/heading/correction"))
       ->connect_to(new SKOutputFloat("navigation.headingTrue", ""));
 }
