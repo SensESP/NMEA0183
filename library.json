@@ -1,10 +1,10 @@
 {
-    "name": "GNSS",
-    "keywords": "GNSS, GPS, GLONASS, Galileo, Beidou, SensESP, Signal K, marine, boat, sensor",
-    "description": "GNSS input sensor for the SensESP framework",
+    "name": "NMEA0183",
+    "keywords": "NMEA, NMEA 0183, GNSS, GPS, GLONASS, Galileo, Beidou, SensESP, Signal K, marine, boat, sensor",
+    "description": "NMEA 0183 input parser for the SensESP framework",
     "repository": {
         "type": "git",
-        "url": "https://github.com/SensESP/GNSS.git"
+        "url": "https://github.com/SensESP/NMEA0183.git"
     },
     "authors": [
         {
@@ -18,7 +18,7 @@
         {
             "name": "SensESP",
             "owner": "SignalK",
-            "version": "^2.0.0"
+            "version": "^2.1.1"
         }
     ],
     "version": "2.0.0",

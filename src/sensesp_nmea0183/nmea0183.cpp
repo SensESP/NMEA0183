@@ -1,4 +1,4 @@
-#include "gps.h"
+#include "nmea0183.h"
 
 #include <math.h>
 

@@ -2,7 +2,7 @@
 #define _gps_H_
 
 #include "sensesp/sensors/sensor.h"
-#include "sensesp_gnss/nmea_parser.h"
+#include "sensesp_nmea0183/nmea_parser.h"
 
 namespace sensesp {
 
