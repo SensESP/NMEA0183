@@ -344,17 +344,25 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
 
   struct tm time;
   float second;
-  bool is_valid;
+  bool is_valid = false;
   Position position;
   float speed;
   float true_course;
-  double variation;
-  bool variation_defined = false;
+  float variation;
 
-  // eg3. $GPRMC,220516,A,5133.82,N,00042.24,W,173.8,231.8,130694,004.2,W*70
+  // clang-format off
+  // eg.  $GPRMC,220516,   A,5133.82,   N,00042.24,   W,173.8,231.8,130694,004.2,W  *70
+  // eg2. $GNRMC,121042.00,A,6011.07385,N,02503.04396,E,0.087,     ,050222,     , ,D*64
+  // clang-format on
+
+  if (num_terms < 12) {
+    ReportSuccess(false, sentence_id());
+    return;
+  }
+
   // 1   220516     Time Stamp
-  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
-                   buffer + term_offsets[1]);
+  ok &=
+      ParseTime(&time.tm_hour, &time.tm_min, &second, buffer + term_offsets[1]);
   // 2   A          validity - A-ok, V-invalid
   ok &= ParseAV(&is_valid, buffer + term_offsets[2]);
   // 3   5133.82    current Latitude
@@ -364,30 +372,28 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   // 5   00042.24   current Longitude
   ok &= ParseLatLon(&position.longitude, buffer + term_offsets[5]);
   // 6   W          East/West
-  ok &= ParseEW(&position.longitude, buffer + term_offsets[6]);
+  ok &= ParseEW(&position.longitude, buffer + term_offsets[6], true);
   // 7   173.8      Speed in knots
-  ok &= ParseFloat(&speed, buffer + term_offsets[7]);
+  ok &= ParseFloat(&speed, buffer + term_offsets[7], true);
   // 8   231.8      True course
-  ok &= ParseFloat(&true_course, buffer + term_offsets[8]);
+  ok &= ParseFloat(&true_course, buffer + term_offsets[8], true);
   // 9   130694     Date Stamp
   ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                   buffer + term_offsets[9]);
+                  buffer + term_offsets[9]);
   // 10  004.2      Variation
-  if (*(buffer + term_offsets[10]) != 0) {
-    ok &= ParseDouble(&variation, buffer + term_offsets[10]);
-  }
+  ok &= ParseFloat(&variation, buffer + term_offsets[10], true);
   // 11  W          East/West
-  if (*(buffer + term_offsets[11]) != 0) {
-    ok &= ParseEW(&variation, buffer + term_offsets[11]);
-    variation_defined = true;
-  }
+  ok &= ParseEW(&variation, buffer + term_offsets[11], true);
+
+  // Positioning system mode indicator might be available as term 12, but
+  // let's ignore it for now.
 
   ReportSuccess(ok, sentence_id());
   if (!ok) {
     return;
   }
 
-  position.altitude = -kPositionInvalidAltitude;
+  position.altitude = kPositionInvalidAltitude;
   time.tm_sec = (int)second;
   time.tm_isdst = 0;
 
@@ -396,9 +402,13 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   if (is_valid) {
     nmea_data_->position.set(position);
     nmea_data_->datetime.set(mktime(&time));
-    nmea_data_->speed.set(1852. * speed / 3600.);
-    nmea_data_->true_course.set(2 * PI * true_course / 360.);
-    if (variation_defined) {
+    if (speed != kInvalidFloat) {
+      nmea_data_->speed.set(1852. * speed / 3600.);
+    }
+    if (true_course != kInvalidFloat) {
+      nmea_data_->true_course.set(2 * PI * true_course / 360.);
+    }
+    if (variation != kInvalidFloat) {
       nmea_data_->variation.set(2 * PI * variation / 360.);
     }
   }
