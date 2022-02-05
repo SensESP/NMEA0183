@@ -192,11 +192,19 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[],
   float horizontal_dilution;
   float geoidal_separation;
   float dgps_age;
-  bool dgps_age_defined = false;
   int dgps_id;
-  bool dgps_id_defined = false;
 
-  // eg3. $GPGGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
+  // clang-format off
+  // term      0         1          2 3           4 5 6  7   8     9 10  11 12 13   14 15
+  // eg.  $GPGGA,hhmmss.ss,llll.ll   ,a,yyyyy.yy   ,a,x,xx,x.x, x.x ,M,x.x ,M,x.x,xxxx*hh
+  // eg2. $GNGGA,121042.00,6011.07385,N,02503.04396,E,2,11,1.04,17.0,M,17.6,M,   ,0000*75
+  // clang-format on
+
+  if (num_terms < 15) {
+    ReportSuccess(false, sentence_id());
+    return;
+  }
+
   // 1    = UTC of Position
   ok &= ParseTime(&hour, &minute, &second, buffer + term_offsets[1]);
   // 2    = Latitude
@@ -223,15 +231,10 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[],
   // 12   = Meters  (Units of geoidal separation)
   ok &= ParseM(buffer + term_offsets[12]);
   // 13   = Age in seconds since last update from diff. reference station
-  if (*(buffer + term_offsets[13]) != 0) {
-    ok &= ParseFloat(&dgps_age, buffer + term_offsets[13]);
-    dgps_age_defined = true;
-  }
+  ok &= ParseFloat(&dgps_age, buffer + term_offsets[13], true);
   // 14   = Diff. reference station ID#
-  if (*(buffer + term_offsets[14]) != 0) {
-    ok &= ParseInt(&dgps_id, buffer + term_offsets[14]);
-    dgps_id_defined = true;
-  }
+  ok &= ParseInt(&dgps_id, buffer + term_offsets[14], true);
+
   // 15   = Checksum
   // (validated already earlier)
 
@@ -247,10 +250,10 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[],
   nmea_data_->num_satellites.set(num_satellites);
   nmea_data_->horizontal_dilution.set(horizontal_dilution);
   nmea_data_->geoidal_separation.set(geoidal_separation);
-  if (dgps_age_defined) {
+  if (dgps_age != kInvalidFloat) {
     nmea_data_->dgps_age.set(dgps_age);
   }
-  if (dgps_id_defined) {
+  if (dgps_id != kInvalidInt) {
     nmea_data_->dgps_id.set(dgps_id);
   }
 }
