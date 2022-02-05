@@ -11,9 +11,9 @@ NMEA0183Input::NMEA0183Input(Stream* rx_stream)
   rx_stream_ = rx_stream;
 
   // add the built-in sentence parsers
-  add_sentence_parser(new GPGGASentenceParser(&nmea_data_));
-  add_sentence_parser(new GPGLLSentenceParser(&nmea_data_));
-  add_sentence_parser(new GPRMCSentenceParser(&nmea_data_));
+  add_sentence_parser(new GGASentenceParser(&nmea_data_));
+  add_sentence_parser(new GLLSentenceParser(&nmea_data_));
+  add_sentence_parser(new RMCSentenceParser(&nmea_data_));
   add_sentence_parser(new PSTISentenceParser(&nmea_data_));
   add_sentence_parser(new PSTI030SentenceParser(&nmea_data_));
   add_sentence_parser(new PSTI032SentenceParser(&nmea_data_));

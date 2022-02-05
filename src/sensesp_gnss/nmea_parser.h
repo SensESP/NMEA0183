@@ -11,8 +11,9 @@
 
 namespace sensesp {
 
-/// Maximum length of a single NMEA sentence.
-constexpr int kNMEA0183InputBufferLength = 250;
+/// Maximum length of a single NMEA sentence. The standard defined
+/// maximum is 82, but let's give it a bit of margin.
+constexpr int kNMEA0183InputBufferLength = 164;
 /// Maximum number of comma-separated terms in one NMEA sentence.
 constexpr int kNMEA0183MaxTerms = 25;
 
@@ -41,9 +42,9 @@ struct NMEALocationData {
 
 /**
  * @brief NMEA 0183 sentence parser base class.
- * 
+ *
  * This class is responsible for parsing NMEA 0183 sentences.
- *  
+ *
  * Note: For the sake of convenience, all built-in SentenceParser children
  * take a reference to a NMEALocationData object. If you want to
  * provide your own SentenceParser children, you need to maintain their
@@ -65,34 +66,34 @@ class SentenceParser {
  private:
 };
 
-/// Parser for GPGGA - Global Positioning System Fix Data.
-class GPGGASentenceParser : public SentenceParser {
+/// Parser for GGA - Global Positioning System Fix Data.
+class GGASentenceParser : public SentenceParser {
  public:
-  GPGGASentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
+  GGASentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
-  const char* sentence() { return "GPGGA"; }
+  const char* sentence() { return "GGA"; }
 
  private:
   NMEALocationData* nmea_data_;
 };
 
-/// Parser for GPGLL - Geographic position, latitude / longitude
-class GPGLLSentenceParser : public SentenceParser {
+/// Parser for GLL - Geographic position, latitude / longitude
+class GLLSentenceParser : public SentenceParser {
  public:
-  GPGLLSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
+  GLLSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
-  const char* sentence() { return "GPGLL"; }
+  const char* sentence() { return "GLL"; }
 
  private:
   NMEALocationData* nmea_data_;
 };
 
-/// Parser for GPRMC - Recommended minimum specific GPS/Transit data
-class GPRMCSentenceParser : public SentenceParser {
+/// Parser for RMC - Recommended minimum specific GPS/Transit data
+class RMCSentenceParser : public SentenceParser {
  public:
-  GPRMCSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
+  RMCSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
-  const char* sentence() { return "GPRMC"; }
+  const char* sentence() { return "RMC"; }
 
  private:
   NMEALocationData* nmea_data_;
@@ -106,7 +107,7 @@ class GPRMCSentenceParser : public SentenceParser {
 // private:
 //};
 
-/// Top-level parser for PSTI* sentences.
+/// Top-level parser for proprietary mfg. id STI sentences.
 class PSTISentenceParser : public SentenceParser {
  public:
   PSTISentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
@@ -119,7 +120,7 @@ class PSTISentenceParser : public SentenceParser {
   NMEALocationData* nmea_data_;
 };
 
-/// Parser for STI,030 - Recommended Minimum 3D GNSS Data
+/// Parser for proprietary STI,030 - Recommended Minimum 3D GNSS Data
 class PSTI030SentenceParser : public SentenceParser {
  public:
   PSTI030SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
@@ -130,7 +131,7 @@ class PSTI030SentenceParser : public SentenceParser {
   NMEALocationData* nmea_data_;
 };
 
-/// Parser for STI,032 - RTK Baseline Data
+/// Parser for proprietary STI,032 - RTK Baseline Data
 class PSTI032SentenceParser : public SentenceParser {
  public:
   PSTI032SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
@@ -143,9 +144,9 @@ class PSTI032SentenceParser : public SentenceParser {
 
 /**
  * @brief NMEA 0183 parser class.
- * 
+ *
  * Data from an input stream is fed to the parse one character at a time.
- * 
+ *
  * At initialization, the parser registers a set of sentence parsers.
  * When input data matches a sentence, the parser calls the appropriate
  * sentence parser.

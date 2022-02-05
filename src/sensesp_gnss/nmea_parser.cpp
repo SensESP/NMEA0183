@@ -179,7 +179,7 @@ void report_success(bool ok, const char* sentence) {
   }
 }
 
-void GPGGASentenceParser::parse(char* buffer, int term_offsets[],
+void GGASentenceParser::parse(char* buffer, int term_offsets[],
                                 int num_terms) {
   bool ok = true;
 
@@ -255,7 +255,7 @@ void GPGGASentenceParser::parse(char* buffer, int term_offsets[],
   }
 }
 
-void GPGLLSentenceParser::parse(char* buffer, int term_offsets[],
+void GLLSentenceParser::parse(char* buffer, int term_offsets[],
                                 int num_terms) {
   bool ok = true;
 
@@ -283,7 +283,7 @@ void GPGLLSentenceParser::parse(char* buffer, int term_offsets[],
   nmea_data_->position.set(position);
 }
 
-void GPRMCSentenceParser::parse(char* buffer, int term_offsets[],
+void RMCSentenceParser::parse(char* buffer, int term_offsets[],
                                 int num_terms) {
   bool ok = true;
 
@@ -609,6 +609,8 @@ void NMEAParser::state_in_term(char c) {
 }
 
 void NMEAParser::state_in_checksum(char c) {
+  char* sentence_id;
+
   switch (c) {
     case ',':
     case '*':
@@ -622,12 +624,28 @@ void NMEAParser::state_in_checksum(char c) {
         current_state = &NMEAParser::state_start;
         return;
       }
-      // call the relevant sentence parser
-      if (sentence_parsers.find(buffer) == sentence_parsers.end()) {
-        debugD("Parser not found for sentence %s", buffer);
+      // If we got this far, we know that the sentence is valid and it's time
+      // to parse it.
+
+      // If the first letter is "P", it's a proprietary sentence.
+      if (buffer[0] == 'P') {
+        debugD("Parsing proprietary sentence %s\n", buffer);
+        // proprietary sentences have no talker ID. We'll consider the initial
+        // "P" as part of the sentence ID.
+        sentence_id = buffer;
       } else {
-        sentence_parsers[buffer]->parse(buffer, term_offsets, cur_term + 1,
-                                        sentence_parsers);
+        // standard sentences have a two-character talker ID before the
+        // sentence ID.
+        sentence_id = buffer + 2;
+      }
+
+      // call the relevant sentence parser
+      if (sentence_parsers.find(sentence_id) == sentence_parsers.end()) {
+        debugD("Parser not found for sentence %s", sentence_id);
+      } else {
+        debugD("Parsing sentence %s", sentence_id);
+        sentence_parsers[sentence_id]->parse(buffer, term_offsets, cur_term + 1,
+                                             sentence_parsers);
       }
       current_state = &NMEAParser::state_start;
       break;
@@ -645,4 +663,4 @@ bool NMEAParser::validate_checksum() {
   return this->parity == checksum;
 }
 
-}  // namespace
+}  // namespace sensesp
