@@ -14,6 +14,7 @@ NMEA0183Input::NMEA0183Input(Stream* rx_stream)
   add_sentence_parser(new GGASentenceParser(&nmea_data_));
   add_sentence_parser(new GLLSentenceParser(&nmea_data_));
   add_sentence_parser(new RMCSentenceParser(&nmea_data_));
+  add_sentence_parser(new VTGSentenceParser(&nmea_data_));
   add_sentence_parser(new PSTISentenceParser(&nmea_data_));
   add_sentence_parser(new PSTI030SentenceParser(&nmea_data_));
   add_sentence_parser(new PSTI032SentenceParser(&nmea_data_));

@@ -411,6 +411,53 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   }
 }
 
+void VTGSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
+  bool ok = true;
+
+  float true_track;
+  float magnetic_track;
+  float ground_speed;
+
+  // clang-format off
+  // eg. $GNVTG,,T,,M,1.317,N,2.438,K,D*31
+  // clang-format on
+
+  if (num_terms < 9) {
+    ReportFailure(false, sentence_id());
+    return;
+  }
+
+  // 1             True track made good
+  ok &= ParseFloat(&true_track, buffer + term_offsets[1], true);
+  // 2 T
+  ok &= ParseChar(buffer + term_offsets[2], 'T');
+  // 3             Magnetic track made good
+  ok &= ParseFloat(&magnetic_track, buffer + term_offsets[3], true);
+  // 4 M
+  ok &= ParseChar(buffer + term_offsets[4], 'M');
+  // 5             Ground speed, knots
+  ok &= ParseFloat(&ground_speed, buffer + term_offsets[5], true);
+  // 6 N
+  ok &= ParseChar(buffer + term_offsets[6], 'N');
+
+  // ignore the remaining terms for now
+
+  ReportFailure(ok, sentence_id());
+  if (!ok) {
+    return;
+  }
+
+  // set observers
+
+  if (true_track != kInvalidFloat) {
+    nmea_data_->true_course.set(2 * PI * true_track / 360.);
+  }
+  // ignore magnetic track for now
+  if (ground_speed != kInvalidFloat) {
+    nmea_data_->speed.set(1852. * ground_speed / 3600.);
+  }
+}
+
 void PSTISentenceParser::parse(
     char* buffer, int term_offsets[], int num_terms,
     std::map<String, SentenceParser*>& sentence_parsers) {

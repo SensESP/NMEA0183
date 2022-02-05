@@ -105,13 +105,16 @@ class RMCSentenceParser : public SentenceParser {
   NMEALocationData* nmea_data_;
 };
 
-// class GPVTGSentenceParser : public SentenceParser {
-// public:
-//  GPVTGSentenceParser(NMEALocationData* nmea_data) : SentenceParser{nmea_data} {}
-//  void parse(char* buffer, int term_offsets[], int num_terms) override final;
-//  const char* sentence() { return "GPVTG"; }
-// private:
-//};
+/// Parser for VTG - Track made good and ground speed
+ class VTGSentenceParser : public SentenceParser {
+ public:
+  VTGSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
+  void parse(char* buffer, int term_offsets[], int num_terms) override final;
+  const char* sentence_id() { return "VTG"; }
+
+ private:
+  NMEALocationData* nmea_data_;
+};
 
 /// Top-level parser for proprietary mfg. id STI sentences.
 class PSTISentenceParser : public SentenceParser {
