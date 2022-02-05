@@ -214,17 +214,14 @@ static bool ParseDate(int* year, int* month, int* day, char* s,
   return retval == 3;
 }
 
-static void ReportSuccess(bool ok, const char* sentence) {
+static void ReportFailure(bool ok, const char* sentence) {
   if (!ok) {
     debugI("Failed to parse %s", sentence);
     return;
-  } else {
-    debugD("Parsed sentence %s", sentence);
   }
 }
 
-void GGASentenceParser::parse(char* buffer, int term_offsets[],
-                                int num_terms) {
+void GGASentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   bool ok = true;
 
   int hour;
@@ -245,7 +242,7 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[],
   // clang-format on
 
   if (num_terms < 15) {
-    ReportSuccess(false, sentence_id());
+    ReportFailure(false, sentence_id());
     return;
   }
 
@@ -282,7 +279,7 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[],
   // 15   = Checksum
   // (validated already earlier)
 
-  ReportSuccess(ok, sentence_id());
+  ReportFailure(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -312,7 +309,7 @@ void GLLSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   // eg3. $GNGLL,6011.07479,N,02503.05652,E,133453.00,A,D*7A
 
   if (num_terms < 5) {
-    ReportSuccess(false, sentence_id());
+    ReportFailure(false, sentence_id());
     return;
   }
 
@@ -327,7 +324,7 @@ void GLLSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
 
   // ignore the UTC time of the fix and the status of the fix for now
 
-  ReportSuccess(ok, sentence_id());
+  ReportFailure(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -356,7 +353,7 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   // clang-format on
 
   if (num_terms < 12) {
-    ReportSuccess(false, sentence_id());
+    ReportFailure(false, sentence_id());
     return;
   }
 
@@ -388,7 +385,7 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   // Positioning system mode indicator might be available as term 12, but
   // let's ignore it for now.
 
-  ReportSuccess(ok, sentence_id());
+  ReportFailure(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -422,7 +419,7 @@ void PSTISentenceParser::parse(
 
   ok &= ParseInt(&subsentence, buffer + term_offsets[1]);
 
-  ReportSuccess(ok, sentence_id());
+  ReportFailure(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -457,7 +454,7 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   // the subsentence number is at offset 1
 
   if (num_terms < 15) {
-    ReportSuccess(false, sentence_id());
+    ReportFailure(false, sentence_id());
     return;
   }
 
@@ -512,7 +509,7 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   // 14  RTK Ratio  4.2  AR ratio factor for validation
   ok &= ParseFloat(&rtk_ratio, buffer + term_offsets[15]);
 
-  ReportSuccess(ok, sentence_id());
+  ReportFailure(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -556,7 +553,7 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
   // the subsentence number is at offset 1
 
   if (num_terms < 10) {
-    ReportSuccess(false, sentence_id());
+    ReportFailure(false, sentence_id());
     return;
   }
 
@@ -602,7 +599,7 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
     // 14  Reserve    Reserve
   }
 
-  ReportSuccess(ok, sentence_id());
+  ReportFailure(ok, sentence_id());
   if (!ok) {
     return;
   }
