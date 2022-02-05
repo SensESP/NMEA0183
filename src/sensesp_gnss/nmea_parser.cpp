@@ -235,7 +235,7 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[],
   // 15   = Checksum
   // (validated already earlier)
 
-  ReportSuccess(ok, sentence());
+  ReportSuccess(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -270,7 +270,7 @@ void GLLSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   //       4    W         East/West
   ok &= ParseEW(&position.longitude, buffer + term_offsets[4]);
 
-  ReportSuccess(ok, sentence());
+  ReportSuccess(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -325,7 +325,7 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
     variation_defined = true;
   }
 
-  ReportSuccess(ok, sentence());
+  ReportSuccess(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -355,7 +355,7 @@ void PSTISentenceParser::parse(
 
   ok &= ParseInt(&subsentence, buffer + term_offsets[1]);
 
-  ReportSuccess(ok, sentence());
+  ReportSuccess(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -440,7 +440,7 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   // 14  RTK Ratio  4.2  AR ratio factor for validation
   ok &= ParseFloat(&rtk_ratio, buffer + term_offsets[15]);
 
-  ReportSuccess(ok, sentence());
+  ReportSuccess(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -525,7 +525,7 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
     // 14  Reserve    Reserve
   }
 
-  ReportSuccess(ok, sentence());
+  ReportSuccess(ok, sentence_id());
   if (!ok) {
     return;
   }
@@ -548,7 +548,7 @@ NMEAParser::NMEAParser() {
 }
 
 void NMEAParser::add_sentence_parser(SentenceParser* parser) {
-  const char* sentence = parser->sentence();
+  const char* sentence = parser->sentence_id();
   sentence_parsers[sentence] = parser;
 }
 

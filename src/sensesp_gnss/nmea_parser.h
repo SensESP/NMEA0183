@@ -59,7 +59,7 @@ class SentenceParser {
                      std::map<String, SentenceParser*>& sentence_parsers) {
     parse(buffer, term_offsets, num_terms);
   }
-  virtual const char* sentence() = 0;
+  virtual const char* sentence_id() = 0;
 
  protected:
 
@@ -71,7 +71,7 @@ class GGASentenceParser : public SentenceParser {
  public:
   GGASentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
-  const char* sentence() { return "GGA"; }
+  const char* sentence_id() { return "GGA"; }
 
  private:
   NMEALocationData* nmea_data_;
@@ -82,7 +82,7 @@ class GLLSentenceParser : public SentenceParser {
  public:
   GLLSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
-  const char* sentence() { return "GLL"; }
+  const char* sentence_id() { return "GLL"; }
 
  private:
   NMEALocationData* nmea_data_;
@@ -93,7 +93,7 @@ class RMCSentenceParser : public SentenceParser {
  public:
   RMCSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
-  const char* sentence() { return "RMC"; }
+  const char* sentence_id() { return "RMC"; }
 
  private:
   NMEALocationData* nmea_data_;
@@ -114,7 +114,7 @@ class PSTISentenceParser : public SentenceParser {
   void parse(char* buffer, int term_offsets[], int num_terms) override final {}
   void parse(char* buffer, int term_offsets[], int num_terms,
              std::map<String, SentenceParser*>& sentence_parsers);
-  const char* sentence() { return "PSTI"; }
+  const char* sentence_id() { return "PSTI"; }
 
  private:
   NMEALocationData* nmea_data_;
@@ -125,7 +125,7 @@ class PSTI030SentenceParser : public SentenceParser {
  public:
   PSTI030SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
-  const char* sentence() { return "PSTI,030"; }
+  const char* sentence_id() { return "PSTI,030"; }
 
  private:
   NMEALocationData* nmea_data_;
@@ -136,7 +136,7 @@ class PSTI032SentenceParser : public SentenceParser {
  public:
   PSTI032SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
   void parse(char* buffer, int term_offsets[], int num_terms) override final;
-  const char* sentence() { return "PSTI,032"; }
+  const char* sentence_id() { return "PSTI,032"; }
 
  private:
   NMEALocationData* nmea_data_;
