@@ -4,19 +4,17 @@
 #include <limits>
 #include <map>
 
-#include "sensesp/system/observablevalue.h"
-
-#include "sensesp/types/position.h"
 #include "sensesp/signalk/signalk_position.h"
-
+#include "sensesp/system/observablevalue.h"
+#include "sensesp/types/position.h"
 
 namespace sensesp {
 
 /// Maximum length of a single NMEA sentence. The standard defined
 /// maximum is 82, but let's give it a bit of margin.
 constexpr int kNMEA0183InputBufferLength = 164;
-/// Maximum number of comma-separated terms in one NMEA sentence.
-constexpr int kNMEA0183MaxTerms = 25;
+/// Maximum number of comma-separated fields in one NMEA sentence.
+constexpr int kNMEA0183MaxFields = 25;
 
 // magic values for invalid data
 constexpr float kInvalidFloat = std::numeric_limits<float>::lowest();
@@ -60,15 +58,14 @@ struct NMEALocationData {
  */
 class SentenceParser {
  public:
-  virtual void parse(char* buffer, int term_offsets[], int num_terms) = 0;
-  virtual void parse(char* buffer, int term_offsets[], int num_terms,
+  virtual void parse(char* buffer, int field_offsets[], int num_fields) = 0;
+  virtual void parse(char* buffer, int field_offsets[], int num_fields,
                      std::map<String, SentenceParser*>& sentence_parsers) {
-    parse(buffer, term_offsets, num_terms);
+    parse(buffer, field_offsets, num_fields);
   }
   virtual const char* sentence_id() = 0;
 
  protected:
-
  private:
 };
 
@@ -76,7 +73,7 @@ class SentenceParser {
 class GGASentenceParser : public SentenceParser {
  public:
   GGASentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
-  void parse(char* buffer, int term_offsets[], int num_terms) override final;
+  void parse(char* buffer, int field_offsets[], int num_fields) override final;
   const char* sentence_id() { return "GGA"; }
 
  private:
@@ -87,7 +84,7 @@ class GGASentenceParser : public SentenceParser {
 class GLLSentenceParser : public SentenceParser {
  public:
   GLLSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
-  void parse(char* buffer, int term_offsets[], int num_terms) override final;
+  void parse(char* buffer, int field_offsets[], int num_fields) override final;
   const char* sentence_id() { return "GLL"; }
 
  private:
@@ -98,7 +95,7 @@ class GLLSentenceParser : public SentenceParser {
 class RMCSentenceParser : public SentenceParser {
  public:
   RMCSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
-  void parse(char* buffer, int term_offsets[], int num_terms) override final;
+  void parse(char* buffer, int field_offsets[], int num_fields) override final;
   const char* sentence_id() { return "RMC"; }
 
  private:
@@ -106,10 +103,10 @@ class RMCSentenceParser : public SentenceParser {
 };
 
 /// Parser for VTG - Track made good and ground speed
- class VTGSentenceParser : public SentenceParser {
+class VTGSentenceParser : public SentenceParser {
  public:
   VTGSentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
-  void parse(char* buffer, int term_offsets[], int num_terms) override final;
+  void parse(char* buffer, int field_offsets[], int num_fields) override final;
   const char* sentence_id() { return "VTG"; }
 
  private:
@@ -120,8 +117,9 @@ class RMCSentenceParser : public SentenceParser {
 class PSTISentenceParser : public SentenceParser {
  public:
   PSTISentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
-  void parse(char* buffer, int term_offsets[], int num_terms) override final {}
-  void parse(char* buffer, int term_offsets[], int num_terms,
+  void parse(char* buffer, int field_offsets[], int num_fields) override final {
+  }
+  void parse(char* buffer, int field_offsets[], int num_fields,
              std::map<String, SentenceParser*>& sentence_parsers);
   const char* sentence_id() { return "PSTI"; }
 
@@ -133,7 +131,7 @@ class PSTISentenceParser : public SentenceParser {
 class PSTI030SentenceParser : public SentenceParser {
  public:
   PSTI030SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
-  void parse(char* buffer, int term_offsets[], int num_terms) override final;
+  void parse(char* buffer, int field_offsets[], int num_fields) override final;
   const char* sentence_id() { return "PSTI,030"; }
 
  private:
@@ -144,7 +142,7 @@ class PSTI030SentenceParser : public SentenceParser {
 class PSTI032SentenceParser : public SentenceParser {
  public:
   PSTI032SentenceParser(NMEALocationData* nmea_data) : nmea_data_{nmea_data} {}
-  void parse(char* buffer, int term_offsets[], int num_terms) override final;
+  void parse(char* buffer, int field_offsets[], int num_fields) override final;
   const char* sentence_id() { return "PSTI,032"; }
 
  private:
@@ -169,16 +167,16 @@ class NMEAParser {
  private:
   void (NMEAParser::*current_state)(char);
   void state_start(char c);
-  void state_in_term(char c);
+  void state_in_field(char c);
   void state_in_checksum(char c);
   // current sentence
   char buffer[kNMEA0183InputBufferLength];
-  // offset for each sentence term in the buffer
-  int term_offsets[kNMEA0183MaxTerms];
+  // offset for each sentence field in the buffer
+  int field_offsets[kNMEA0183MaxFields];
   // pointer for the next character in buffer
   int cur_offset;
-  // pointer for the current term in buffer
-  int cur_term;
+  // pointer for the current field in buffer
+  int cur_field;
   int parity;
   bool validate_checksum();
   std::map<String, SentenceParser*> sentence_parsers;

@@ -35,12 +35,12 @@ String gnssQualityStrings[] = {"no GPS",
 
 /// Reconstruct the original NMEA sentence for debugging purposes.
 static void ReconstructNMEASentence(char* sentence, const char* buffer,
-                                    int term_offsets[], int num_terms) {
+                                    int field_offsets[], int num_fields) {
   // get the total length of the sentence
-  int last_term_loc = term_offsets[num_terms - 1];
-  int last_term_len = strlen(buffer + term_offsets[num_terms - 1]);
+  int last_field_loc = field_offsets[num_fields - 1];
+  int last_field_len = strlen(buffer + field_offsets[num_fields - 1]);
   // include the final \0
-  int sentence_len = last_term_loc + last_term_len + 1;
+  int sentence_len = last_field_loc + last_field_len + 1;
 
   // beginning $
   sentence[0] = '$';
@@ -48,11 +48,11 @@ static void ReconstructNMEASentence(char* sentence, const char* buffer,
   memcpy(sentence + 1, buffer, sentence_len);
 
   // fill in the gaps with commas
-  for (int i = 1; i < num_terms - 1; i++) {
-    sentence[term_offsets[i]] = ',';
+  for (int i = 1; i < num_fields - 1; i++) {
+    sentence[field_offsets[i]] = ',';
   }
   // the final gap has an asterisk
-  sentence[term_offsets[num_terms - 1]] = '*';
+  sentence[field_offsets[num_fields - 1]] = '*';
 }
 
 static bool ParseInt(int* value, char* s, bool allow_empty = false) {
@@ -221,7 +221,8 @@ static void ReportFailure(bool ok, const char* sentence) {
   }
 }
 
-void GGASentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
+void GGASentenceParser::parse(char* buffer, int field_offsets[],
+                              int num_fields) {
   bool ok = true;
 
   int hour;
@@ -236,45 +237,45 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   int dgps_id;
 
   // clang-format off
-  // term      0         1          2 3           4 5 6  7   8     9 10  11 12 13   14 15
+  // field      0         1          2 3           4 5 6  7   8     9 10  11 12 13   14 15
   // eg.  $GPGGA,hhmmss.ss,llll.ll   ,a,yyyyy.yy   ,a,x,xx,x.x, x.x ,M,x.x ,M,x.x,xxxx*hh
   // eg2. $GNGGA,121042.00,6011.07385,N,02503.04396,E,2,11,1.04,17.0,M,17.6,M,   ,0000*75
   // clang-format on
 
-  if (num_terms < 15) {
+  if (num_fields < 15) {
     ReportFailure(false, sentence_id());
     return;
   }
 
   // 1    = UTC of Position
-  ok &= ParseTime(&hour, &minute, &second, buffer + term_offsets[1]);
+  ok &= ParseTime(&hour, &minute, &second, buffer + field_offsets[1]);
   // 2    = Latitude
-  ok &= ParseLatLon(&position.latitude, buffer + term_offsets[2]);
+  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[2]);
   // 3    = N or S
-  ok &= ParseNS(&position.latitude, buffer + term_offsets[3]);
+  ok &= ParseNS(&position.latitude, buffer + field_offsets[3]);
   // 4    = Longitude
-  ok &= ParseLatLon(&position.longitude, buffer + term_offsets[4]);
+  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[4]);
   // 5    = E or W
-  ok &= ParseEW(&position.longitude, buffer + term_offsets[5]);
+  ok &= ParseEW(&position.longitude, buffer + field_offsets[5]);
   // 6    = GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
-  ok &= ParseInt(&quality, buffer + term_offsets[6]);
+  ok &= ParseInt(&quality, buffer + field_offsets[6]);
   // 7    = Number of satellites in use [not those in view]
-  ok &= ParseInt(&num_satellites, buffer + term_offsets[7]);
+  ok &= ParseInt(&num_satellites, buffer + field_offsets[7]);
   // 8    = Horizontal dilution of position
-  ok &= ParseFloat(&horizontal_dilution, buffer + term_offsets[8]);
+  ok &= ParseFloat(&horizontal_dilution, buffer + field_offsets[8]);
   // 9    = Antenna altitude above/below mean sea level (geoid)
-  ok &= ParseFloat(&position.altitude, buffer + term_offsets[9]);
+  ok &= ParseFloat(&position.altitude, buffer + field_offsets[9]);
   // 10   = Meters  (Antenna height unit)
-  ok &= ParseChar(buffer + term_offsets[10], 'M');
+  ok &= ParseChar(buffer + field_offsets[10], 'M');
   // 11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
   //        mean sea level.  -=geoid is below WGS-84 ellipsoid)
-  ok &= ParseFloat(&geoidal_separation, buffer + term_offsets[11]);
+  ok &= ParseFloat(&geoidal_separation, buffer + field_offsets[11]);
   // 12   = Meters  (Units of geoidal separation)
-  ok &= ParseChar(buffer + term_offsets[12], 'M');
+  ok &= ParseChar(buffer + field_offsets[12], 'M');
   // 13   = Age in seconds since last update from diff. reference station
-  ok &= ParseFloat(&dgps_age, buffer + term_offsets[13], true);
+  ok &= ParseFloat(&dgps_age, buffer + field_offsets[13], true);
   // 14   = Diff. reference station ID#
-  ok &= ParseInt(&dgps_id, buffer + term_offsets[14], true);
+  ok &= ParseInt(&dgps_id, buffer + field_offsets[14], true);
 
   // 15   = Checksum
   // (validated already earlier)
@@ -299,7 +300,8 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   }
 }
 
-void GLLSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
+void GLLSentenceParser::parse(char* buffer, int field_offsets[],
+                              int num_fields) {
   bool ok = true;
 
   Position position;
@@ -308,19 +310,19 @@ void GLLSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   // eg2. $GNGLL,4916.45   ,N,12311.12   ,W,225444   ,A
   // eg3. $GNGLL,6011.07479,N,02503.05652,E,133453.00,A,D*7A
 
-  if (num_terms < 5) {
+  if (num_fields < 5) {
     ReportFailure(false, sentence_id());
     return;
   }
 
   //       1    5133.81   Current latitude
-  ok &= ParseLatLon(&position.latitude, buffer + term_offsets[1]);
+  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[1]);
   //       2    N         North/South
-  ok &= ParseNS(&position.latitude, buffer + term_offsets[2]);
+  ok &= ParseNS(&position.latitude, buffer + field_offsets[2]);
   //       3    00042.25  Current longitude
-  ok &= ParseLatLon(&position.longitude, buffer + term_offsets[3]);
+  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[3]);
   //       4    W         East/West
-  ok &= ParseEW(&position.longitude, buffer + term_offsets[4]);
+  ok &= ParseEW(&position.longitude, buffer + field_offsets[4]);
 
   // ignore the UTC time of the fix and the status of the fix for now
 
@@ -336,7 +338,8 @@ void GLLSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   nmea_data_->position.set(position);
 }
 
-void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
+void RMCSentenceParser::parse(char* buffer, int field_offsets[],
+                              int num_fields) {
   bool ok = true;
 
   struct tm time;
@@ -352,37 +355,37 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   // eg2. $GNRMC,121042.00,A,6011.07385,N,02503.04396,E,0.087,     ,050222,     , ,D*64
   // clang-format on
 
-  if (num_terms < 12) {
+  if (num_fields < 12) {
     ReportFailure(false, sentence_id());
     return;
   }
 
   // 1   220516     Time Stamp
-  ok &=
-      ParseTime(&time.tm_hour, &time.tm_min, &second, buffer + term_offsets[1]);
+  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
+                  buffer + field_offsets[1]);
   // 2   A          validity - A-ok, V-invalid
-  ok &= ParseAV(&is_valid, buffer + term_offsets[2]);
+  ok &= ParseAV(&is_valid, buffer + field_offsets[2]);
   // 3   5133.82    current Latitude
-  ok &= ParseLatLon(&position.latitude, buffer + term_offsets[3]);
+  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[3]);
   // 4   N          North/South
-  ok &= ParseNS(&position.latitude, buffer + term_offsets[4]);
+  ok &= ParseNS(&position.latitude, buffer + field_offsets[4]);
   // 5   00042.24   current Longitude
-  ok &= ParseLatLon(&position.longitude, buffer + term_offsets[5]);
+  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[5]);
   // 6   W          East/West
-  ok &= ParseEW(&position.longitude, buffer + term_offsets[6], true);
+  ok &= ParseEW(&position.longitude, buffer + field_offsets[6], true);
   // 7   173.8      Speed in knots
-  ok &= ParseFloat(&speed, buffer + term_offsets[7], true);
+  ok &= ParseFloat(&speed, buffer + field_offsets[7], true);
   // 8   231.8      True course
-  ok &= ParseFloat(&true_course, buffer + term_offsets[8], true);
+  ok &= ParseFloat(&true_course, buffer + field_offsets[8], true);
   // 9   130694     Date Stamp
   ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                  buffer + term_offsets[9]);
+                  buffer + field_offsets[9]);
   // 10  004.2      Variation
-  ok &= ParseFloat(&variation, buffer + term_offsets[10], true);
+  ok &= ParseFloat(&variation, buffer + field_offsets[10], true);
   // 11  W          East/West
-  ok &= ParseEW(&variation, buffer + term_offsets[11], true);
+  ok &= ParseEW(&variation, buffer + field_offsets[11], true);
 
-  // Positioning system mode indicator might be available as term 12, but
+  // Positioning system mode indicator might be available as field 12, but
   // let's ignore it for now.
 
   ReportFailure(ok, sentence_id());
@@ -411,7 +414,8 @@ void RMCSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   }
 }
 
-void VTGSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
+void VTGSentenceParser::parse(char* buffer, int field_offsets[],
+                              int num_fields) {
   bool ok = true;
 
   float true_track;
@@ -422,25 +426,25 @@ void VTGSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   // eg. $GNVTG,,T,,M,1.317,N,2.438,K,D*31
   // clang-format on
 
-  if (num_terms < 9) {
+  if (num_fields < 9) {
     ReportFailure(false, sentence_id());
     return;
   }
 
   // 1             True track made good
-  ok &= ParseFloat(&true_track, buffer + term_offsets[1], true);
+  ok &= ParseFloat(&true_track, buffer + field_offsets[1], true);
   // 2 T
-  ok &= ParseChar(buffer + term_offsets[2], 'T');
+  ok &= ParseChar(buffer + field_offsets[2], 'T');
   // 3             Magnetic track made good
-  ok &= ParseFloat(&magnetic_track, buffer + term_offsets[3], true);
+  ok &= ParseFloat(&magnetic_track, buffer + field_offsets[3], true);
   // 4 M
-  ok &= ParseChar(buffer + term_offsets[4], 'M');
+  ok &= ParseChar(buffer + field_offsets[4], 'M');
   // 5             Ground speed, knots
-  ok &= ParseFloat(&ground_speed, buffer + term_offsets[5], true);
+  ok &= ParseFloat(&ground_speed, buffer + field_offsets[5], true);
   // 6 N
-  ok &= ParseChar(buffer + term_offsets[6], 'N');
+  ok &= ParseChar(buffer + field_offsets[6], 'N');
 
-  // ignore the remaining terms for now
+  // ignore the remaining fields for now
 
   ReportFailure(ok, sentence_id());
   if (!ok) {
@@ -459,12 +463,12 @@ void VTGSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
 }
 
 void PSTISentenceParser::parse(
-    char* buffer, int term_offsets[], int num_terms,
+    char* buffer, int field_offsets[], int num_fields,
     std::map<String, SentenceParser*>& sentence_parsers) {
   bool ok = true;
   int subsentence;
 
-  ok &= ParseInt(&subsentence, buffer + term_offsets[1]);
+  ok &= ParseInt(&subsentence, buffer + field_offsets[1]);
 
   ReportFailure(ok, sentence_id());
   if (!ok) {
@@ -473,16 +477,16 @@ void PSTISentenceParser::parse(
 
   switch (subsentence) {
     case 30:
-      sentence_parsers["PSTI,030"]->parse(buffer, term_offsets, num_terms);
+      sentence_parsers["PSTI,030"]->parse(buffer, field_offsets, num_fields);
       break;
     case 32:
-      sentence_parsers["PSTI,032"]->parse(buffer, term_offsets, num_terms);
+      sentence_parsers["PSTI,032"]->parse(buffer, field_offsets, num_fields);
       break;
   }
 }
 
-void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
-                                  int num_terms) {
+void PSTI030SentenceParser::parse(char* buffer, int field_offsets[],
+                                  int num_fields) {
   bool ok = true;
 
   struct tm time;
@@ -497,10 +501,10 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   // Example:
   // $PSTI,030,044606.000,A,2447.0924110,N,12100.5227860,E,103.323,0.00,0.00,0.00,180915,R,1.2,4.2*02
 
-  // note: term offsets are one larger than in the reference because
+  // note: field offsets are one larger than in the reference because
   // the subsentence number is at offset 1
 
-  if (num_terms < 15) {
+  if (num_fields < 15) {
     ReportFailure(false, sentence_id());
     return;
   }
@@ -508,37 +512,37 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   // Field  Name  Example  Description
   // 1  UTC time  044606.000  UTC time in hhmmss.sss format (000000.00 ~
   // 235959.999)
-  ok &=
-      ParseTime(&time.tm_hour, &time.tm_min, &second, buffer + term_offsets[2]);
+  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
+                  buffer + field_offsets[2]);
   // 2  Status  A  Status
   // ‘V’ = Navigation receiver warning
   // ‘A’ = Data Valid
-  ok &= ParseAV(&is_valid, buffer + term_offsets[3]);
+  ok &= ParseAV(&is_valid, buffer + field_offsets[3]);
   // 3  Latitude  2447.0924110  Latitude in dddmm.mmmmmmm format
   // Leading zeros transmitted
-  ok &= ParseLatLon(&position.latitude, buffer + term_offsets[4]);
+  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[4]);
   // 4  N/S indicator  N  Latitude hemisphere indicator
   // ‘N’ = North
   // ‘S’ = South
-  ok &= ParseNS(&position.latitude, buffer + term_offsets[5]);
+  ok &= ParseNS(&position.latitude, buffer + field_offsets[5]);
   // 5  Longitude  12100.5227860 Longitude in dddmm.mmmmmmm format
   // Leading zeros transmitted
-  ok &= ParseLatLon(&position.longitude, buffer + term_offsets[6]);
+  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[6]);
   // 6  E/W Indicator  E  Longitude hemisphere indicator
   // 'E' = East
   // 'W' = West
-  ok &= ParseEW(&position.longitude, buffer + term_offsets[7]);
+  ok &= ParseEW(&position.longitude, buffer + field_offsets[7]);
   // 7  Altitude  103.323  mean sea level (geoid), (‐9999.999 ~ 17999.999)
-  ok &= ParseFloat(&position.altitude, buffer + term_offsets[8]);
+  ok &= ParseFloat(&position.altitude, buffer + field_offsets[8]);
   // 8  East Velocity  0.00  ‘East’ component of ENU velocity (m/s)
-  ok &= ParseFloat(&velocity.east, buffer + term_offsets[9]);
+  ok &= ParseFloat(&velocity.east, buffer + field_offsets[9]);
   // 9  North Velocity  0.00  ‘North’ component of ENU velocity (m/s)
-  ok &= ParseFloat(&velocity.north, buffer + term_offsets[10]);
+  ok &= ParseFloat(&velocity.north, buffer + field_offsets[10]);
   // 10  Up Velocity  0.00  ‘Up’ component of ENU velocity (m/s)
-  ok &= ParseFloat(&velocity.up, buffer + term_offsets[11]);
+  ok &= ParseFloat(&velocity.up, buffer + field_offsets[11]);
   // 11  UTC Date  180915  UTC date of position fix, ddmmyy format
   ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                  buffer + term_offsets[12]);
+                  buffer + field_offsets[12]);
   // 12  Mode indicator  R  Mode indicator
   // ‘N’ = Data not valid
   // ‘A’ = Autonomous mode
@@ -550,11 +554,11 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   // integers
   // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
   // integers
-  ok &= ParsePSTI030Mode(&quality, buffer + term_offsets[13]);
+  ok &= ParsePSTI030Mode(&quality, buffer + field_offsets[13]);
   // 13  RTK Age  1.2  Age of differential
-  ok &= ParseFloat(&rtk_age, buffer + term_offsets[14]);
+  ok &= ParseFloat(&rtk_age, buffer + field_offsets[14]);
   // 14  RTK Ratio  4.2  AR ratio factor for validation
-  ok &= ParseFloat(&rtk_ratio, buffer + term_offsets[15]);
+  ok &= ParseFloat(&rtk_ratio, buffer + field_offsets[15]);
 
   ReportFailure(ok, sentence_id());
   if (!ok) {
@@ -577,8 +581,8 @@ void PSTI030SentenceParser::parse(char* buffer, int term_offsets[],
   }
 }
 
-void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
-                                  int num_terms) {
+void PSTI032SentenceParser::parse(char* buffer, int field_offsets[],
+                                  int num_fields) {
   bool ok = true;
 
   struct tm time;
@@ -590,16 +594,16 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
   float baseline_course;
 
   char reconstruction[kNMEA0183InputBufferLength];
-  ReconstructNMEASentence(reconstruction, buffer, term_offsets, num_terms);
+  ReconstructNMEASentence(reconstruction, buffer, field_offsets, num_fields);
   debugD("%s", reconstruction);
 
   // Example:
   // $PSTI,032,041457.000,170316,A,R,0.603,‐0.837,‐0.089,1.036,144.22,,,,,*30
 
-  // note: term offsets are one larger than in the reference because
+  // note: field offsets are one larger than in the reference because
   // the subsentence number is at offset 1
 
-  if (num_terms < 10) {
+  if (num_fields < 10) {
     ReportFailure(false, sentence_id());
     return;
   }
@@ -607,38 +611,38 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
   // Field  Name  Example  Description
   // 1  UTC time  041457.000  UTC time in hhmmss.sss format
   // (000000.000~235959.999)
-  ok &=
-      ParseTime(&time.tm_hour, &time.tm_min, &second, buffer + term_offsets[2]);
+  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
+                  buffer + field_offsets[2]);
   // 2  UTC Date  170316  UTC date of position fix, ddmmyy format
   ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                  buffer + term_offsets[3]);
+                  buffer + field_offsets[3]);
   // 3  Status  A
   // Status
   // ‘V’ = Void
   // ‘A’ = Active
-  ok &= ParseAV(&is_valid, buffer + term_offsets[4]);
+  ok &= ParseAV(&is_valid, buffer + field_offsets[4]);
   if (is_valid) {
     // 4  Mode indicator  R
     // Mode indicator
     // ‘F’ = Float RTK. System used in RTK mode with float ambiguity
     // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
     // ambiguity
-    ok &= ParsePSTI030Mode(&quality, buffer + term_offsets[5]);
+    ok &= ParsePSTI030Mode(&quality, buffer + field_offsets[5]);
     // 5  East‐projection of
     // baseline  0.603  East‐projection of baseline, meters
-    ok &= ParseFloat(&projection.east, buffer + term_offsets[6]);
+    ok &= ParseFloat(&projection.east, buffer + field_offsets[6]);
     // 6  North‐projection of
     // baseline  ‐0.837  North‐projection of baseline, meters
-    ok &= ParseFloat(&projection.north, buffer + term_offsets[7]);
+    ok &= ParseFloat(&projection.north, buffer + field_offsets[7]);
     // 7  Up‐projection of
     // baseline  ‐0.089  Up‐projection of baseline, meters
-    ok &= ParseFloat(&projection.up, buffer + term_offsets[8]);
+    ok &= ParseFloat(&projection.up, buffer + field_offsets[8]);
     // 8  Baseline length  1.036  Baseline length, meters
-    ok &= ParseFloat(&baseline_length, buffer + term_offsets[9]);
+    ok &= ParseFloat(&baseline_length, buffer + field_offsets[9]);
     // 9  Baseline course  144.22
     // Baseline course (angle between baseline vector and north
     // direction), degrees
-    ok &= ParseFloat(&baseline_course, buffer + term_offsets[10]);
+    ok &= ParseFloat(&baseline_course, buffer + field_offsets[10]);
     // 10  Reserve    Reserve
     // 11  Reserve    Reserve
     // 12  Reserve    Reserve
@@ -664,7 +668,7 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
 }
 
 NMEAParser::NMEAParser() {
-  term_offsets[0] = 0;
+  field_offsets[0] = 0;
   current_state = &NMEAParser::state_start;
 }
 
@@ -679,8 +683,8 @@ void NMEAParser::state_start(char c) {
   switch (c) {
     case '$':
       cur_offset = 0;
-      cur_term = 0;
-      current_state = &NMEAParser::state_in_term;
+      cur_field = 0;
+      current_state = &NMEAParser::state_in_field;
       parity = 0;
       break;
     default:
@@ -689,20 +693,20 @@ void NMEAParser::state_start(char c) {
   }
 }
 
-void NMEAParser::state_in_term(char c) {
+void NMEAParser::state_in_field(char c) {
   switch (c) {
     case ',':
     case '*':
       if (cur_offset < kNMEA0183InputBufferLength) {
-        // split terms with 0 to help further processing
+        // split fields with 0 to help further processing
         buffer[cur_offset++] = 0;
       } else {
         current_state = &NMEAParser::state_start;
         break;
       }
-      if (cur_term < kNMEA0183MaxTerms) {
-        // advance term offset
-        term_offsets[++cur_term] = cur_offset;
+      if (cur_field < kNMEA0183MaxFields) {
+        // advance field offset
+        field_offsets[++cur_field] = cur_offset;
       } else {
         current_state = &NMEAParser::state_start;
         break;
@@ -720,7 +724,7 @@ void NMEAParser::state_in_term(char c) {
       current_state = &NMEAParser::state_start;
       break;
     default:
-      // read term characters
+      // read field characters
       buffer[cur_offset++] = c;
       parity ^= c;
       break;
@@ -731,12 +735,12 @@ void NMEAParser::state_in_checksum(char c) {
   char* sentence_id;
   char reconstructed_sentence[kNMEA0183InputBufferLength];
 
-  int num_terms = cur_term + 1;
+  int num_fields = cur_field + 1;
 
   switch (c) {
     case ',':
     case '*':
-      // there shouldn't be new terms after the checksum
+      // there shouldn't be new fields after the checksum
       current_state = &NMEAParser::state_start;
     case '\r':
     case '\n':
@@ -763,24 +767,24 @@ void NMEAParser::state_in_checksum(char c) {
       // call the relevant sentence parser
       if (sentence_parsers.find(sentence_id) == sentence_parsers.end()) {
         // print out the reconstructed sentence for debugging purposes
-        ReconstructNMEASentence(reconstructed_sentence, buffer, term_offsets,
-                                num_terms);
+        ReconstructNMEASentence(reconstructed_sentence, buffer, field_offsets,
+                                num_fields);
         debugD("No parser for sentence: %s", reconstructed_sentence);
       } else {
-        sentence_parsers[sentence_id]->parse(buffer, term_offsets, num_terms,
+        sentence_parsers[sentence_id]->parse(buffer, field_offsets, num_fields,
                                              sentence_parsers);
       }
       current_state = &NMEAParser::state_start;
       break;
     default:
-      // read term characters
+      // read field characters
       buffer[cur_offset++] = c;
       break;
   }
 }
 
 bool NMEAParser::validate_checksum() {
-  char* checksum_str = buffer + term_offsets[cur_term];
+  char* checksum_str = buffer + field_offsets[cur_field];
   int checksum;
   sscanf(checksum_str, "%2x", &checksum);
   return this->parity == checksum;
