@@ -20,6 +20,7 @@ constexpr int kNMEA0183MaxTerms = 25;
 
 // magic values for invalid data
 constexpr float kInvalidFloat = std::numeric_limits<float>::lowest();
+constexpr double kInvalidDouble = std::numeric_limits<double>::lowest();
 constexpr int kInvalidInt = std::numeric_limits<int>::lowest();
 
 /**

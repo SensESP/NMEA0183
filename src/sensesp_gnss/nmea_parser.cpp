@@ -55,23 +55,30 @@ static void ReconstructNMEASentence(char* sentence, const char* buffer,
   sentence[term_offsets[num_terms - 1]] = '*';
 }
 
-static bool ParseInt(int* value, char* s) {
+static bool ParseInt(int* value, char* s, bool allow_empty = false) {
+  if (s[0] == 0) {
+    *value = kInvalidInt;
+    return allow_empty;
+  }
   int retval = sscanf(s, "%d", value);
   return retval == 1;
 }
 
-static bool ParseFloat(float* value, char* s) {
+static bool ParseFloat(float* value, char* s, bool allow_empty = false) {
+  if (s[0] == 0) {
+    *value = kInvalidFloat;
+    return allow_empty;
+  }
   int retval = sscanf(s, "%f", value);
   return retval == 1;
 }
 
-static bool ParseDouble(double* value, char* s) {
-  int retval = sscanf(s, "%lf", value);
-  return retval == 1;
-}
-
-static bool ParseLatLon(double* value, char* s) {
+static bool ParseLatLon(double* value, char* s, bool allow_empty = false) {
   double degmin;
+  if (s[0] == 0) {
+    *value = kInvalidDouble;
+    return allow_empty;
+  }
   int retval = sscanf(s, "%lf", &degmin);
   if (retval == 1) {
     int degrees = degmin / 100;
@@ -83,12 +90,16 @@ static bool ParseLatLon(double* value, char* s) {
   }
 }
 
-static bool ParseNS(double* value, char* s) {
+static bool ParseNS(double* value, char* s, bool allow_empty = false) {
+  if (s[0] == 0) {
+    return allow_empty;
+  }
+
   switch (*s) {
     case 'N':
       break;
     case 'S':
-      *value *= 1;
+      *value *= -1;
       break;
     default:
       return false;
@@ -96,12 +107,31 @@ static bool ParseNS(double* value, char* s) {
   return true;
 }
 
-static bool ParseEW(double* value, char* s) {
+static bool ParseEW(double* value, char* s, bool allow_empty = false) {
+  if (s[0] == 0) {
+    return allow_empty;
+  }
   switch (*s) {
     case 'E':
       break;
     case 'W':
-      *value *= 1;
+      *value *= -1;
+      break;
+    default:
+      return false;
+  }
+  return true;
+}
+
+static bool ParseEW(float* value, char* s, bool allow_empty = false) {
+  if (s[0] == 0) {
+    return allow_empty;
+  }
+  switch (*s) {
+    case 'E':
+      break;
+    case 'W':
+      *value *= -1;
       break;
     default:
       return false;
@@ -157,12 +187,26 @@ static bool ParsePSTI030Mode(GNSSQuality* quality, char* s) {
   return true;
 }
 
-static bool ParseTime(int* hour, int* minute, float* second, char* s) {
+static bool ParseTime(int* hour, int* minute, float* second, char* s,
+                      bool allow_empty = false) {
+  if (s[0] == 0) {
+    *hour = kInvalidInt;
+    *minute = kInvalidInt;
+    *second = kInvalidFloat;
+    return allow_empty;
+  }
   int retval = sscanf(s, "%2d%2d%f", hour, minute, second);
   return retval == 3;
 }
 
-static bool ParseDate(int* year, int* month, int* day, char* s) {
+static bool ParseDate(int* year, int* month, int* day, char* s,
+                      bool allow_empty = false) {
+  if (s[0] == 0) {
+    *year = kInvalidInt;
+    *month = kInvalidInt;
+    *day = kInvalidInt;
+    return allow_empty;
+  }
   int retval = sscanf(s, "%2d%2d%2d", day, month, year);
   // date expressed as C struct tm
   *year += 100;
