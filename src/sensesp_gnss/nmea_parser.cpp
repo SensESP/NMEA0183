@@ -34,8 +34,8 @@ String gnssQualityStrings[] = {"no GPS",
                                "Error"};
 
 /// Reconstruct the original NMEA sentence for debugging purposes.
-void ReconstructNMEASentence(char* sentence, const char* buffer,
-                             int term_offsets[], int num_terms) {
+static void ReconstructNMEASentence(char* sentence, const char* buffer,
+                                    int term_offsets[], int num_terms) {
   // get the total length of the sentence
   int last_term_loc = term_offsets[num_terms - 1];
   int last_term_len = strlen(buffer + term_offsets[num_terms - 1]);
@@ -55,22 +55,22 @@ void ReconstructNMEASentence(char* sentence, const char* buffer,
   sentence[term_offsets[num_terms - 1]] = '*';
 }
 
-bool ParseInt(int* value, char* s) {
+static bool ParseInt(int* value, char* s) {
   int retval = sscanf(s, "%d", value);
   return retval == 1;
 }
 
-bool ParseFloat(float* value, char* s) {
+static bool ParseFloat(float* value, char* s) {
   int retval = sscanf(s, "%f", value);
   return retval == 1;
 }
 
-bool ParseDouble(double* value, char* s) {
+static bool ParseDouble(double* value, char* s) {
   int retval = sscanf(s, "%lf", value);
   return retval == 1;
 }
 
-bool ParseLatLon(double* value, char* s) {
+static bool ParseLatLon(double* value, char* s) {
   double degmin;
   int retval = sscanf(s, "%lf", &degmin);
   if (retval == 1) {
@@ -83,7 +83,7 @@ bool ParseLatLon(double* value, char* s) {
   }
 }
 
-bool ParseNS(double* value, char* s) {
+static bool ParseNS(double* value, char* s) {
   switch (*s) {
     case 'N':
       break;
@@ -96,7 +96,7 @@ bool ParseNS(double* value, char* s) {
   return true;
 }
 
-bool ParseEW(double* value, char* s) {
+static bool ParseEW(double* value, char* s) {
   switch (*s) {
     case 'E':
       break;
@@ -109,9 +109,9 @@ bool ParseEW(double* value, char* s) {
   return true;
 }
 
-bool ParseM(char* s) { return (*s == 'M'); }
+static bool ParseM(char* s) { return (*s == 'M'); }
 
-bool ParseAV(bool* is_valid, char* s) {
+static bool ParseAV(bool* is_valid, char* s) {
   switch (*s) {
     case 'A':
       *is_valid = true;
@@ -125,7 +125,7 @@ bool ParseAV(bool* is_valid, char* s) {
   return true;
 }
 
-bool ParsePSTI030Mode(GNSSQuality* quality, char* s) {
+static bool ParsePSTI030Mode(GNSSQuality* quality, char* s) {
   switch (*s) {
     case 'N':
       *quality = GNSSQuality::no_gps;
@@ -157,12 +157,12 @@ bool ParsePSTI030Mode(GNSSQuality* quality, char* s) {
   return true;
 }
 
-bool ParseTime(int* hour, int* minute, float* second, char* s) {
+static bool ParseTime(int* hour, int* minute, float* second, char* s) {
   int retval = sscanf(s, "%2d%2d%f", hour, minute, second);
   return retval == 3;
 }
 
-bool ParseDate(int* year, int* month, int* day, char* s) {
+static bool ParseDate(int* year, int* month, int* day, char* s) {
   int retval = sscanf(s, "%2d%2d%2d", day, month, year);
   // date expressed as C struct tm
   *year += 100;
@@ -170,7 +170,7 @@ bool ParseDate(int* year, int* month, int* day, char* s) {
   return retval == 3;
 }
 
-void ReportSuccess(bool ok, const char* sentence) {
+static void ReportSuccess(bool ok, const char* sentence) {
   if (!ok) {
     debugI("Failed to parse %s", sentence);
     return;
