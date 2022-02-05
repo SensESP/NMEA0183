@@ -263,7 +263,15 @@ void GLLSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
 
   Position position;
 
-  // eg3. $GPGLL,5133.81,N,00042.25,W*75
+  // eg.  $GPGLL,5133.81   ,N,00042.25   ,W              *75
+  // eg2. $GNGLL,4916.45   ,N,12311.12   ,W,225444   ,A
+  // eg3. $GNGLL,6011.07479,N,02503.05652,E,133453.00,A,D*7A
+
+  if (num_terms < 5) {
+    ReportSuccess(false, sentence_id());
+    return;
+  }
+
   //       1    5133.81   Current latitude
   ok &= ParseLatLon(&position.latitude, buffer + term_offsets[1]);
   //       2    N         North/South
@@ -273,12 +281,14 @@ void GLLSentenceParser::parse(char* buffer, int term_offsets[], int num_terms) {
   //       4    W         East/West
   ok &= ParseEW(&position.longitude, buffer + term_offsets[4]);
 
+  // ignore the UTC time of the fix and the status of the fix for now
+
   ReportSuccess(ok, sentence_id());
   if (!ok) {
     return;
   }
 
-  position.altitude = -kPositionInvalidAltitude;
+  position.altitude = kPositionInvalidAltitude;
 
   // notify relevant observers
 
