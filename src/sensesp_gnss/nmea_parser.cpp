@@ -555,11 +555,16 @@ void PSTI032SentenceParser::parse(char* buffer, int term_offsets[],
   // note: term offsets are one larger than in the reference because
   // the subsentence number is at offset 1
 
+  if (num_terms < 10) {
+    ReportSuccess(false, sentence_id());
+    return;
+  }
+
   // Field  Name  Example  Description
   // 1  UTC time  041457.000  UTC time in hhmmss.sss format
   // (000000.000~235959.999)
-  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
-                   buffer + term_offsets[2]);
+  ok &=
+      ParseTime(&time.tm_hour, &time.tm_min, &second, buffer + term_offsets[2]);
   // 2  UTC Date  170316  UTC date of position fix, ddmmyy format
   ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
                    buffer + term_offsets[3]);
