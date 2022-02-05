@@ -139,7 +139,7 @@ static bool ParseEW(float* value, char* s, bool allow_empty = false) {
   return true;
 }
 
-static bool ParseM(char* s) { return (*s == 'M'); }
+static bool ParseChar(char* s, char expected) { return (*s == expected); }
 
 static bool ParseAV(bool* is_valid, char* s) {
   switch (*s) {
@@ -268,12 +268,12 @@ void GGASentenceParser::parse(char* buffer, int term_offsets[],
   // 9    = Antenna altitude above/below mean sea level (geoid)
   ok &= ParseFloat(&position.altitude, buffer + term_offsets[9]);
   // 10   = Meters  (Antenna height unit)
-  ok &= ParseM(buffer + term_offsets[10]);
+  ok &= ParseChar(buffer + term_offsets[10], 'M');
   // 11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
   //        mean sea level.  -=geoid is below WGS-84 ellipsoid)
   ok &= ParseFloat(&geoidal_separation, buffer + term_offsets[11]);
   // 12   = Meters  (Units of geoidal separation)
-  ok &= ParseM(buffer + term_offsets[12]);
+  ok &= ParseChar(buffer + term_offsets[12], 'M');
   // 13   = Age in seconds since last update from diff. reference station
   ok &= ParseFloat(&dgps_age, buffer + term_offsets[13], true);
   // 14   = Diff. reference station ID#
