@@ -1,4 +1,4 @@
-name: OneWire Temperature Automatic Build
+name: SensESP/NMEA0183 Automatic Build
 
 on: [push, pull_request]
 
@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         example:
-          - examples/onewire_temperature/onewire_temperature_example.cpp
+          - examples/gnss_receiver.cpp
         target_device:
           - esp32dev
     steps:
