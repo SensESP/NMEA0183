@@ -15,7 +15,7 @@ bool ParseLatLon(double* value, char* s, bool allow_empty = false);
 bool ParseNS(double* value, char* s, bool allow_empty = false);
 bool ParseEW(double* value, char* s, bool allow_empty = false);
 bool ParseEW(float* value, char* s, bool allow_empty = false);
-bool ParseChar(char* s, char expected);
+bool ParseChar(char* value, char* s, char expected, bool allow_empty = false);
 bool ParseAV(bool* is_valid, char* s);
 
 }  // namespace sensesp

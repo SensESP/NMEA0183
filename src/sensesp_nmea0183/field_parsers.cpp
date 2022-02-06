@@ -90,7 +90,13 @@ bool ParseEW(float* value, char* s, bool allow_empty) {
   return true;
 }
 
-bool ParseChar(char* s, char expected) { return (*s == expected); }
+bool ParseChar(char* value, char* s, char expected, bool allow_empty) {
+  if (s[0] == 0) {
+    *value = 0;
+    return allow_empty;
+  }
+  return (*s == expected);
+}
 
 bool ParseAV(bool* is_valid, char* s) {
   switch (*s) {
