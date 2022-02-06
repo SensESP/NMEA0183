@@ -3,9 +3,8 @@
 
 #include <ctime>
 
-#include "sensesp.h"
-
 #include "field_parsers.h"
+#include "sensesp.h"
 
 namespace sensesp {
 
@@ -135,11 +134,14 @@ void GGASentenceParser::parse(char* buffer, int field_offsets[],
   float geoidal_separation;
   float dgps_age;
   int dgps_id;
+  char antenna_height_unit;
+  char geoidal_separation_unit;
 
   // clang-format off
-  // field      0         1          2 3           4 5 6  7   8     9 10  11 12 13   14 15
-  // eg.  $GPGGA,hhmmss.ss,llll.ll   ,a,yyyyy.yy   ,a,x,xx,x.x, x.x ,M,x.x ,M,x.x,xxxx*hh
-  // eg2. $GNGGA,121042.00,6011.07385,N,02503.04396,E,2,11,1.04,17.0,M,17.6,M,   ,0000*75
+  // field     0         1          2 3           4 5 6  7     8    9 10   11 12  13   14 15
+  // eg.  $GPGGA,hhmmss.ss,llll.ll   ,a,yyyyy.yy   ,a,x,xx,x.x  ,x.x , M,x.x , M,x.x,xxxx*hh
+  // eg2. $GNGGA,121042.00,6011.07385,N,02503.04396,E,2,11,1.04 ,17.0, M,17.6, M,   ,0000*75
+  // eg3. $GNGGA,121224.00,          , ,           , ,0,00,99.99,    ,  ,    ,  ,   ,    *7E
   // clang-format on
 
   if (num_fields < 15) {
@@ -148,15 +150,15 @@ void GGASentenceParser::parse(char* buffer, int field_offsets[],
   }
 
   // 1    = UTC of Position
-  ok &= ParseTime(&hour, &minute, &second, buffer + field_offsets[1]);
+  ok &= ParseTime(&hour, &minute, &second, buffer + field_offsets[1], true);
   // 2    = Latitude
-  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[2]);
+  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[2], true);
   // 3    = N or S
-  ok &= ParseNS(&position.latitude, buffer + field_offsets[3]);
+  ok &= ParseNS(&position.latitude, buffer + field_offsets[3], true);
   // 4    = Longitude
-  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[4]);
+  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[4], true);
   // 5    = E or W
-  ok &= ParseEW(&position.longitude, buffer + field_offsets[5]);
+  ok &= ParseEW(&position.longitude, buffer + field_offsets[5], true);
   // 6    = GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
   ok &= ParseInt(&quality, buffer + field_offsets[6]);
   // 7    = Number of satellites in use [not those in view]
@@ -164,14 +166,14 @@ void GGASentenceParser::parse(char* buffer, int field_offsets[],
   // 8    = Horizontal dilution of position
   ok &= ParseFloat(&horizontal_dilution, buffer + field_offsets[8]);
   // 9    = Antenna altitude above/below mean sea level (geoid)
-  ok &= ParseFloat(&position.altitude, buffer + field_offsets[9]);
+  ok &= ParseFloat(&position.altitude, buffer + field_offsets[9], true);
   // 10   = Meters  (Antenna height unit)
-  ok &= ParseChar(buffer + field_offsets[10], 'M');
+  ok &= ParseChar(buffer + field_offsets[10], &antenna_height_unit, 'M', true);
   // 11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
   //        mean sea level.  -=geoid is below WGS-84 ellipsoid)
-  ok &= ParseFloat(&geoidal_separation, buffer + field_offsets[11]);
+  ok &= ParseFloat(&geoidal_separation, buffer + field_offsets[11], true);
   // 12   = Meters  (Units of geoidal separation)
-  ok &= ParseChar(buffer + field_offsets[12], 'M');
+  ok &= ParseChar(buffer + field_offsets[12], &geoidal_separation_unit, 'M', true);
   // 13   = Age in seconds since last update from diff. reference station
   ok &= ParseFloat(&dgps_age, buffer + field_offsets[13], true);
   // 14   = Diff. reference station ID#
@@ -187,16 +189,28 @@ void GGASentenceParser::parse(char* buffer, int field_offsets[],
 
   // notify relevant observers
 
-  nmea_data_->position.set(position);
-  nmea_data_->gnss_quality.set(gnssQualityStrings[quality]);
-  nmea_data_->num_satellites.set(num_satellites);
-  nmea_data_->horizontal_dilution.set(horizontal_dilution);
-  nmea_data_->geoidal_separation.set(geoidal_separation);
-  if (dgps_age != kInvalidFloat) {
-    nmea_data_->dgps_age.set(dgps_age);
+  if (position.latitude != kInvalidDouble && position.longitude != kInvalidDouble) {
+    nmea_data_->position.set(position);
   }
-  if (dgps_id != kInvalidInt) {
-    nmea_data_->dgps_id.set(dgps_id);
+  if (quality != kInvalidInt) {
+    nmea_data_->gnss_quality.set(gnssQualityStrings[quality]);
+  }
+
+  nmea_data_->num_satellites.set(num_satellites);
+  // remaining fields are relevant only if quality is not invalid (0)
+  if (quality != 0) {
+    if (horizontal_dilution != kInvalidFloat) {
+      nmea_data_->horizontal_dilution.set(horizontal_dilution);
+    }
+    if (geoidal_separation != kInvalidFloat) {
+      nmea_data_->geoidal_separation.set(geoidal_separation);
+    }
+    if (dgps_age != kInvalidFloat) {
+      nmea_data_->dgps_age.set(dgps_age);
+    }
+    if (dgps_id != kInvalidInt) {
+      nmea_data_->dgps_id.set(dgps_id);
+    }
   }
 }
 
@@ -209,6 +223,7 @@ void GLLSentenceParser::parse(char* buffer, int field_offsets[],
   // eg.  $GPGLL,5133.81   ,N,00042.25   ,W              *75
   // eg2. $GNGLL,4916.45   ,N,12311.12   ,W,225444   ,A
   // eg3. $GNGLL,6011.07479,N,02503.05652,E,133453.00,A,D*7A
+  // eg4. $GNGLL,          , ,           , ,121223.00,V,N*55
 
   if (num_fields < 5) {
     ReportFailure(false, sentence_id());
@@ -216,13 +231,13 @@ void GLLSentenceParser::parse(char* buffer, int field_offsets[],
   }
 
   //       1    5133.81   Current latitude
-  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[1]);
+  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[1], true);
   //       2    N         North/South
-  ok &= ParseNS(&position.latitude, buffer + field_offsets[2]);
+  ok &= ParseNS(&position.latitude, buffer + field_offsets[2], true);
   //       3    00042.25  Current longitude
-  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[3]);
+  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[3], true);
   //       4    W         East/West
-  ok &= ParseEW(&position.longitude, buffer + field_offsets[4]);
+  ok &= ParseEW(&position.longitude, buffer + field_offsets[4], true);
 
   // ignore the UTC time of the fix and the status of the fix for now
 
@@ -235,7 +250,9 @@ void GLLSentenceParser::parse(char* buffer, int field_offsets[],
 
   // notify relevant observers
 
-  nmea_data_->position.set(position);
+  if (position.latitude != kInvalidDouble && position.longitude != kInvalidDouble) {
+    nmea_data_->position.set(position);
+  }
 }
 
 void RMCSentenceParser::parse(char* buffer, int field_offsets[],
@@ -253,6 +270,7 @@ void RMCSentenceParser::parse(char* buffer, int field_offsets[],
   // clang-format off
   // eg.  $GPRMC,220516,   A,5133.82,   N,00042.24,   W,173.8,231.8,130694,004.2,W  *70
   // eg2. $GNRMC,121042.00,A,6011.07385,N,02503.04396,E,0.087,     ,050222,     , ,D*64
+  // eg3. $GNRMC,121224.00,V,          , ,           , ,     ,     ,060222,     , ,N*61
   // clang-format on
 
   if (num_fields < 12) {
@@ -262,15 +280,15 @@ void RMCSentenceParser::parse(char* buffer, int field_offsets[],
 
   // 1   220516     Time Stamp
   ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
-                  buffer + field_offsets[1]);
+                  buffer + field_offsets[1], true);
   // 2   A          validity - A-ok, V-invalid
   ok &= ParseAV(&is_valid, buffer + field_offsets[2]);
   // 3   5133.82    current Latitude
-  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[3]);
+  ok &= ParseLatLon(&position.latitude, buffer + field_offsets[3], true);
   // 4   N          North/South
-  ok &= ParseNS(&position.latitude, buffer + field_offsets[4]);
+  ok &= ParseNS(&position.latitude, buffer + field_offsets[4], true);
   // 5   00042.24   current Longitude
-  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[5]);
+  ok &= ParseLatLon(&position.longitude, buffer + field_offsets[5], true);
   // 6   W          East/West
   ok &= ParseEW(&position.longitude, buffer + field_offsets[6], true);
   // 7   173.8      Speed in knots
@@ -279,7 +297,7 @@ void RMCSentenceParser::parse(char* buffer, int field_offsets[],
   ok &= ParseFloat(&true_course, buffer + field_offsets[8], true);
   // 9   130694     Date Stamp
   ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                  buffer + field_offsets[9]);
+                  buffer + field_offsets[9], true);
   // 10  004.2      Variation
   ok &= ParseFloat(&variation, buffer + field_offsets[10], true);
   // 11  W          East/West
@@ -300,8 +318,12 @@ void RMCSentenceParser::parse(char* buffer, int field_offsets[],
   // notify relevant observers
 
   if (is_valid) {
-    nmea_data_->position.set(position);
-    nmea_data_->datetime.set(mktime(&time));
+    if (position.latitude != kInvalidDouble && position.longitude != kInvalidDouble) {
+      nmea_data_->position.set(position);
+    }
+    if (time.tm_year != kInvalidInt && time.tm_hour != kInvalidInt) {
+      nmea_data_->datetime.set(mktime(&time));
+    }
     if (speed != kInvalidFloat) {
       nmea_data_->speed.set(1852. * speed / 3600.);
     }
@@ -321,9 +343,13 @@ void VTGSentenceParser::parse(char* buffer, int field_offsets[],
   float true_track;
   float magnetic_track;
   float ground_speed;
+  char true_track_symbol;
+  char magnetic_track_symbol;
+  char ground_speed_knots_unit;
 
   // clang-format off
-  // eg. $GNVTG,,T,,M,1.317,N,2.438,K,D*31
+  // eg.  $GNVTG,,T,,M,1.317,N,2.438,K,D*31
+  // eg2. $GNVTG,, ,, ,     , ,     , ,N*2E
   // clang-format on
 
   if (num_fields < 9) {
@@ -334,15 +360,15 @@ void VTGSentenceParser::parse(char* buffer, int field_offsets[],
   // 1             True track made good
   ok &= ParseFloat(&true_track, buffer + field_offsets[1], true);
   // 2 T
-  ok &= ParseChar(buffer + field_offsets[2], 'T');
+  ok &= ParseChar(&true_track_symbol, buffer + field_offsets[2], 'T', true);
   // 3             Magnetic track made good
   ok &= ParseFloat(&magnetic_track, buffer + field_offsets[3], true);
   // 4 M
-  ok &= ParseChar(buffer + field_offsets[4], 'M');
+  ok &= ParseChar(&magnetic_track_symbol, buffer + field_offsets[4], 'M', true);
   // 5             Ground speed, knots
   ok &= ParseFloat(&ground_speed, buffer + field_offsets[5], true);
   // 6 N
-  ok &= ParseChar(buffer + field_offsets[6], 'N');
+  ok &= ParseChar(&ground_speed_knots_unit, buffer + field_offsets[6], 'N', true);
 
   // ignore the remaining fields for now
 
@@ -664,13 +690,15 @@ void NMEAParser::state_in_checksum(char c) {
         sentence_id = buffer + 2;
       }
 
+      ReconstructNMEASentence(reconstructed_sentence, buffer, field_offsets,
+                              num_fields);
+
       // call the relevant sentence parser
       if (sentence_parsers.find(sentence_id) == sentence_parsers.end()) {
         // print out the reconstructed sentence for debugging purposes
-        ReconstructNMEASentence(reconstructed_sentence, buffer, field_offsets,
-                                num_fields);
         debugD("No parser for sentence: %s", reconstructed_sentence);
       } else {
+        debugD("Parsing sentence: %s", reconstructed_sentence);
         sentence_parsers[sentence_id]->parse(buffer, field_offsets, num_fields,
                                              sentence_parsers);
       }
