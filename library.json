@@ -17,8 +17,7 @@
     "dependencies": [
         {
             "name": "SensESP",
-            "owner": "SignalK",
-            "version": "^2.1.1"
+            "version": "https://github.com/SignalK/SensESP.git#dev-3"
         }
     ],
     "version": "2.0.1",
