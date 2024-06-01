@@ -2,7 +2,10 @@
 
 #include <stdio.h>
 
+#include <cstring>
 #include <ctime>
+
+#include "sensesp.h"
 
 namespace sensesp {
 
@@ -90,10 +93,19 @@ bool ParseEW(float* value, char* s, bool allow_empty) {
   return true;
 }
 
+#include <cstring>
+
 bool ParseChar(char* value, char* s, char expected, bool allow_empty) {
   if (s[0] == 0) {
     *value = 0;
     return allow_empty;
+  }
+  if (strlen(s) > 1) {
+    return false;
+  }
+  *value = *s;
+  if (expected == 255) {
+    return true;
   }
   return (*s == expected);
 }
@@ -110,6 +122,32 @@ bool ParseAV(bool* is_valid, char* s) {
       return false;
   }
   return true;
+}
+
+bool ParseTime(int* hour, int* minute, float* second, char* s,
+               bool allow_empty) {
+  if (s[0] == 0) {
+    *hour = kInvalidInt;
+    *minute = kInvalidInt;
+    *second = kInvalidFloat;
+    return allow_empty;
+  }
+  int retval = sscanf(s, "%2d%2d%f", hour, minute, second);
+  return retval == 3;
+}
+
+bool ParseDate(int* year, int* month, int* day, char* s, bool allow_empty) {
+  if (s[0] == 0) {
+    *year = kInvalidInt;
+    *month = kInvalidInt;
+    *day = kInvalidInt;
+    return allow_empty;
+  }
+  int retval = sscanf(s, "%2d%2d%2d", day, month, year);
+  // date expressed as C struct tm
+  *year += 100;
+  *month -= 1;
+  return retval == 3;
 }
 
 }  // namespace sensesp
