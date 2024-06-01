@@ -27,7 +27,7 @@ static int strncmpwc(const char* s1, const char* s2, int n) {
   return 0;
 }
 
-NMEA0183Input::NMEA0183Input(Stream* rx_stream) : rx_stream_{rx_stream} {
+NMEA0183::NMEA0183(Stream* rx_stream) : rx_stream_{rx_stream} {
   // enable reading the serial port
   ReactESP::app->onAvailable(*rx_stream_, [this]() {
     while (rx_stream_->available()) {
@@ -36,7 +36,7 @@ NMEA0183Input::NMEA0183Input(Stream* rx_stream) : rx_stream_{rx_stream} {
   });
 }
 
-void NMEA0183Input::handle(char c) {
+void NMEA0183::handle(char c) {
   // Check that we're not overflowing the buffer
   if (input_offset == kNMEA0183InputBufferLength - 1) {
     input_offset = 0;
@@ -62,7 +62,7 @@ void NMEA0183Input::handle(char c) {
   input_buffer[input_offset++] = c;
 }
 
-void NMEA0183Input::parse_sentence() {
+void NMEA0183::parse_sentence() {
   char* tail = input_buffer;
 
   // Check that the sentence starts with a dollar sign
@@ -109,7 +109,7 @@ void ReportFailure(bool ok, const char* sentence) {
   }
 }
 
-void NMEA0183Input::register_sentence_parser(SentenceParser* parser) {
+void NMEA0183::register_sentence_parser(SentenceParser* parser) {
   sentence_parsers.push_back(parser);
 }
 

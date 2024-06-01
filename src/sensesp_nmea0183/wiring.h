@@ -12,7 +12,7 @@ namespace sensesp {
  *
  * @param nmea_input
  */
-void ConnectGNSS(NMEA0183Input* nmea_input, GNSSData* location_data);
+void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data);
 
 /**
  * @brief Wire the RTKData observable members to SK outputs.
@@ -20,13 +20,13 @@ void ConnectGNSS(NMEA0183Input* nmea_input, GNSSData* location_data);
  * @param nmea_input
  * @param rtk_data
  */
-void ConnectRTK(NMEA0183Input* nmea_input, RTKData* rtk_data);
+void ConnectRTK(NMEA0183* nmea_input, RTKData* rtk_data);
 
 /**
  * @brief Wire the ApparentWindData observable members to SK outputs.
  *
  */
-void ConnectApparentWind(NMEA0183Input* nmea_input,
+void ConnectApparentWind(NMEA0183* nmea_input,
                          ApparentWindData* apparent_wind_data);
 
 }  // namespace sensesp

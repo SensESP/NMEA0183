@@ -8,7 +8,7 @@
 
 namespace sensesp {
 
-class NMEA0183Input;
+class NMEA0183;
 
 /**
  * @brief NMEA 0183 sentence parser base class.
@@ -24,7 +24,7 @@ class NMEA0183Input;
  */
 class SentenceParser {
  public:
-  SentenceParser(NMEA0183Input* nmea_io);
+  SentenceParser(NMEA0183* nmea);
   void ignore_checksum(bool ignore) { ignore_checksum_ = ignore; }
 
   virtual const char* sentence_address() = 0;

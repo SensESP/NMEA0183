@@ -29,9 +29,9 @@ class SentenceParser;
  * @param rx_stream Pointer to the Stream of incoming GPS data over
  * a serial connection.
  **/
-class NMEA0183Input {
+class NMEA0183 {
  public:
-  NMEA0183Input(Stream* rx_stream);
+  NMEA0183(Stream* rx_stream);
 
   void register_sentence_parser(SentenceParser* parser);
   void handle(char c);

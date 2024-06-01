@@ -10,7 +10,7 @@
 
 namespace sensesp {
 
-void ConnectGNSS(NMEA0183Input* nmea_input, GNSSData* location_data) {
+void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
   GGASentenceParser* gga_sentence_parser = new GGASentenceParser(
       nmea_input, &location_data->position, &location_data->gnss_quality,
       &location_data->num_satellites, &location_data->horizontal_dilution,
@@ -53,7 +53,7 @@ void ConnectGNSS(NMEA0183Input* nmea_input, GNSSData* location_data) {
       "navigation.magneticVariation", "/SK Path/Magnetic Variation"));
 }
 
-void ConnectRTK(NMEA0183Input* nmea_input, RTKData* rtk_data) {
+void ConnectRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
   PSTI030SentenceParser* psti030_sentence_parser = new PSTI030SentenceParser(
       nmea_input, &rtk_data->position, &rtk_data->datetime,
       &rtk_data->enu_velocity, &rtk_data->gnss_quality, &rtk_data->rtk_age,
@@ -88,7 +88,7 @@ void ConnectRTK(NMEA0183Input* nmea_input, RTKData* rtk_data) {
                                      "/SK Path/RTK Heading True"));
 }
 
-void ConnectApparentWind(NMEA0183Input* nmea_input,
+void ConnectApparentWind(NMEA0183* nmea_input,
                          ApparentWindData* apparent_wind_data) {
   WIMWVSentenceParser* wind_sentence_parser = new WIMWVSentenceParser(
       nmea_input, &apparent_wind_data->speed, &apparent_wind_data->angle);

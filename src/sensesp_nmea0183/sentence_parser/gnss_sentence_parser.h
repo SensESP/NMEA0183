@@ -27,14 +27,14 @@ extern String gnss_quality_strings[];
 /// Parser for GGA - Global Positioning System Fix Data.
 class GGASentenceParser : public SentenceParser {
  public:
-  GGASentenceParser(NMEA0183Input* nmea_io, ObservableValue<Position>* position,
+  GGASentenceParser(NMEA0183* nmea, ObservableValue<Position>* position,
                     ObservableValue<String>* gnss_quality,
                     ObservableValue<int>* num_satellites,
                     ObservableValue<float>* horizontal_dilution,
                     ObservableValue<float>* geoidal_separation,
                     ObservableValue<float>* dgps_age,
                     ObservableValue<int>* dgps_id)
-      : SentenceParser(nmea_io),
+      : SentenceParser(nmea),
         position_{position},
         gnss_quality_{gnss_quality},
         num_satellites_{num_satellites},
@@ -59,8 +59,8 @@ class GGASentenceParser : public SentenceParser {
 /// Parser for GLL - Geographic position, latitude / longitude
 class GLLSentenceParser : public SentenceParser {
  public:
-  GLLSentenceParser(NMEA0183Input* nmea_io, ObservableValue<Position>* position)
-      : SentenceParser(nmea_io), position_{position} {}
+  GLLSentenceParser(NMEA0183* nmea, ObservableValue<Position>* position)
+      : SentenceParser(nmea), position_{position} {}
   bool parse_fields(char* buffer, int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.GLL"; }
@@ -72,12 +72,12 @@ class GLLSentenceParser : public SentenceParser {
 /// Parser for RMC - Recommended minimum specific GPS/Transit data
 class RMCSentenceParser : public SentenceParser {
  public:
-  RMCSentenceParser(NMEA0183Input* nmea_io, ObservableValue<Position>* position,
+  RMCSentenceParser(NMEA0183* nmea, ObservableValue<Position>* position,
                     ObservableValue<time_t>* datetime,
                     ObservableValue<float>* speed,
                     ObservableValue<float>* true_course,
                     ObservableValue<float>* variation)
-      : SentenceParser(nmea_io),
+      : SentenceParser(nmea),
         position_{position},
         datetime_{datetime},
         speed_{speed},
@@ -98,9 +98,9 @@ class RMCSentenceParser : public SentenceParser {
 /// Parser for VTG - Track made good and ground speed
 class VTGSentenceParser : public SentenceParser {
  public:
-  VTGSentenceParser(NMEA0183Input* nmea_io, ObservableValue<float>* true_course,
+  VTGSentenceParser(NMEA0183* nmea, ObservableValue<float>* true_course,
                     ObservableValue<float>* speed)
-      : SentenceParser(nmea_io),
+      : SentenceParser(nmea),
         true_course_{true_course},
         speed_{speed} {}
   bool parse_fields(char* buffer, int field_offsets[],
@@ -115,14 +115,14 @@ class VTGSentenceParser : public SentenceParser {
 /// Parser for proprietary STI,030 - Recommended Minimum 3D GNSS Data
 class PSTI030SentenceParser : public SentenceParser {
  public:
-  PSTI030SentenceParser(NMEA0183Input* nmea_io,
+  PSTI030SentenceParser(NMEA0183* nmea,
                         ObservableValue<Position>* position,
                         ObservableValue<time_t>* datetime,
                         ObservableValue<ENUVector>* enu_velocity,
                         ObservableValue<String>* gnss_quality,
                         ObservableValue<float>* rtk_age,
                         ObservableValue<float>* rtk_ratio)
-      : SentenceParser(nmea_io),
+      : SentenceParser(nmea),
         position_{position},
         datetime_{datetime},
         enu_velocity_{enu_velocity},
@@ -146,12 +146,12 @@ class PSTI030SentenceParser : public SentenceParser {
 /// Parser for proprietary STI,032 - RTK Baseline Data
 class PSTI032SentenceParser : public SentenceParser {
  public:
-  PSTI032SentenceParser(NMEA0183Input* nmea_io, ObservableValue<time_t>* datetime,
+  PSTI032SentenceParser(NMEA0183* nmea, ObservableValue<time_t>* datetime,
                         ObservableValue<ENUVector>* baseline_projection,
                         ObservableValue<float>* baseline_length,
                         ObservableValue<float>* baseline_course,
                         ObservableValue<String>* gnss_quality)
-      : SentenceParser(nmea_io),
+      : SentenceParser(nmea),
         datetime_{datetime},
         baseline_projection_{baseline_projection},
         baseline_length_{baseline_length},

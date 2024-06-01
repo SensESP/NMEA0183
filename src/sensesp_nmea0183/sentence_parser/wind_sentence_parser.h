@@ -11,10 +11,10 @@ namespace sensesp {
 /// Parser for WIMWV (Wind Speed and Angle) sentences
 class WIMWVSentenceParser : public SentenceParser {
  public:
-  WIMWVSentenceParser(NMEA0183Input* nmea_io,
+  WIMWVSentenceParser(NMEA0183* nmea,
                       ObservableValue<float>* apparent_wind_speed,
                       ObservableValue<float>* apparent_wind_angle)
-      : SentenceParser(nmea_io),
+      : SentenceParser(nmea),
         apparent_wind_speed_{apparent_wind_speed},
         apparent_wind_angle_{apparent_wind_angle} {}
   bool parse_fields(char* field_strings, int field_offsets[],
