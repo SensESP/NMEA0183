@@ -16,28 +16,35 @@ constexpr int kNMEA0183MaxFields = 25;
 
 class SentenceParser;
 
+int CalculateChecksum(const char* buffer, char seed = 0);
+void AddChecksum(String& sentence);
+
 /**
  * @brief NMEA 0183 parser class.
  *
- * Data from an input stream is fed to the parse one character at a time.
- * The parser reads the input stream until a newline is encountered.
- *
- * At initialization, the parser registers a set of sentence parsers.
- * When input data matches a sentence, the parser calls the appropriate
- * sentence parser.
- *
- * @param rx_stream Pointer to the Stream of incoming GPS data over
+ * @param stream Pointer to the Stream of incoming NMEA0183 data over
  * a serial connection.
  **/
 class NMEA0183 {
  public:
-  NMEA0183(Stream* rx_stream);
+  NMEA0183(Stream* stream);
 
   void register_sentence_parser(SentenceParser* parser);
   void handle(char c);
 
+  /**
+   * @brief Output a sentence to the serial port.
+   *
+   * It is assumed that the sentence does not include the CRLF newline.
+   *
+   * @param sentence
+   */
+  void output_raw(const char* sentence) const {
+    stream_->println(sentence);
+  }
+
  protected:
-  Stream* rx_stream_;
+  Stream* stream_;
   // current sentence
   char input_buffer[kNMEA0183InputBufferLength];
   // offset for each sentence field in the buffer

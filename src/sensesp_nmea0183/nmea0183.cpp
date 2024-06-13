@@ -27,11 +27,26 @@ static int strncmpwc(const char* s1, const char* s2, int n) {
   return 0;
 }
 
-NMEA0183::NMEA0183(Stream* rx_stream) : rx_stream_{rx_stream} {
+int CalculateChecksum(const char* buffer, char seed) {
+  int checksum = seed;
+  for (const char* p = buffer; *p != '*' && *p != 0; p++) {
+    checksum ^= *p;
+  }
+  return checksum;
+}
+
+void AddChecksum(String& sentence) {
+  int checksum = CalculateChecksum(sentence.c_str());
+  char checksum_str[3];
+  sprintf(checksum_str, "%02X", checksum);
+  sentence += "*" + String(checksum_str);
+}
+
+NMEA0183::NMEA0183(Stream* rx_stream) : stream_{rx_stream} {
   // enable reading the serial port
-  ReactESP::app->onAvailable(*rx_stream_, [this]() {
-    while (rx_stream_->available()) {
-      this->handle(rx_stream_->read());
+  ReactESP::app->onAvailable(*stream_, [this]() {
+    while (stream_->available()) {
+      this->handle(stream_->read());
     }
   });
 }
