@@ -11,19 +11,14 @@ namespace sensesp {
 /// Parser for WIMWV (Wind Speed and Angle) sentences
 class WIMWVSentenceParser : public SentenceParser {
  public:
-  WIMWVSentenceParser(NMEA0183* nmea,
-                      ObservableValue<float>* apparent_wind_speed,
-                      ObservableValue<float>* apparent_wind_angle)
-      : SentenceParser(nmea),
-        apparent_wind_speed_{apparent_wind_speed},
-        apparent_wind_angle_{apparent_wind_angle} {}
+  WIMWVSentenceParser(NMEA0183* nmea)
+      : SentenceParser(nmea) {}
   bool parse_fields(char* field_strings, int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "WIMWV"; }
 
- private:
-  ObservableValue<float>* apparent_wind_speed_;
-  ObservableValue<float>* apparent_wind_angle_;
+  ObservableValue<float> apparent_wind_speed_;
+  ObservableValue<float> apparent_wind_angle_;
 };
 
 }  // namespace sensesp

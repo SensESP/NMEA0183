@@ -12,21 +12,35 @@ namespace sensesp {
 
 void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
   GGASentenceParser* gga_sentence_parser = new GGASentenceParser(
-      nmea_input, &location_data->position, &location_data->gnss_quality,
-      &location_data->num_satellites, &location_data->horizontal_dilution,
-      &location_data->geoidal_separation, &location_data->dgps_age,
-      &location_data->dgps_id);
+      nmea_input);
 
   GLLSentenceParser* gll_sentence_parser =
-      new GLLSentenceParser(nmea_input, &location_data->position);
+      new GLLSentenceParser(nmea_input);
 
   RMCSentenceParser* rmc_sentence_parser = new RMCSentenceParser(
-      nmea_input, &location_data->position, &location_data->datetime,
-      &location_data->speed, &location_data->true_course,
-      &location_data->variation);
+      nmea_input);
 
   VTGSentenceParser* vtg_sentence_parser = new VTGSentenceParser(
-      nmea_input, &location_data->true_course, &location_data->speed);
+      nmea_input);
+
+  gga_sentence_parser->position_.connect_to(&location_data->position);
+  gga_sentence_parser->gnss_quality_.connect_to(&location_data->gnss_quality);
+  gga_sentence_parser->num_satellites_.connect_to(&location_data->num_satellites);
+  gga_sentence_parser->horizontal_dilution_.connect_to(
+      &location_data->horizontal_dilution);
+  gga_sentence_parser->geoidal_separation_.connect_to(
+      &location_data->geoidal_separation);
+  gga_sentence_parser->dgps_age_.connect_to(&location_data->dgps_age);
+  gga_sentence_parser->dgps_id_.connect_to(&location_data->dgps_id);
+
+  gll_sentence_parser->position_.connect_to(&location_data->position);
+
+  rmc_sentence_parser->position_.connect_to(&location_data->position);
+  rmc_sentence_parser->datetime_.connect_to(&location_data->datetime);
+  rmc_sentence_parser->speed_.connect_to(&location_data->speed);
+  rmc_sentence_parser->variation_.connect_to(&location_data->variation);
+
+  vtg_sentence_parser->true_course_.connect_to(&location_data->true_course);
 
   location_data->position.connect_to(
       new SKOutputPosition("navigation.position", "/SK Path/Position"));
@@ -55,14 +69,24 @@ void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
 
 void ConnectRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
   PSTI030SentenceParser* psti030_sentence_parser = new PSTI030SentenceParser(
-      nmea_input, &rtk_data->position, &rtk_data->datetime,
-      &rtk_data->enu_velocity, &rtk_data->gnss_quality, &rtk_data->rtk_age,
-      &rtk_data->rtk_ratio);
+      nmea_input);
 
   PSTI032SentenceParser* psti032_sentence_parser = new PSTI032SentenceParser(
-      nmea_input, &rtk_data->datetime, &rtk_data->baseline_projection,
-      &rtk_data->baseline_length, &rtk_data->baseline_course,
-      &rtk_data->gnss_quality);
+      nmea_input);
+
+  psti030_sentence_parser->position_.connect_to(&rtk_data->position);
+  psti030_sentence_parser->datetime_.connect_to(&rtk_data->datetime);
+  psti030_sentence_parser->enu_velocity_.connect_to(&rtk_data->enu_velocity);
+  psti030_sentence_parser->gnss_quality_.connect_to(&rtk_data->gnss_quality);
+  psti030_sentence_parser->rtk_age_.connect_to(&rtk_data->rtk_age);
+  psti030_sentence_parser->rtk_ratio_.connect_to(&rtk_data->rtk_ratio);
+
+  psti032_sentence_parser->baseline_projection_.connect_to(
+      &rtk_data->baseline_projection);
+  psti032_sentence_parser->baseline_length_.connect_to(
+      &rtk_data->baseline_length);
+  psti032_sentence_parser->baseline_course_.connect_to(
+      &rtk_data->baseline_course);
 
   rtk_data->rtk_age.connect_to(new SKOutputFloat(
       "navigation.gnss.rtkAge", "/SK Path/RTK Age",
@@ -90,8 +114,13 @@ void ConnectRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
 
 void ConnectApparentWind(NMEA0183* nmea_input,
                          ApparentWindData* apparent_wind_data) {
-  WIMWVSentenceParser* wind_sentence_parser = new WIMWVSentenceParser(
-      nmea_input, &apparent_wind_data->speed, &apparent_wind_data->angle);
+  WIMWVSentenceParser* wind_sentence_parser =
+      new WIMWVSentenceParser(nmea_input);
+
+  wind_sentence_parser->apparent_wind_speed_.connect_to(
+      &apparent_wind_data->speed);
+  wind_sentence_parser->apparent_wind_angle_.connect_to(
+      &apparent_wind_data->angle);
 
   apparent_wind_data->angle.connect_to(new SKOutputFloat(
       "environment.wind.angleApparent", "/SK Path/Apparent Wind Angle"));

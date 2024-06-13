@@ -4,6 +4,7 @@
 #include <map>
 
 #include "sensesp_nmea0183/nmea0183.h"
+#include "sensesp/system/valueconsumer.h"
 #include "sensesp/signalk/signalk_position.h"
 
 namespace sensesp {
@@ -18,7 +19,7 @@ class NMEA0183;
  * Note: For the sake of convenience, all built-in SentenceParser children
  * take a reference to a NMEALocationData object. If you want to
  * provide your own SentenceParser children, you need to maintain their
- * target `ObservableValue` objects separately and feed those objects (or a
+ * target `ValueConsumer` objects separately and feed those objects (or a
  * container class) to your parsers manually.
  *
  */
@@ -43,7 +44,6 @@ class SentenceParser {
   virtual bool parse_fields(char* field_strings, int field_offsets[],
                             int num_fields) = 0;
   bool validate_checksum(char* buffer);
-  int calculate_checksum(const char* buffer, char seed = 0);
 
  private:
   bool ignore_checksum_;

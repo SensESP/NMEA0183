@@ -52,11 +52,11 @@ bool WIMWVSentenceParser::parse_fields(char* field_strings, int field_offsets[],
   if (units == 'N') wind_speed = wind_speed * 0.514444;
   if (units == 'S') wind_speed = wind_speed * 0.44704;
 
-  apparent_wind_speed_->set(wind_speed);
+  apparent_wind_speed_.set(wind_speed);
 
   // convert wind angle to radians
   wind_angle = wind_angle * DEG_TO_RAD;
-  apparent_wind_angle_->set(wind_angle);
+  apparent_wind_angle_.set(wind_angle);
 
   return true;
 }

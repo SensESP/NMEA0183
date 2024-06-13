@@ -124,26 +124,26 @@ bool GGASentenceParser::parse_fields(char* field_strings, int field_offsets[],
 
   if (position.latitude != kInvalidDouble &&
       position.longitude != kInvalidDouble) {
-    position_->set(position);
+    position_.set(position);
   }
   if (quality != kInvalidInt) {
-    gnss_quality_->set(gnss_quality_strings[quality]);
+    gnss_quality_.set(gnss_quality_strings[quality]);
   }
 
-  num_satellites_->set(num_satellites);
+  num_satellites_.set(num_satellites);
   // remaining fields are relevant only if quality is not invalid (0)
   if (quality != 0) {
     if (horizontal_dilution != kInvalidFloat) {
-      horizontal_dilution_->set(horizontal_dilution);
+      horizontal_dilution_.set(horizontal_dilution);
     }
     if (geoidal_separation != kInvalidFloat) {
-      geoidal_separation_->set(geoidal_separation);
+      geoidal_separation_.set(geoidal_separation);
     }
     if (dgps_age != kInvalidFloat) {
-      dgps_age_->set(dgps_age);
+      dgps_age_.set(dgps_age);
     }
     if (dgps_id != kInvalidInt) {
-      dgps_id_->set(dgps_id);
+      dgps_id_.set(dgps_id);
     }
   }
 
@@ -189,7 +189,7 @@ bool GLLSentenceParser::parse_fields(char* field_strings, int field_offsets[],
 
   if (position.latitude != kInvalidDouble &&
       position.longitude != kInvalidDouble) {
-    position_->set(position);
+    position_.set(position);
   }
 
   return true;
@@ -261,19 +261,19 @@ bool RMCSentenceParser::parse_fields(char* field_strings, int field_offsets[],
   if (is_valid) {
     if (position.latitude != kInvalidDouble &&
         position.longitude != kInvalidDouble) {
-      position_->set(position);
+      position_.set(position);
     }
     if (time.tm_year != kInvalidInt && time.tm_hour != kInvalidInt) {
-      datetime_->set(mktime(&time));
+      datetime_.set(mktime(&time));
     }
     if (speed != kInvalidFloat) {
-      speed_->set(1852. * speed / 3600.);
+      speed_.set(1852. * speed / 3600.);
     }
     if (true_course != kInvalidFloat) {
-      true_course_->set(2 * PI * true_course / 360.);
+      true_course_.set(2 * PI * true_course / 360.);
     }
     if (variation != kInvalidFloat) {
-      variation_->set(2 * PI * variation / 360.);
+      variation_.set(2 * PI * variation / 360.);
     }
   }
 
@@ -327,11 +327,11 @@ bool VTGSentenceParser::parse_fields(char* field_strings, int field_offsets[],
   // set observers
 
   if (true_track != kInvalidFloat) {
-    true_course_->set(2 * PI * true_track / 360.);
+    true_course_.set(2 * PI * true_track / 360.);
   }
   // ignore magnetic track for now
   if (ground_speed != kInvalidFloat) {
-    speed_->set(1852. * ground_speed / 3600.);
+    speed_.set(1852. * ground_speed / 3600.);
   }
 
   return true;
@@ -422,14 +422,14 @@ bool PSTI030SentenceParser::parse_fields(char* field_strings,
 
   // notify relevant observers
 
-  gnss_quality_->set(gnss_quality_strings[quality]);
-  rtk_age_->set(rtk_age);
-  rtk_ratio_->set(rtk_ratio);
+  gnss_quality_.set(gnss_quality_strings[quality]);
+  rtk_age_.set(rtk_age);
+  rtk_ratio_.set(rtk_ratio);
 
   if (is_valid) {
-    position_->set(position);
-    datetime_->set(mktime(&time));
-    enu_velocity_->set(velocity);
+    position_.set(position);
+    datetime_.set(mktime(&time));
+    enu_velocity_.set(velocity);
   }
 
   return true;
@@ -509,11 +509,11 @@ bool PSTI032SentenceParser::parse_fields(char* field_strings,
   time.tm_isdst = 0;
 
   if (is_valid) {
-    datetime_->set(mktime(&time));
-    baseline_projection_->set(projection);
-    baseline_length_->set(baseline_length);
-    baseline_course_->set(2 * PI * baseline_course / 360.);
-    gnss_quality_->set(gnss_quality_strings[quality]);
+    datetime_.set(mktime(&time));
+    baseline_projection_.set(projection);
+    baseline_length_.set(baseline_length);
+    baseline_course_.set(2 * PI * baseline_course / 360.);
+    gnss_quality_.set(gnss_quality_strings[quality]);
   }
 
   return true;

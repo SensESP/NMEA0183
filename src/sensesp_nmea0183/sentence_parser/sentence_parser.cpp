@@ -29,7 +29,8 @@ bool SentenceParser::parse(char* buffer) {
   // the first offset is 0.
 
   int num_fields = 1;
-  for (int i = 0; buffer[i] != 0; i++) {
+  int i;
+  for (i = 0; buffer[i] != 0; i++) {
     if (num_fields >= kNMEA0183MaxFields) {
       ESP_LOGW("SensESP/NMEA0183", "Too many fields in sentence %s,%s",
                sentence_address(), buffer);
@@ -49,6 +50,7 @@ bool SentenceParser::parse(char* buffer) {
       field_strings[i] = buffer[i];
     }
   }
+  field_strings[i] = 0;
 
   return parse_fields(field_strings, field_offsets, num_fields);
 }
@@ -68,19 +70,11 @@ bool SentenceParser::validate_checksum(char* buffer) {
   // Calculate the checksum. The checksum is the XOR of all bytes between '$'
   // and '*'. Our buffer doesn't include the address field and the first comma,
   // so start with XORing them.
-  int chksum = calculate_checksum(sentence_address());
-  chksum = calculate_checksum(",", chksum);
-  chksum = calculate_checksum(buffer, chksum);
+  int chksum = CalculateChecksum(sentence_address());
+  chksum = CalculateChecksum(",", chksum);
+  chksum = CalculateChecksum(buffer, chksum);
 
   return chksum == checksum;
-}
-
-int SentenceParser::calculate_checksum(const char* buffer, char seed) {
-  int checksum = seed;
-  for (const char* p = buffer; *p != '*' && *p != 0; p++) {
-    checksum ^= *p;
-  }
-  return checksum;
 }
 
 }  // namespace sensesp
