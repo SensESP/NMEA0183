@@ -12,6 +12,7 @@ constexpr int kInvalidInt = std::numeric_limits<int>::lowest();
 
 bool ParseInt(int* value, char* s, bool allow_empty = false);
 bool ParseFloat(float* value, char* s, bool allow_empty = false);
+bool ParseDouble(double* value, char* s, bool allow_empty = false);
 bool ParseLatLon(double* value, char* s, bool allow_empty = false);
 bool ParseNS(double* value, char* s, bool allow_empty = false);
 bool ParseEW(double* value, char* s, bool allow_empty = false);

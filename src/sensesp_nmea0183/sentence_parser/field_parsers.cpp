@@ -27,6 +27,15 @@ bool ParseFloat(float* value, char* s, bool allow_empty) {
   return retval == 1;
 }
 
+bool ParseDouble(double* value, char* s, bool allow_empty) {
+  if (s[0] == 0) {
+    *value = kInvalidDouble;
+    return allow_empty;
+  }
+  int retval = sscanf(s, "%lf", value);
+  return retval == 1;
+}
+
 bool ParseLatLon(double* value, char* s, bool allow_empty) {
   double degmin;
   if (s[0] == 0) {
