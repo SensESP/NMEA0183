@@ -4,12 +4,11 @@
 
 namespace sensesp {
 
-SentenceParser::SentenceParser(NMEA0183* nmea_io)
-    : ignore_checksum_{false} {
+SentenceParser::SentenceParser(NMEA0183* nmea_io) : ignore_checksum_{false} {
   nmea_io->register_sentence_parser(this);
 }
 
-bool SentenceParser::parse(char* buffer) {
+bool SentenceParser::parse(const char* buffer) {
   if (!ignore_checksum_) {
     if (!validate_checksum(buffer)) {
       ESP_LOGW("SensESP/NMEA0183", "Invalid checksum in sentence %s,%s",
@@ -19,6 +18,22 @@ bool SentenceParser::parse(char* buffer) {
   }
 
   char field_strings[kNMEA0183InputBufferLength];
+  strncpy(field_strings, buffer, kNMEA0183InputBufferLength);
+  field_strings[kNMEA0183InputBufferLength - 1] = 0;
+
+  int i;
+  int checksum_location = -1;
+
+  if (!ignore_checksum_) {
+    // Remove the checksum from field_strings
+    for (i = 0; field_strings[i] != 0; i++) {
+      if (field_strings[i] == '*') {
+        field_strings[i] = 0;
+        break;
+      }
+    }
+  }
+
   // The first field starts at the beginning of the buffer
   int field_offsets[kNMEA0183MaxFields] = {0};
 
@@ -28,34 +43,35 @@ bool SentenceParser::parse(char* buffer) {
   // Since the first field starts at the beginning of the buffer,
   // the first offset is 0.
 
-  int num_fields = 1;
-  int i;
-  for (i = 0; buffer[i] != 0; i++) {
+  int num_fields = 0;
+  for (i = 0; field_strings[i] != 0; i++) {
     if (num_fields >= kNMEA0183MaxFields) {
       ESP_LOGW("SensESP/NMEA0183", "Too many fields in sentence %s,%s",
-               sentence_address(), buffer);
+               sentence_address(), field_strings);
       return false;
     }
-    if (buffer[i] == ',') {
-      field_offsets[num_fields] = i + 1;
-      field_strings[i] = 0;
+    if (field_strings[i] == ',') {
       num_fields++;
-    } else if (buffer[i] == '*') {
+      field_strings[i] = 0;
+      field_offsets[num_fields] = i + 1;
+    } else if (field_strings[i] == '\r' || field_strings[i] == '\n') {
       field_strings[i] = 0;
       break;
-    } else if (buffer[i] == '\n' || buffer[i] == '\r') {
-      field_strings[i] = 0;
-      break;
-    } else {
-      field_strings[i] = buffer[i];
     }
   }
-  field_strings[i] = 0;
+  if (i > 0) {
+    num_fields++;
+  }
 
-  return parse_fields(field_strings, field_offsets, num_fields);
+  bool result = parse_fields(field_strings, field_offsets, num_fields);
+  if (result) {
+    rx_count_++;
+    this->emit(true);
+  }
+  return result;
 }
 
-bool SentenceParser::validate_checksum(char* buffer) {
+bool SentenceParser::validate_checksum(const char* buffer) {
   // Find the checksum field, delimited by a '*'
   char* checksum_str = strchr(buffer, '*');
   if (checksum_str == nullptr) {
