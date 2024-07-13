@@ -16,7 +16,7 @@ String gnss_quality_strings[] = {"no GPS",
                                  "Simulator mode",
                                  "Error"};
 
-static bool ParsePSTI030Mode(GNSSQuality* quality, char* s) {
+static bool ParsePSTI030Mode(GNSSQuality* quality, const char* s) {
   switch (*s) {
     case 'N':
       *quality = GNSSQuality::no_gps;
@@ -48,7 +48,8 @@ static bool ParsePSTI030Mode(GNSSQuality* quality, char* s) {
   return true;
 }
 
-bool GGASentenceParser::parse_fields(char* field_strings, int field_offsets[],
+bool GGASentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
                                      int num_fields) {
   bool ok = true;
 
@@ -98,14 +99,14 @@ bool GGASentenceParser::parse_fields(char* field_strings, int field_offsets[],
   // 9    = Antenna altitude above/below mean sea level (geoid)
   ok &= ParseFloat(&position.altitude, field_strings + field_offsets[9], true);
   // 10   = Meters  (Antenna height unit)
-  ok &= ParseChar(field_strings + field_offsets[10], &antenna_height_unit, 'M',
+  ok &= ParseChar(&antenna_height_unit, field_strings + field_offsets[10], 'M',
                   true);
   // 11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
   //        mean sea level.  -=geoid is below WGS-84 ellipsoid)
   ok &=
       ParseFloat(&geoidal_separation, field_strings + field_offsets[11], true);
   // 12   = Meters  (Units of geoidal separation)
-  ok &= ParseChar(field_strings + field_offsets[12], &geoidal_separation_unit,
+  ok &= ParseChar(&geoidal_separation_unit, field_strings + field_offsets[12],
                   'M', true);
   // 13   = Age in seconds since last update from diff. reference station
   ok &= ParseFloat(&dgps_age, field_strings + field_offsets[13], true);
@@ -150,7 +151,8 @@ bool GGASentenceParser::parse_fields(char* field_strings, int field_offsets[],
   return true;
 }
 
-bool GLLSentenceParser::parse_fields(char* field_strings, int field_offsets[],
+bool GLLSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
                                      int num_fields) {
   bool ok = true;
 
@@ -195,7 +197,8 @@ bool GLLSentenceParser::parse_fields(char* field_strings, int field_offsets[],
   return true;
 }
 
-bool RMCSentenceParser::parse_fields(char* field_strings, int field_offsets[],
+bool RMCSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
                                      int num_fields) {
   bool ok = true;
 
@@ -280,7 +283,8 @@ bool RMCSentenceParser::parse_fields(char* field_strings, int field_offsets[],
   return true;
 }
 
-bool VTGSentenceParser::parse_fields(char* field_strings, int field_offsets[],
+bool VTGSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
                                      int num_fields) {
   bool ok = true;
 
@@ -337,8 +341,9 @@ bool VTGSentenceParser::parse_fields(char* field_strings, int field_offsets[],
   return true;
 }
 
-bool PSTI030SentenceParser::parse_fields(char* field_strings,
-                                         int field_offsets[], int num_fields) {
+bool PSTI030SentenceParser::parse_fields(const char* field_strings,
+                                         const int field_offsets[],
+                                         int num_fields) {
   bool ok = true;
 
   struct tm time;
@@ -435,8 +440,9 @@ bool PSTI030SentenceParser::parse_fields(char* field_strings,
   return true;
 }
 
-bool PSTI032SentenceParser::parse_fields(char* field_strings,
-                                         int field_offsets[], int num_fields) {
+bool PSTI032SentenceParser::parse_fields(const char* field_strings,
+                                         const int field_offsets[],
+                                         int num_fields) {
   bool ok = true;
 
   struct tm time;

@@ -9,7 +9,16 @@
 
 namespace sensesp {
 
-bool ParseInt(int* value, char* s, bool allow_empty) {
+bool ParseString(String* value, const char* s, bool allow_empty) {
+  if (s[0] == 0) {
+    *value = "";
+    return allow_empty;
+  }
+  *value = s;
+  return true;
+}
+
+bool ParseInt(int* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     *value = kInvalidInt;
     return allow_empty;
@@ -18,7 +27,7 @@ bool ParseInt(int* value, char* s, bool allow_empty) {
   return retval == 1;
 }
 
-bool ParseFloat(float* value, char* s, bool allow_empty) {
+bool ParseFloat(float* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     *value = kInvalidFloat;
     return allow_empty;
@@ -27,7 +36,7 @@ bool ParseFloat(float* value, char* s, bool allow_empty) {
   return retval == 1;
 }
 
-bool ParseDouble(double* value, char* s, bool allow_empty) {
+bool ParseDouble(double* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     *value = kInvalidDouble;
     return allow_empty;
@@ -36,7 +45,7 @@ bool ParseDouble(double* value, char* s, bool allow_empty) {
   return retval == 1;
 }
 
-bool ParseLatLon(double* value, char* s, bool allow_empty) {
+bool ParseLatLon(double* value, const char* s, bool allow_empty) {
   double degmin;
   if (s[0] == 0) {
     *value = kInvalidDouble;
@@ -53,7 +62,7 @@ bool ParseLatLon(double* value, char* s, bool allow_empty) {
   }
 }
 
-bool ParseNS(double* value, char* s, bool allow_empty) {
+bool ParseNS(double* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     return allow_empty;
   }
@@ -70,7 +79,7 @@ bool ParseNS(double* value, char* s, bool allow_empty) {
   return true;
 }
 
-bool ParseEW(double* value, char* s, bool allow_empty) {
+bool ParseEW(double* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     return allow_empty;
   }
@@ -86,7 +95,7 @@ bool ParseEW(double* value, char* s, bool allow_empty) {
   return true;
 }
 
-bool ParseEW(float* value, char* s, bool allow_empty) {
+bool ParseEW(float* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     return allow_empty;
   }
@@ -104,7 +113,7 @@ bool ParseEW(float* value, char* s, bool allow_empty) {
 
 #include <cstring>
 
-bool ParseChar(char* value, char* s, char expected, bool allow_empty) {
+bool ParseChar(char* value, const char* s, char expected, bool allow_empty) {
   if (s[0] == 0) {
     *value = 0;
     return allow_empty;
@@ -119,7 +128,7 @@ bool ParseChar(char* value, char* s, char expected, bool allow_empty) {
   return (*s == expected);
 }
 
-bool ParseAV(bool* is_valid, char* s) {
+bool ParseAV(bool* is_valid, const char* s) {
   switch (*s) {
     case 'A':
       *is_valid = true;
@@ -133,7 +142,7 @@ bool ParseAV(bool* is_valid, char* s) {
   return true;
 }
 
-bool ParseTime(int* hour, int* minute, float* second, char* s,
+bool ParseTime(int* hour, int* minute, float* second, const char* s,
                bool allow_empty) {
   if (s[0] == 0) {
     *hour = kInvalidInt;
@@ -145,7 +154,7 @@ bool ParseTime(int* hour, int* minute, float* second, char* s,
   return retval == 3;
 }
 
-bool ParseDate(int* year, int* month, int* day, char* s, bool allow_empty) {
+bool ParseDate(int* year, int* month, int* day, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     *year = kInvalidInt;
     *month = kInvalidInt;

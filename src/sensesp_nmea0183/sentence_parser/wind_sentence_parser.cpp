@@ -2,7 +2,8 @@
 
 namespace sensesp {
 
-bool WIMWVSentenceParser::parse_fields(char* field_strings, int field_offsets[],
+bool WIMWVSentenceParser::parse_fields(const char* field_strings,
+                                       const int field_offsets[],
                                        int num_fields) {
   bool ok = true;
 

@@ -13,7 +13,7 @@ class WIMWVSentenceParser : public SentenceParser {
  public:
   WIMWVSentenceParser(NMEA0183* nmea)
       : SentenceParser(nmea) {}
-  bool parse_fields(char* field_strings, int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "WIMWV"; }
 
