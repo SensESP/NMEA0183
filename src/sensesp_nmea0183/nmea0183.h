@@ -25,33 +25,18 @@ void AddChecksum(String& sentence);
  * @param stream Pointer to the Stream of incoming NMEA0183 data over
  * a serial connection.
  **/
-class NMEA0183 {
+class NMEA0183 : public ValueConsumer<String> {
  public:
-  NMEA0183(Stream* stream);
+  NMEA0183() : ValueConsumer<String>() {}
 
   void register_sentence_parser(SentenceParser* parser);
-  void handle(char c);
-
-  /**
-   * @brief Output a sentence to the serial port.
-   *
-   * It is assumed that the sentence does not include the CRLF newline.
-   *
-   * @param sentence
-   */
-  void output_raw(const char* sentence) const {
-    stream_->println(sentence);
-  }
+  virtual void set(const String& line) override;
 
  protected:
   Stream* stream_;
-  // current sentence
-  char input_buffer[kNMEA0183InputBufferLength];
   // offset for each sentence field in the buffer
   int field_offsets[kNMEA0183MaxFields];
-  // pointer for the next character in buffer
-  int input_offset = 0;
-  void parse_sentence();
+  void parse_sentence(const String& sentence);
   std::vector<SentenceParser*> sentence_parsers;
 };
 

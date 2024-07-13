@@ -42,46 +42,22 @@ void AddChecksum(String& sentence) {
   sentence += "*" + String(checksum_str);
 }
 
-NMEA0183::NMEA0183(Stream* rx_stream) : stream_{rx_stream} {
-  // enable reading the serial port
-  ReactESP::app->onAvailable(*stream_, [this]() {
-    while (stream_->available()) {
-      this->handle(stream_->read());
-    }
-  });
-}
+void NMEA0183::set(const String& line) {
 
-void NMEA0183::handle(char c) {
-  // Check that we're not overflowing the buffer
-  if (input_offset == kNMEA0183InputBufferLength - 1) {
-    input_offset = 0;
-  }
-
-  // Swallow trailing whitespace
-  if (c == '\r') {
-    return;
-  }
-
-  // Check if we've reached the end of the sentence
-  if (c == '\n') {
-    // Null-terminate the buffer
-    input_buffer[input_offset] = '\0';
+    // Trim trailing whitespace
+    String trimmed = line;
+    trimmed.trim();
 
     // Parse the sentence
-    parse_sentence();
-    input_offset = 0;
+    parse_sentence(trimmed);
     return;
-  }
-
-  // Add the character to the buffer
-  input_buffer[input_offset++] = c;
 }
 
-void NMEA0183::parse_sentence() {
-  char* tail = input_buffer;
+void NMEA0183::parse_sentence(const String& sentence) {
+  const char* tail = sentence.c_str();
 
-  // Check that the sentence starts with a dollar sign
-  if (tail[0] != '$') {
+  // Check that the sentence starts with a dollar or an exclamation sign
+  if (tail[0] != '$' && tail[0] != '!') {
     return;
   }
   tail++;
@@ -98,7 +74,7 @@ void NMEA0183::parse_sentence() {
       tail += address_length + 1;
       bool result = parser->parse(tail);
       ESP_LOGV("SensESP/NMEA0183", "Parsed sentence %s with result %s",
-               input_buffer, result ? "true" : "false");
+               sentence.c_str(), result ? "true" : "false");
       return;
     }
   }
