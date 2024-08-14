@@ -5,6 +5,9 @@
  */
 
 #include "sensesp_app_builder.h"
+#include "sensesp/system/stream_producer.h"
+#include "sensesp/transforms/filter.h"
+
 #include "sensesp_nmea0183/wiring.h"
 
 using namespace sensesp;
@@ -17,20 +20,26 @@ constexpr int kGNSSRxPin = 15;
 constexpr int kGNSSTxPin = 13;
 
 void setup() {
+  SetupLogging();
+
   SensESPAppBuilder builder;
   sensesp_app = builder.set_hostname("sensesp-gnss")->get_app();
-
-#ifndef SERIAL_DEBUG_DISABLED
-  SetupSerialDebug(115200);
-#endif
 
   HardwareSerial* serial = &Serial1;
   serial->begin(kGNSSBitRate, SERIAL_8N1, kGNSSRxPin, kGNSSTxPin);
 
-  NMEA0183Input* nmea_input = new NMEA0183Input(serial);
-  ConnectLocationSKOutputs(nmea_input);
+  StreamLineProducer* ais_line_producer = new StreamLineProducer(serial);
 
-  sensesp_app->start();
+  Filter<String>* sentence_filter = new Filter<String>([](const String& line) {
+    return line.startsWith("!") || line.startsWith("$");
+  });
+
+  ais_line_producer->connect_to(sentence_filter);
+
+  NMEA0183* nmea = new NMEA0183();
+  sentence_filter->connect_to(nmea);
+
+  ConnectGNSS(nmea, new GNSSData());
 }
 
 void loop() { app.tick(); }

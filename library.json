@@ -17,10 +17,10 @@
     "dependencies": [
         {
             "name": "SensESP",
-            "version": "https://github.com/SignalK/SensESP.git#dev-3"
+            "version": ">=3.0.0-beta.1,<4.0.0-alpha.1"
         }
     ],
-    "version": "2.0.1",
+    "version": "3.0.0",
     "frameworks": "arduino",
     "platforms": "*"
 }
