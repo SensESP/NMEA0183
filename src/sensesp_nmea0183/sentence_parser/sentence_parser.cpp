@@ -2,7 +2,7 @@
 
 #include "sensesp_nmea0183/nmea0183.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 SentenceParser::SentenceParser(NMEA0183* nmea_io) : ignore_checksum_{false} {
   nmea_io->register_sentence_parser(this);
@@ -11,14 +11,18 @@ SentenceParser::SentenceParser(NMEA0183* nmea_io) : ignore_checksum_{false} {
 bool SentenceParser::parse(const char* buffer) {
   if (!ignore_checksum_) {
     if (!validate_checksum(buffer)) {
-      ESP_LOGW("SensESP/NMEA0183", "Invalid checksum in sentence %s,%s",
-               sentence_address(), buffer);
+      ESP_LOGW("SensESP/NMEA0183", "Invalid checksum in sentence: %s", buffer);
       return false;
     }
   }
 
+  // We already know buffer starts with the sentence address and a comma,
+  // so remove them.
+
+  const char* tail = buffer + strlen(sentence_address()) + 1;
+
   char field_strings[kNMEA0183InputBufferLength];
-  strncpy(field_strings, buffer, kNMEA0183InputBufferLength);
+  strncpy(field_strings, tail, kNMEA0183InputBufferLength);
   field_strings[kNMEA0183InputBufferLength - 1] = 0;
 
   int i;
@@ -46,8 +50,7 @@ bool SentenceParser::parse(const char* buffer) {
   int num_fields = 0;
   for (i = 0; field_strings[i] != 0; i++) {
     if (num_fields >= kNMEA0183MaxFields) {
-      ESP_LOGW("SensESP/NMEA0183", "Too many fields in sentence %s,%s",
-               sentence_address(), field_strings);
+      ESP_LOGW("SensESP/NMEA0183", "Too many fields in sentence: %s", buffer);
       return false;
     }
     if (field_strings[i] == ',') {
@@ -86,9 +89,7 @@ bool SentenceParser::validate_checksum(const char* buffer) {
   // Calculate the checksum. The checksum is the XOR of all bytes between '$'
   // and '*'. Our buffer doesn't include the address field and the first comma,
   // so start with XORing them.
-  int chksum = CalculateChecksum(sentence_address());
-  chksum = CalculateChecksum(",", chksum);
-  chksum = CalculateChecksum(buffer, chksum);
+  int chksum = CalculateChecksum(buffer);
 
   return chksum == checksum;
 }

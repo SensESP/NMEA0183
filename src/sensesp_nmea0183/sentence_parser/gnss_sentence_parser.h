@@ -7,7 +7,7 @@
 #include "sensesp_nmea0183/nmea0183.h"
 #include "sensesp_nmea0183/sentence_parser/sentence_parser.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 enum GNSSQuality {
   no_gps,

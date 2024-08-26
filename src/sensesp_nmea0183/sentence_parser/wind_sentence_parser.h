@@ -6,7 +6,7 @@
 #include "sensesp/system/observablevalue.h"
 #include "sentence_parser.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 /// Parser for WIMWV (Wind Speed and Angle) sentences
 class WIMWVSentenceParser : public SentenceParser {
@@ -21,6 +21,6 @@ class WIMWVSentenceParser : public SentenceParser {
   ObservableValue<float> apparent_wind_angle_;
 };
 
-}  // namespace sensesp
+}  // namespace sensesp::nmea0183
 
 #endif  // SENSEP_NMEA0183_WIND_SENTENCE_PARSER_H

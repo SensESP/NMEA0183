@@ -1,9 +1,13 @@
 
 #include "gnss_sentence_parser.h"
 
+#include <functional>
+
 #include "Arduino.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
+
+using namespace std::placeholders;
 
 String gnss_quality_strings[] = {"no GPS",
                                  "GNSS Fix",
@@ -73,50 +77,46 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
   // eg3. $GNGGA,121224.00,          , ,           , ,0,00,99.99,    ,  ,    ,  ,   ,    *7E
   // clang-format on
 
-  if (num_fields < 15) {
-    ReportFailure(false, sentence_address());
+  if (num_fields < 14) {
     return false;
   }
 
-  // 1    = UTC of Position
-  ok &= ParseTime(&hour, &minute, &second, field_strings + field_offsets[1],
-                  true);
-  // 2    = Latitude
-  ok &= ParseLatLon(&position.latitude, field_strings + field_offsets[2], true);
-  // 3    = N or S
-  ok &= ParseNS(&position.latitude, field_strings + field_offsets[3], true);
-  // 4    = Longitude
-  ok &=
-      ParseLatLon(&position.longitude, field_strings + field_offsets[4], true);
-  // 5    = E or W
-  ok &= ParseEW(&position.longitude, field_strings + field_offsets[5], true);
-  // 6    = GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
-  ok &= ParseInt(&quality, field_strings + field_offsets[6]);
-  // 7    = Number of satellites in use [not those in view]
-  ok &= ParseInt(&num_satellites, field_strings + field_offsets[7]);
-  // 8    = Horizontal dilution of position
-  ok &= ParseFloat(&horizontal_dilution, field_strings + field_offsets[8]);
-  // 9    = Antenna altitude above/below mean sea level (geoid)
-  ok &= ParseFloat(&position.altitude, field_strings + field_offsets[9], true);
-  // 10   = Meters  (Antenna height unit)
-  ok &= ParseChar(&antenna_height_unit, field_strings + field_offsets[10], 'M',
-                  true);
-  // 11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
-  //        mean sea level.  -=geoid is below WGS-84 ellipsoid)
-  ok &=
-      ParseFloat(&geoidal_separation, field_strings + field_offsets[11], true);
-  // 12   = Meters  (Units of geoidal separation)
-  ok &= ParseChar(&geoidal_separation_unit, field_strings + field_offsets[12],
-                  'M', true);
-  // 13   = Age in seconds since last update from diff. reference station
-  ok &= ParseFloat(&dgps_age, field_strings + field_offsets[13], true);
-  // 14   = Diff. reference station ID#
-  ok &= ParseInt(&dgps_id, field_strings + field_offsets[14], true);
+  std::function<bool(const char*)> fps[] = {
+      // 1    = UTC of Position
+      FLDP(Time, &hour, &minute, &second),
+      // 2    = Latitude
+      FLDP(LatLon, &position.latitude),
+      // 3    = N or S
+      FLDP(NS, &position.latitude),
+      // 4    = Longitude
+      FLDP(LatLon, &position.longitude),
+      // 5    = E or W
+      FLDP(EW, &position.longitude),
+      // 6    = GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
+      FLDP(Int, &quality),
+      // 7    = Number of satellites in use [not those in view]
+      FLDP(Int, &num_satellites),
+      // 8    = Horizontal dilution of position
+      FLDP(Float, &horizontal_dilution),
+      // 9    = Antenna altitude above/below mean sea level (geoid)
+      FLDP(Float, &position.altitude),
+      // 10   = Meters  (Antenna height unit)
+      FLDP(Char, &antenna_height_unit, 'M'),  // M = meters
+      // 11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
+      //        mean sea level.  -=geoid is below WGS-84 ellipsoid)
+      FLDP(Float, &geoidal_separation),
+      // 12   = Meters  (Units of geoidal separation)
+      FLDP(Char, &geoidal_separation_unit, 'M'),
+      // 13   = Age in seconds since last update from diff. reference station
+      FLDP(Float, &dgps_age),
+      // 14   = Diff. reference station ID#
+      FLDP(Int, &dgps_id)};
 
-  // 15   = Checksum
-  // (validated already earlier)
+  int i = 0;
+  for (auto f : fps) {
+    ok &= f(field_strings + field_offsets[i++]);
+  }
 
-  ReportFailure(ok, sentence_address());
   if (!ok) {
     return false;
   }
@@ -163,24 +163,27 @@ bool GLLSentenceParser::parse_fields(const char* field_strings,
   // eg3. $GNGLL,6011.07479,N,02503.05652,E,133453.00,A,D*7A
   // eg4. $GNGLL,          , ,           , ,121223.00,V,N*55
 
-  if (num_fields < 5) {
-    ReportFailure(false, sentence_address());
+  if (num_fields < 4) {
     return false;
   }
 
-  //       1    5133.81   Current latitude
-  ok &= ParseLatLon(&position.latitude, field_strings + field_offsets[1], true);
-  //       2    N         North/South
-  ok &= ParseNS(&position.latitude, field_strings + field_offsets[2], true);
-  //       3    00042.25  Current longitude
-  ok &=
-      ParseLatLon(&position.longitude, field_strings + field_offsets[3], true);
-  //       4    W         East/West
-  ok &= ParseEW(&position.longitude, field_strings + field_offsets[4], true);
+  std::function<bool(const char*)> fps[] = {
+      // 1    5133.81   Current latitude
+      FLDP(LatLon, &position.latitude),
+      // 2    N         North/South
+      FLDP(NS, &position.latitude),
+      // 3    00042.25  Current longitude
+      FLDP(LatLon, &position.longitude),
+      // 4    W         East/West
+      FLDP(EW, &position.longitude)
+      // ignore the UTC time of the fix and the status of the fix for now
+  };
 
-  // ignore the UTC time of the fix and the status of the fix for now
+  int i = 0;
+  for (auto f : fps) {
+    ok &= f(field_strings + field_offsets[i++]);
+  }
 
-  ReportFailure(ok, sentence_address());
   if (!ok) {
     return false;
   }
@@ -216,41 +219,43 @@ bool RMCSentenceParser::parse_fields(const char* field_strings,
   // eg3. $GNRMC,121224.00,V,          , ,           , ,     ,     ,060222,     , ,N*61
   // clang-format on
 
-  if (num_fields < 12) {
-    ReportFailure(false, sentence_address());
+  if (num_fields < 11) {
     return false;
   }
 
-  // 1   220516     Time Stamp
-  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
-                  field_strings + field_offsets[1], true);
-  // 2   A          validity - A-ok, V-invalid
-  ok &= ParseAV(&is_valid, field_strings + field_offsets[2]);
-  // 3   5133.82    current Latitude
-  ok &= ParseLatLon(&position.latitude, field_strings + field_offsets[3], true);
-  // 4   N          North/South
-  ok &= ParseNS(&position.latitude, field_strings + field_offsets[4], true);
-  // 5   00042.24   current Longitude
-  ok &=
-      ParseLatLon(&position.longitude, field_strings + field_offsets[5], true);
-  // 6   W          East/West
-  ok &= ParseEW(&position.longitude, field_strings + field_offsets[6], true);
-  // 7   173.8      Speed in knots
-  ok &= ParseFloat(&speed, field_strings + field_offsets[7], true);
-  // 8   231.8      True course
-  ok &= ParseFloat(&true_course, field_strings + field_offsets[8], true);
-  // 9   130694     Date Stamp
-  ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                  field_strings + field_offsets[9], true);
-  // 10  004.2      Variation
-  ok &= ParseFloat(&variation, field_strings + field_offsets[10], true);
-  // 11  W          East/West
-  ok &= ParseEW(&variation, field_strings + field_offsets[11], true);
+  std::function<bool(const char*)> fps[] = {
+      // 1   220516     Time Stamp
+      FLDP(Time, &time.tm_hour, &time.tm_min, &second),
+      // 2   A          validity - A-ok, V-invalid
+      FLDP(AV, &is_valid),
+      // 3   5133.82    current Latitude
+      FLDP(LatLon, &position.latitude),
+      // 4   N          North/South
+      FLDP(NS, &position.latitude),
+      // 5   00042.24   current Longitude
+      FLDP(LatLon, &position.longitude),
+      // 6   W          East/West
+      FLDP(EW, &position.longitude),
+      // 7   173.8      Speed in knots
+      FLDP(Float, &speed),
+      // 8   231.8      True course
+      FLDP(Float, &true_course),
+      // 9   130694     Date Stamp
+      FLDP(Date, &time.tm_year, &time.tm_mon, &time.tm_mday),
+      // 10  004.2      Variation
+      FLDP(Float, &variation),
+      // 11  W          East/West
+      FLDP(EW, &variation)
 
-  // Positioning system mode indicator might be available as field 12, but
-  // let's ignore it for now.
+      // Positioning system mode indicator might be available as field 12, but
+      // let's ignore it for now.
+  };
 
-  ReportFailure(ok, sentence_address());
+  int i = 0;
+  for (auto f : fps) {
+    ok &= f(field_strings + field_offsets[i++]);
+  }
+
   if (!ok) {
     return false;
   }
@@ -300,30 +305,31 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
   // eg2. $GNVTG,, ,, ,     , ,     , ,N*2E
   // clang-format on
 
-  if (num_fields < 9) {
-    ReportFailure(false, sentence_address());
+  if (num_fields < 8) {
     return false;
   }
 
-  // 1             True track made good
-  ok &= ParseFloat(&true_track, field_strings + field_offsets[1], true);
-  // 2 T
-  ok &= ParseChar(&true_track_symbol, field_strings + field_offsets[2], 'T',
-                  true);
-  // 3             Magnetic track made good
-  ok &= ParseFloat(&magnetic_track, field_strings + field_offsets[3], true);
-  // 4 M
-  ok &= ParseChar(&magnetic_track_symbol, field_strings + field_offsets[4], 'M',
-                  true);
-  // 5             Ground speed, knots
-  ok &= ParseFloat(&ground_speed, field_strings + field_offsets[5], true);
-  // 6 N
-  ok &= ParseChar(&ground_speed_knots_unit, field_strings + field_offsets[6],
-                  'N', true);
+  std::function<bool(const char*)> fps[] = {
+      // 1   True track made good
+      FLDP(Float, &true_track),
+      // 2   T
+      FLDP(Char, &true_track_symbol, 'T'),
+      // 3   Magnetic track made good
+      FLDP(Float, &magnetic_track),
+      // 4   M
+      FLDP(Char, &magnetic_track_symbol, 'M'),
+      // 5   Ground speed, knots
+      FLDP(Float, &ground_speed),
+      // 6   N
+      FLDP(Char, &ground_speed_knots_unit, 'N')
+      // ignore the remaining fields for now
+  };
 
-  // ignore the remaining fields for now
+  int i = 0;
+  for (auto f : fps) {
+    ok &= f(field_strings + field_offsets[i++]);
+  }
 
-  ReportFailure(ok, sentence_address());
   if (!ok) {
     return false;
   }
@@ -361,63 +367,65 @@ bool PSTI030SentenceParser::parse_fields(const char* field_strings,
   // note: field offsets are one larger than in the reference because
   // the subsentence number is at offset 1
 
-  if (num_fields < 15) {
-    ReportFailure(false, sentence_address());
+  if (num_fields < 14) {
     return false;
   }
 
   // Field  Name  Example  Description
-  // 1  UTC time  044606.000  UTC time in hhmmss.sss format (000000.00 ~
-  // 235959.999)
-  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
-                  field_strings + field_offsets[2]);
-  // 2  Status  A  Status
-  // ‘V’ = Navigation receiver warning
-  // ‘A’ = Data Valid
-  ok &= ParseAV(&is_valid, field_strings + field_offsets[3]);
-  // 3  Latitude  2447.0924110  Latitude in dddmm.mmmmmmm format
-  // Leading zeros transmitted
-  ok &= ParseLatLon(&position.latitude, field_strings + field_offsets[4]);
-  // 4  N/S indicator  N  Latitude hemisphere indicator
-  // ‘N’ = North
-  // ‘S’ = South
-  ok &= ParseNS(&position.latitude, field_strings + field_offsets[5]);
-  // 5  Longitude  12100.5227860 Longitude in dddmm.mmmmmmm format
-  // Leading zeros transmitted
-  ok &= ParseLatLon(&position.longitude, field_strings + field_offsets[6]);
-  // 6  E/W Indicator  E  Longitude hemisphere indicator
-  // 'E' = East
-  // 'W' = West
-  ok &= ParseEW(&position.longitude, field_strings + field_offsets[7]);
-  // 7  Altitude  103.323  mean sea level (geoid), (‐9999.999 ~ 17999.999)
-  ok &= ParseFloat(&position.altitude, field_strings + field_offsets[8]);
-  // 8  East Velocity  0.00  ‘East’ component of ENU velocity (m/s)
-  ok &= ParseFloat(&velocity.east, field_strings + field_offsets[9]);
-  // 9  North Velocity  0.00  ‘North’ component of ENU velocity (m/s)
-  ok &= ParseFloat(&velocity.north, field_strings + field_offsets[10]);
-  // 10  Up Velocity  0.00  ‘Up’ component of ENU velocity (m/s)
-  ok &= ParseFloat(&velocity.up, field_strings + field_offsets[11]);
-  // 11  UTC Date  180915  UTC date of position fix, ddmmyy format
-  ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                  field_strings + field_offsets[12]);
-  // 12  Mode indicator  R  Mode indicator
-  // ‘N’ = Data not valid
-  // ‘A’ = Autonomous mode
-  // ‘D’ = Differential mode
-  // ‘E’ = Estimated (dead reckoning) mode
-  // ‘M’ = Manual input mode
-  // ‘S’ = Simulator mode
-  // ‘F’ = Float RTK. Satellite system used in RTK mode, floating
-  // integers
-  // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
-  // integers
-  ok &= ParsePSTI030Mode(&quality, field_strings + field_offsets[13]);
-  // 13  RTK Age  1.2  Age of differential
-  ok &= ParseFloat(&rtk_age, field_strings + field_offsets[14]);
-  // 14  RTK Ratio  4.2  AR ratio factor for validation
-  ok &= ParseFloat(&rtk_ratio, field_strings + field_offsets[15]);
+  std::function<bool(const char*)> fps[] = {
+      // 1  UTC time  044606.000  UTC time in hhmmss.sss format (000000.00 ~
+      // 235959.999)
+      FLDP(Time, &time.tm_hour, &time.tm_min, &second),
+      // 2  Status  A  Status
+      // ‘V’ = Navigation receiver warning
+      // ‘A’ = Data Valid
+      FLDP(AV, &is_valid),
+      // 3  Latitude  2447.0924110  Latitude in dddmm.mmmmmmm format
+      // Leading zeros transmitted
+      FLDP(LatLon, &position.latitude),
+      // 4  N/S indicator  N  Latitude hemisphere indicator
+      // ‘N’ = North
+      // ‘S’ = South
+      FLDP(NS, &position.latitude),
+      // 5  Longitude  12100.5227860 Longitude in dddmm.mmmmmmm format
+      // Leading zeros transmitted
+      FLDP(LatLon, &position.longitude),
+      // 6  E/W Indicator  E  Longitude hemisphere indicator
+      // 'E' = East
+      // 'W' = West
+      FLDP(EW, &position.longitude),
+      // 7  Altitude  103.323  mean sea level (geoid), (‐9999.999 ~ 17999.999)
+      FLDP(Float, &position.altitude),
+      // 8  East Velocity  0.00  ‘East’ component of ENU velocity (m/s)
+      FLDP(Float, &velocity.east),
+      // 9  North Velocity  0.00  ‘North’ component of ENU velocity (m/s)
+      FLDP(Float, &velocity.north),
+      // 10  Up Velocity  0.00  ‘Up’ component of ENU velocity (m/s)
+      FLDP(Float, &velocity.up),
+      // 11  UTC Date  180915  UTC date of position fix, ddmmyy format
+      FLDP(Date, &time.tm_year, &time.tm_mon, &time.tm_mday),
+      // 12  Mode indicator  R  Mode indicator
+      // ‘N’ = Data not valid
+      // ‘A’ = Autonomous mode
+      // ‘D’ = Differential mode
+      // ‘E’ = Estimated (dead reckoning) mode
+      // ‘M’ = Manual input mode
+      // ‘S’ = Simulator mode
+      // ‘F’ = Float RTK. Satellite system used in RTK mode, floating
+      // integers
+      // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
+      // integers
+      FLDP(PSTI030Mode, &quality),
+      // 13  RTK Age  1.2  Age of differential
+      FLDP(Float, &rtk_age),
+      // 14  RTK Ratio  4.2  AR ratio factor for validation
+      FLDP(Float, &rtk_ratio)};
 
-  ReportFailure(ok, sentence_address());
+  int i = 0;
+  for (auto f : fps) {
+    ok &= f(field_strings + field_offsets[i++]);
+  }
+
   if (!ok) {
     return false;
   }
@@ -459,54 +467,54 @@ bool PSTI032SentenceParser::parse_fields(const char* field_strings,
   // note: field offsets are one larger than in the reference because
   // the subsentence number is at offset 1
 
-  if (num_fields < 10) {
-    ReportFailure(false, sentence_address());
+  if (num_fields < 9) {
     return false;
   }
 
-  // Field  Name  Example  Description
-  // 1  UTC time  041457.000  UTC time in hhmmss.sss format
-  // (000000.000~235959.999)
-  ok &= ParseTime(&time.tm_hour, &time.tm_min, &second,
-                  field_strings + field_offsets[2]);
-  // 2  UTC Date  170316  UTC date of position fix, ddmmyy format
-  ok &= ParseDate(&time.tm_year, &time.tm_mon, &time.tm_mday,
-                  field_strings + field_offsets[3]);
-  // 3  Status  A
-  // Status
-  // ‘V’ = Void
-  // ‘A’ = Active
-  ok &= ParseAV(&is_valid, field_strings + field_offsets[4]);
-  if (is_valid) {
-    // 4  Mode indicator  R
-    // Mode indicator
-    // ‘F’ = Float RTK. System used in RTK mode with float ambiguity
-    // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
-    // ambiguity
-    ok &= ParsePSTI030Mode(&quality, field_strings + field_offsets[5]);
-    // 5  East‐projection of
-    // baseline  0.603  East‐projection of baseline, meters
-    ok &= ParseFloat(&projection.east, field_strings + field_offsets[6]);
-    // 6  North‐projection of
-    // baseline  ‐0.837  North‐projection of baseline, meters
-    ok &= ParseFloat(&projection.north, field_strings + field_offsets[7]);
-    // 7  Up‐projection of
-    // baseline  ‐0.089  Up‐projection of baseline, meters
-    ok &= ParseFloat(&projection.up, field_strings + field_offsets[8]);
-    // 8  Baseline length  1.036  Baseline length, meters
-    ok &= ParseFloat(&baseline_length, field_strings + field_offsets[9]);
-    // 9  Baseline course  144.22
-    // Baseline course (angle between baseline vector and north
-    // direction), degrees
-    ok &= ParseFloat(&baseline_course, field_strings + field_offsets[10]);
-    // 10  Reserve    Reserve
-    // 11  Reserve    Reserve
-    // 12  Reserve    Reserve
-    // 13  Reserve    Reserve
-    // 14  Reserve    Reserve
+  std::function<bool(const char*)> fps[] = {
+      // 1  UTC time  041457.000  UTC time in hhmmss.sss format
+      // (000000.000~235959.999)
+      FLDP(Time, &time.tm_hour, &time.tm_min, &second),
+      // 2  UTC Date  170316  UTC date of position fix, ddmmyy format
+      FLDP(Date, &time.tm_year, &time.tm_mon, &time.tm_mday),
+      // 3  Status  A
+      // Status
+      // ‘V’ = Void
+      // ‘A’ = Active
+      FLDP(AV, &is_valid),
+      // 4  Mode indicator  R
+      // Mode indicator
+      // ‘F’ = Float RTK. System used in RTK mode with float ambiguity
+      // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
+      // ambiguity
+      FLDP(PSTI030Mode, &quality),
+      // 5  East‐projection of
+      // baseline  0.603  East‐projection of baseline, meters
+      FLDP(Float, &projection.east),
+      // 6  North‐projection of
+      // baseline  ‐0.837  North‐projection of baseline, meters
+      FLDP(Float, &projection.north),
+      // 7  Up‐projection of
+      // baseline  ‐0.089  Up‐projection of baseline, meters
+      FLDP(Float, &projection.up),
+      // 8  Baseline length  1.036  Baseline length, meters
+      FLDP(Float, &baseline_length),
+      // 9  Baseline course  144.22
+      // Baseline course (angle between baseline vector and north
+      // direction), degrees
+      FLDP(Float, &baseline_course)
+      // 10  Reserve    Reserve
+      // 11  Reserve    Reserve
+      // 12  Reserve    Reserve
+      // 13  Reserve    Reserve
+      // 14  Reserve    Reserve
+      };
+
+  int i = 0;
+  for (auto f : fps) {
+    ok &= f(field_strings + field_offsets[i++]);
   }
 
-  ReportFailure(ok, sentence_address());
   if (!ok) {
     return false;
   }
@@ -525,4 +533,4 @@ bool PSTI032SentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
-}  // namespace sensesp
+}  // namespace sensesp::nmea0183

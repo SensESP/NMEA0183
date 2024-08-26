@@ -4,7 +4,7 @@
 
 #include "sensesp.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 /**
  * @brief String comparision with a maximum length and wildcard support.
@@ -60,6 +60,7 @@ void NMEA0183::parse_sentence(const String& sentence) {
   if (tail[0] != '$' && tail[0] != '!') {
     return;
   }
+  // Move the tail pointer past the sentence begin character
   tail++;
 
   // Loop through sentence parsers and find the one that matches the sentence.
@@ -71,7 +72,6 @@ void NMEA0183::parse_sentence(const String& sentence) {
       if (tail[address_length] != ',') {
         continue;
       }
-      tail += address_length + 1;
       bool result = parser->parse(tail);
       ESP_LOGV("SensESP/NMEA0183", "Parsed sentence %s with result %s",
                sentence.c_str(), result ? "true" : "false");
@@ -104,4 +104,4 @@ void NMEA0183::register_sentence_parser(SentenceParser* parser) {
   sentence_parsers.push_back(parser);
 }
 
-}  // namespace sensesp
+}  // namespace sensesp::nmea0183

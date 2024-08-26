@@ -1,6 +1,8 @@
 #include "wind_sentence_parser.h"
 
-namespace sensesp {
+#include "field_parsers.h"
+
+namespace sensesp::nmea0183 {
 
 bool WIMWVSentenceParser::parse_fields(const char* field_strings,
                                        const int field_offsets[],
@@ -15,29 +17,31 @@ bool WIMWVSentenceParser::parse_fields(const char* field_strings,
   //       s.s is the relative wind speed in knots
 
   if (num_fields < 5) {
-    ReportFailure(false, sentence_address());
     return false;
   }
 
-  // 1 a.a = Apparent wind angle
-  ok &= ParseFloat(&wind_angle, field_strings + field_offsets[0], false);
-
-  // 2 R = Relative wind speed
   char r_value;
-  ok &= ParseChar(&r_value, field_strings + field_offsets[1], 'R', false);
-
-  // 3 s.s = Wind speed
-  ok &= ParseFloat(&wind_speed, field_strings + field_offsets[2], false);
-
-  // 4 N = Wind speed units
   char units;
-  ok &= ParseChar(&units, field_strings + field_offsets[3], 255, false);
-
-  // 5 A = Valid
   char a_value;
-  ok &= ParseChar(&a_value, field_strings + field_offsets[4], 'A', false);
 
-  ReportFailure(ok, sentence_address());
+  std::function<bool(const char*)> fps[] = {
+    // 1 a.a = Apparent wind angle
+    FLDP_OPT(Float, &wind_angle),
+    // 2 R = Relative wind speed
+    FLDP_OPT(Char, &r_value, 'R'),
+    // 3 s.s = Wind speed
+    FLDP_OPT(Float, &wind_speed),
+    // 4 N = Wind speed units
+    FLDP_OPT(Char, &units, 255),
+    // 5 A = Valid
+    FLDP_OPT(Char, &a_value, 'A')
+  };
+
+  int i = 0;
+  for (auto& fp : fps) {
+    ok &= fp(field_strings + field_offsets[i++]);
+  }
+
   if (!ok) {
     return false;
   }
@@ -47,11 +51,25 @@ bool WIMWVSentenceParser::parse_fields(const char* field_strings,
   // N = knots
   // S = statute miles/hr
 
-  // convert wind speed units to m/s
-  if (units == 'K') wind_speed = wind_speed * 0.277778;
-  if (units == 'M') wind_speed = wind_speed;
-  if (units == 'N') wind_speed = wind_speed * 0.514444;
-  if (units == 'S') wind_speed = wind_speed * 0.44704;
+  float conv_ratio = 1.0;
+  switch (units) {
+    case 'K':
+      conv_ratio = 0.277778;
+      break;
+    case 'M':
+      conv_ratio = 1.0;
+      break;
+    case 'N':
+      conv_ratio = 0.514444;
+      break;
+    case 'S':
+      conv_ratio = 0.44704;
+      break;
+    default:
+      return false;
+  }
+
+  wind_speed *= conv_ratio;
 
   apparent_wind_speed_.set(wind_speed);
 
@@ -62,4 +80,4 @@ bool WIMWVSentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
-}  // namespace sensesp
+}  // namespace sensesp::nmea0183

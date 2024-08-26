@@ -4,7 +4,7 @@
 #include <limits>
 #include <Arduino.h>
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 // magic values for invalid data
 constexpr float kInvalidFloat = std::numeric_limits<float>::lowest();
@@ -19,7 +19,7 @@ bool ParseLatLon(double* value, const char* s, bool allow_empty = false);
 bool ParseNS(double* value, const char* s, bool allow_empty = false);
 bool ParseEW(double* value, const char* s, bool allow_empty = false);
 bool ParseEW(float* value, const char* s, bool allow_empty = false);
-bool ParseChar(char* value, const char* s, char expected, bool allow_empty = false);
+bool ParseChar(char* value, const char expected, const char* s, bool allow_empty = false);
 bool ParseAV(bool* is_valid, const char* s);
 
 bool ParseTime(int* hour, int* minute, float* second, const char* s,
@@ -28,6 +28,15 @@ bool ParseTime(int* hour, int* minute, float* second, const char* s,
 bool ParseDate(int* year, int* month, int* day, const char* s,
                bool allow_empty = false);
 
-}  // namespace sensesp
+// Field parser macro that can be used to define sentence parsers as arrays of
+// field parsers.
+
+#define FLDP(f, ...) [&](const char *s){return Parse##f(__VA_ARGS__ __VA_OPT__(,) s);}
+
+// Field Parser, optional field
+
+#define FLDP_OPT(f, ...) [&](const char *s){return Parse##f(__VA_ARGS__ __VA_OPT__(,) s, false);}
+
+}  // namespace sensesp::nmea0183
 
 #endif  // SENSESP_NMEA0183_FIELD_PARSERS_H_

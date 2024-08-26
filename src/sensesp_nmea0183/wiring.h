@@ -5,7 +5,7 @@
 #include "sensesp_nmea0183/nmea0183.h"
 #include "sensesp_nmea0183/data/wind_data.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 /**
  * @brief GNSSData observable members to SK outputs.

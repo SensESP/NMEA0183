@@ -8,7 +8,7 @@
 #include "sensesp_nmea0183/sentence_parser/gnss_sentence_parser.h"
 #include "sensesp_nmea0183/sentence_parser/wind_sentence_parser.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
   GGASentenceParser* gga_sentence_parser = new GGASentenceParser(

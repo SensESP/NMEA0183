@@ -4,7 +4,7 @@
 #include "sensesp/system/observablevalue.h"
 #include "sensesp/types/position.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 /**
  * @brief Convenience container for all decoded NMEA 0183 GNSS data.
