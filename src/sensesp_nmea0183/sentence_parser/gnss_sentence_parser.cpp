@@ -533,4 +533,76 @@ bool PSTI032SentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
+bool PQTMTARSentenceParser::parse_fields(const char* field_strings,
+                                         const int field_offsets[],
+                                         int num_fields) {
+  bool ok = true;
+
+  struct tm time;
+  float second;
+  float base_line_length;
+  int heading_status;
+  AttitudeVector attitude_degree;
+  AttitudeVector attitude_accuracy_degree;
+  int hdg_num_satellites;
+  char dummy;
+
+  // Example:
+  // $PQTMTAR,1,165331.000,6,,0.232,2.321340,-6.849396,80.410065,0.081330,0.045079,0.054334,00*72
+
+  if (num_fields < 13) {
+    return false;
+  }
+
+  std::function<bool(const char*)> fps[] = {
+      // 1 Message version. Should be 1.
+      FLDP(Char, &dummy, '1'),
+      // 2 UTC time 165331.000 UTC time in hhmmss.sss format (000000.000 ~
+      // 235959.999)
+      FLDP(Time, &time.tm_hour, &time.tm_min, &second),
+      // 3 Heading status.
+      FLDP(Int, &heading_status),
+      // 4 Always empty.
+      FLDP(Empty),
+      // 5 Baseline length.
+      FLDP(Float, &base_line_length),
+      // 6 Pitch angle
+      FLDP_OPT(Float, &attitude_degree.pitch),
+      // 7 Roll angle
+      FLDP_OPT(Float, &attitude_degree.roll),
+      // 8 Yaw angle
+      FLDP_OPT(Float, &attitude_degree.yaw),
+      // 9 Pitch accuracy
+      FLDP_OPT(Float, &attitude_accuracy_degree.pitch),
+      // 10 Roll accuracy
+      FLDP_OPT(Float, &attitude_accuracy_degree.roll),
+      // 11 Yaw accuracy
+      FLDP_OPT(Float, &attitude_accuracy_degree.yaw),
+      // 12 Number of satellites used for heading calculation
+      FLDP(Int, &hdg_num_satellites)};
+
+  int i = 0;
+  for (auto f : fps) {
+    ok &= f(field_strings + field_offsets[i++]);
+  }
+
+  if (!ok) {
+    return false;
+  }
+
+  time.tm_sec = (int)second;
+  time.tm_isdst = 0;
+
+  datetime_.set(mktime(&time));
+  base_line_length_.set(base_line_length);
+  heading_status_.set(static_cast<QuectelRTKHeadingStatus>(heading_status));
+  if (heading_status > 0) {
+    attitude_.set(attitude_degree);
+    attitude_accuracy_.set(attitude_accuracy_degree);
+    hdg_num_satellites_.set(hdg_num_satellites);
+  }
+
+  return true;
+}
+
 }  // namespace sensesp::nmea0183

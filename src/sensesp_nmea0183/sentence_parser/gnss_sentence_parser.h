@@ -22,6 +22,12 @@ enum SkyTraQGNSSQuality {
   error
 };
 
+enum QuectelRTKHeadingStatus {
+  invalid,
+  rtk = 4,
+  dead_reckoning = 6,
+};
+
 extern String gnss_quality_strings[];
 
 /// Parser for GGA - Global Positioning System Fix Data.
@@ -112,6 +118,29 @@ class PSTI032SentenceParser : public SentenceParser {
   ObservableValue<String> gnss_quality_;
 };
 
-}  // namespace sensesp
+struct AttitudeVector {
+  float yaw;  // heading
+  float pitch;
+  float roll;
+};
+
+/// Parser for Quectel proprietary PQTMTAR - Time and Attitude
+class PQTMTARSentenceParser : public SentenceParser {
+ public:
+  PQTMTARSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "PQTMTAR"; }
+
+  ObservableValue<time_t> datetime_;
+  ObservableValue<QuectelRTKHeadingStatus> heading_status_;
+  ObservableValue<float> base_line_length_;
+  ObservableValue<AttitudeVector> attitude_;
+  ObservableValue<AttitudeVector> attitude_accuracy_;
+  ObservableValue<int> hdg_num_satellites_;
+};
+
+}  // namespace sensesp::nmea0183
 
 #endif  // _SENSESP_NMEA0183_GNSS_SENTENCE_PARSER_H_
