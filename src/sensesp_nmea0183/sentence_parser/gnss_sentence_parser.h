@@ -28,7 +28,7 @@ extern String gnss_quality_strings[];
 class GGASentenceParser : public SentenceParser {
  public:
   GGASentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.GGA"; }
 
@@ -45,7 +45,7 @@ class GGASentenceParser : public SentenceParser {
 class GLLSentenceParser : public SentenceParser {
  public:
   GLLSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.GLL"; }
 
@@ -56,7 +56,7 @@ class GLLSentenceParser : public SentenceParser {
 class RMCSentenceParser : public SentenceParser {
  public:
   RMCSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.RMC"; }
 
@@ -71,7 +71,7 @@ class RMCSentenceParser : public SentenceParser {
 class VTGSentenceParser : public SentenceParser {
  public:
   VTGSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "..VTG"; }
 
@@ -79,12 +79,12 @@ class VTGSentenceParser : public SentenceParser {
   ObservableValue<float> speed_;
 };
 
-/// Parser for proprietary STI,030 - Recommended Minimum 3D GNSS Data
+/// Parser for SkyTraQ proprietary STI,030 - Recommended Minimum 3D GNSS Data
 class PSTI030SentenceParser : public SentenceParser {
  public:
   PSTI030SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
 
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "PSTI,030"; }
 
@@ -96,12 +96,12 @@ class PSTI030SentenceParser : public SentenceParser {
   ObservableValue<float> rtk_ratio_;
 };
 
-/// Parser for proprietary STI,032 - RTK Baseline Data
+/// Parser for SkyTraQ proprietary STI,032 - RTK Baseline Data
 class PSTI032SentenceParser : public SentenceParser {
  public:
   PSTI032SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
 
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "PSTI,032"; }
 
