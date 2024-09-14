@@ -28,6 +28,8 @@ bool ParseTime(int* hour, int* minute, float* second, const char* s,
 bool ParseDate(int* year, int* month, int* day, const char* s,
                bool allow_empty = false);
 
+bool ParseEmpty(const char* s);
+
 // Field parser macro that can be used to define sentence parsers as arrays of
 // field parsers.
 

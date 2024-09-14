@@ -168,4 +168,8 @@ bool ParseDate(int* year, int* month, int* day, const char* s, bool allow_empty)
   return retval == 3;
 }
 
+bool ParseEmpty(const char* s) {
+  return s[0] == 0;
+}
+
 }  // namespace sensesp::nmea0183
