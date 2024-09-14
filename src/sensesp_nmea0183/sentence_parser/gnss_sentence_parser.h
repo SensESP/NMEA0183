@@ -9,7 +9,7 @@
 
 namespace sensesp::nmea0183 {
 
-enum GNSSQuality {
+enum SkyTraQGNSSQuality {
   no_gps,
   gnss_fix,
   dgnss_fix,

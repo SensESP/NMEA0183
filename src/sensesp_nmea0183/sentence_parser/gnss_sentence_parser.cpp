@@ -20,31 +20,31 @@ String gnss_quality_strings[] = {"no GPS",
                                  "Simulator mode",
                                  "Error"};
 
-static bool ParsePSTI030Mode(GNSSQuality* quality, const char* s) {
+static bool ParsePSTI030Mode(SkyTraQGNSSQuality* quality, const char* s) {
   switch (*s) {
     case 'N':
-      *quality = GNSSQuality::no_gps;
+      *quality = SkyTraQGNSSQuality::no_gps;
       break;
     case 'A':
-      *quality = GNSSQuality::gnss_fix;
+      *quality = SkyTraQGNSSQuality::gnss_fix;
       break;
     case 'D':
-      *quality = GNSSQuality::dgnss_fix;
+      *quality = SkyTraQGNSSQuality::dgnss_fix;
       break;
     case 'E':
-      *quality = GNSSQuality::estimated_mode;
+      *quality = SkyTraQGNSSQuality::estimated_mode;
       break;
     case 'M':
-      *quality = GNSSQuality::manual_input;
+      *quality = SkyTraQGNSSQuality::manual_input;
       break;
     case 'S':
-      *quality = GNSSQuality::simulator_mode;
+      *quality = SkyTraQGNSSQuality::simulator_mode;
       break;
     case 'F':
-      *quality = GNSSQuality::rtk_float;
+      *quality = SkyTraQGNSSQuality::rtk_float;
       break;
     case 'R':
-      *quality = GNSSQuality::rtk_fixed_integer;
+      *quality = SkyTraQGNSSQuality::rtk_fixed_integer;
       break;
     default:
       return false;
@@ -357,7 +357,7 @@ bool PSTI030SentenceParser::parse_fields(const char* field_strings,
   bool is_valid = false;
   Position position;
   ENUVector velocity;
-  GNSSQuality quality;
+  SkyTraQGNSSQuality quality;
   float rtk_age;
   float rtk_ratio;
 
@@ -457,7 +457,7 @@ bool PSTI032SentenceParser::parse_fields(const char* field_strings,
   float second;
   bool is_valid = false;
   ENUVector projection;
-  GNSSQuality quality;
+  SkyTraQGNSSQuality quality;
   float baseline_length;
   float baseline_course;
 
@@ -508,7 +508,7 @@ bool PSTI032SentenceParser::parse_fields(const char* field_strings,
       // 12  Reserve    Reserve
       // 13  Reserve    Reserve
       // 14  Reserve    Reserve
-      };
+  };
 
   int i = 0;
   for (auto f : fps) {
