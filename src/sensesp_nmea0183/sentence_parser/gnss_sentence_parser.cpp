@@ -20,31 +20,31 @@ String gnss_quality_strings[] = {"no GPS",
                                  "Simulator mode",
                                  "Error"};
 
-static bool ParsePSTI030Mode(SkyTraQGNSSQuality* quality, const char* s) {
+static bool ParseSkyTraqPSTI030Mode(SkyTraqGNSSQuality* quality, const char* s) {
   switch (*s) {
     case 'N':
-      *quality = SkyTraQGNSSQuality::no_gps;
+      *quality = SkyTraqGNSSQuality::no_gps;
       break;
     case 'A':
-      *quality = SkyTraQGNSSQuality::gnss_fix;
+      *quality = SkyTraqGNSSQuality::gnss_fix;
       break;
     case 'D':
-      *quality = SkyTraQGNSSQuality::dgnss_fix;
+      *quality = SkyTraqGNSSQuality::dgnss_fix;
       break;
     case 'E':
-      *quality = SkyTraQGNSSQuality::estimated_mode;
+      *quality = SkyTraqGNSSQuality::estimated_mode;
       break;
     case 'M':
-      *quality = SkyTraQGNSSQuality::manual_input;
+      *quality = SkyTraqGNSSQuality::manual_input;
       break;
     case 'S':
-      *quality = SkyTraQGNSSQuality::simulator_mode;
+      *quality = SkyTraqGNSSQuality::simulator_mode;
       break;
     case 'F':
-      *quality = SkyTraQGNSSQuality::rtk_float;
+      *quality = SkyTraqGNSSQuality::rtk_float;
       break;
     case 'R':
-      *quality = SkyTraQGNSSQuality::rtk_fixed_integer;
+      *quality = SkyTraqGNSSQuality::rtk_fixed_integer;
       break;
     default:
       return false;
@@ -357,7 +357,7 @@ bool PSTI030SentenceParser::parse_fields(const char* field_strings,
   bool is_valid = false;
   Position position;
   ENUVector velocity;
-  SkyTraQGNSSQuality quality;
+  SkyTraqGNSSQuality quality;
   float rtk_age;
   float rtk_ratio;
 
@@ -487,7 +487,7 @@ bool PSTI032SentenceParser::parse_fields(const char* field_strings,
       // ‘F’ = Float RTK. System used in RTK mode with float ambiguity
       // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
       // ambiguity
-      FLDP(PSTI030Mode, &quality),
+      FLDP(SkyTraqPSTI030Mode, &quality),
       // 5  East‐projection of
       // baseline  0.603  East‐projection of baseline, meters
       FLDP(Float, &projection.east),

@@ -9,7 +9,7 @@
 
 namespace sensesp::nmea0183 {
 
-enum SkyTraQGNSSQuality {
+enum SkyTraqGNSSQuality {
   no_gps,
   gnss_fix,
   dgnss_fix,
@@ -85,7 +85,7 @@ class VTGSentenceParser : public SentenceParser {
   ObservableValue<float> speed_;
 };
 
-/// Parser for SkyTraQ proprietary STI,030 - Recommended Minimum 3D GNSS Data
+/// Parser for SkyTraq proprietary STI,030 - Recommended Minimum 3D GNSS Data
 class PSTI030SentenceParser : public SentenceParser {
  public:
   PSTI030SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
@@ -102,7 +102,7 @@ class PSTI030SentenceParser : public SentenceParser {
   ObservableValue<float> rtk_ratio_;
 };
 
-/// Parser for SkyTraQ proprietary STI,032 - RTK Baseline Data
+/// Parser for SkyTraq proprietary STI,032 - RTK Baseline Data
 class PSTI032SentenceParser : public SentenceParser {
  public:
   PSTI032SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
