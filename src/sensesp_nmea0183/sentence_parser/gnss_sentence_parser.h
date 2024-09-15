@@ -28,6 +28,12 @@ enum QuectelRTKHeadingStatus {
   dead_reckoning = 6,
 };
 
+struct AttitudeVector {
+  float yaw;  // heading
+  float pitch;
+  float roll;
+};
+
 extern String gnss_quality_strings[];
 
 /// Parser for GGA - Global Positioning System Fix Data.
@@ -116,12 +122,6 @@ class SkyTraqPSTI032SentenceParser : public SentenceParser {
   ObservableValue<float> baseline_length_;
   ObservableValue<float> baseline_course_;
   ObservableValue<String> gnss_quality_;
-};
-
-struct AttitudeVector {
-  float yaw;  // heading
-  float pitch;
-  float roll;
 };
 
 /// Parser for Quectel proprietary PQTMTAR - Time and Attitude
