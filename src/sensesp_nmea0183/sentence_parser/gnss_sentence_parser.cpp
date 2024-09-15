@@ -77,7 +77,7 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
   // eg3. $GNGGA,121224.00,          , ,           , ,0,00,99.99,    ,  ,    ,  ,   ,    *7E
   // clang-format on
 
-  if (num_fields < 14) {
+  if (num_fields < 15) {
     return false;
   }
 
@@ -112,7 +112,7 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
       // 14   = Diff. reference station ID#
       FLDP(Int, &dgps_id)};
 
-  int i = 0;
+  int i = 1;
   for (auto f : fps) {
     ok &= f(field_strings + field_offsets[i++]);
   }
@@ -163,7 +163,7 @@ bool GLLSentenceParser::parse_fields(const char* field_strings,
   // eg3. $GNGLL,6011.07479,N,02503.05652,E,133453.00,A,D*7A
   // eg4. $GNGLL,          , ,           , ,121223.00,V,N*55
 
-  if (num_fields < 4) {
+  if (num_fields < 5) {
     return false;
   }
 
@@ -179,7 +179,7 @@ bool GLLSentenceParser::parse_fields(const char* field_strings,
       // ignore the UTC time of the fix and the status of the fix for now
   };
 
-  int i = 0;
+  int i = 1;
   for (auto f : fps) {
     ok &= f(field_strings + field_offsets[i++]);
   }
@@ -219,7 +219,7 @@ bool RMCSentenceParser::parse_fields(const char* field_strings,
   // eg3. $GNRMC,121224.00,V,          , ,           , ,     ,     ,060222,     , ,N*61
   // clang-format on
 
-  if (num_fields < 11) {
+  if (num_fields < 12) {
     return false;
   }
 
@@ -251,7 +251,7 @@ bool RMCSentenceParser::parse_fields(const char* field_strings,
       // let's ignore it for now.
   };
 
-  int i = 0;
+  int i = 1;
   for (auto f : fps) {
     ok &= f(field_strings + field_offsets[i++]);
   }
@@ -305,7 +305,7 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
   // eg2. $GNVTG,, ,, ,     , ,     , ,N*2E
   // clang-format on
 
-  if (num_fields < 8) {
+  if (num_fields < 9) {
     return false;
   }
 
@@ -325,7 +325,7 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
       // ignore the remaining fields for now
   };
 
-  int i = 0;
+  int i = 1;
   for (auto f : fps) {
     ok &= f(field_strings + field_offsets[i++]);
   }
@@ -367,7 +367,7 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
   // note: field offsets are one larger than in the reference because
   // the subsentence number is at offset 1
 
-  if (num_fields < 14) {
+  if (num_fields < 15) {
     return false;
   }
 
@@ -421,7 +421,7 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
       // 14  RTK Ratio  4.2  AR ratio factor for validation
       FLDP(Float, &rtk_ratio)};
 
-  int i = 0;
+  int i = 1;
   for (auto f : fps) {
     ok &= f(field_strings + field_offsets[i++]);
   }
@@ -467,7 +467,7 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
   // note: field offsets are one larger than in the reference because
   // the subsentence number is at offset 1
 
-  if (num_fields < 9) {
+  if (num_fields < 10) {
     return false;
   }
 
@@ -510,7 +510,7 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
       // 14  Reserve    Reserve
   };
 
-  int i = 0;
+  int i = 1;
   for (auto f : fps) {
     ok &= f(field_strings + field_offsets[i++]);
   }
@@ -550,7 +550,7 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
   // Example:
   // $PQTMTAR,1,165331.000,6,,0.232,2.321340,-6.849396,80.410065,0.081330,0.045079,0.054334,00*72
 
-  if (num_fields < 13) {
+  if (num_fields < 14) {
     return false;
   }
 
@@ -581,7 +581,7 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
       // 12 Number of satellites used for heading calculation
       FLDP(Int, &hdg_num_satellites)};
 
-  int i = 0;
+  int i = 1;
   for (auto f : fps) {
     ok &= f(field_strings + field_offsets[i++]);
   }

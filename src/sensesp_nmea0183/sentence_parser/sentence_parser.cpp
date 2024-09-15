@@ -16,13 +16,8 @@ bool SentenceParser::parse(const char* buffer) {
     }
   }
 
-  // We already know buffer starts with the sentence address and a comma,
-  // so remove them.
-
-  const char* tail = buffer + strlen(sentence_address()) + 1;
-
   char field_strings[kNMEA0183InputBufferLength];
-  strncpy(field_strings, tail, kNMEA0183InputBufferLength);
+  strncpy(field_strings, buffer, kNMEA0183InputBufferLength);
   field_strings[kNMEA0183InputBufferLength - 1] = 0;
 
   int i;
@@ -44,8 +39,9 @@ bool SentenceParser::parse(const char* buffer) {
   // Split the sentence into fields. field_strings is otherwise a copy
   // of buffer, but the commas are replaced with 0s. field_offsets
   // contains the offsets of the beginning of each field in buffer.
-  // Since the first field starts at the beginning of the buffer,
-  // the first offset is 0.
+  // Since the first field starts after the first comma,
+  // the first field offset is 1. The sentence start character and the
+  // sentence name are in the zeroth field.
 
   int num_fields = 0;
   for (i = 0; field_strings[i] != 0; i++) {

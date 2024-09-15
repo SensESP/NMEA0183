@@ -16,7 +16,7 @@ bool WIMWVSentenceParser::parse_fields(const char* field_strings,
   // where a.a is the apparent wind angle in degrees
   //       s.s is the relative wind speed in knots
 
-  if (num_fields < 5) {
+  if (num_fields < 6) {
     return false;
   }
 
@@ -37,7 +37,7 @@ bool WIMWVSentenceParser::parse_fields(const char* field_strings,
     FLDP_OPT(Char, &a_value, 'A')
   };
 
-  int i = 0;
+  int i = 1;
   for (auto& fp : fps) {
     ok &= fp(field_strings + field_offsets[i++]);
   }

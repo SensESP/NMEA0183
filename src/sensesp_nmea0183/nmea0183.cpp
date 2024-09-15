@@ -54,9 +54,11 @@ void NMEA0183::set(const String& line) {
 }
 
 void NMEA0183::parse_sentence(const String& sentence) {
+  const char* sentence_str = sentence.c_str();
   const char* tail = sentence.c_str();
 
   // Check that the sentence starts with a dollar or an exclamation sign
+  // (AIS sentences only)
   if (tail[0] != '$' && tail[0] != '!') {
     return;
   }
@@ -72,25 +74,14 @@ void NMEA0183::parse_sentence(const String& sentence) {
       if (tail[address_length] != ',') {
         continue;
       }
-      bool result = parser->parse(tail);
+      bool result = parser->parse(sentence_str);
       ESP_LOGV("SensESP/NMEA0183", "Parsed sentence %s with result %s",
-               sentence.c_str(), result ? "true" : "false");
+               sentence_str, result ? "true" : "false");
       return;
     }
   }
-
-  // Get the address field, max 5 characters, delimited by a comma
-  char address[6];
-  int i = 0;
-  while (tail[i] != ',' && i < 5) {
-    address[i] = tail[i];
-    i++;
-  }
-  address[i] = '\0';
-  // Verify that the address field is not empty and that a comma follows
-  if (i == 0 || tail[i] != ',') {
-    return;
-  }
+  ESP_LOGV("SensESP/NMEA0183", "No parser found for sentence %s",
+           sentence_str);
 }
 
 void ReportFailure(bool ok, const char* sentence) {
