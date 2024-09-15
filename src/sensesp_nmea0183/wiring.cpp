@@ -68,10 +68,10 @@ void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
 }
 
 void ConnectRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
-  PSTI030SentenceParser* psti030_sentence_parser = new PSTI030SentenceParser(
+  SkyTraqPSTI030SentenceParser* psti030_sentence_parser = new SkyTraqPSTI030SentenceParser(
       nmea_input);
 
-  PSTI032SentenceParser* psti032_sentence_parser = new PSTI032SentenceParser(
+  SkyTraqPSTI032SentenceParser* psti032_sentence_parser = new SkyTraqPSTI032SentenceParser(
       nmea_input);
 
   psti030_sentence_parser->position_.connect_to(&rtk_data->position);
