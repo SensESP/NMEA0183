@@ -34,6 +34,26 @@ struct AttitudeVector {
   float roll;
 };
 
+enum class GNSSSystem {
+  unknown,
+  gps,
+  glonass,
+  galileo,
+  beidou,
+  qzss,
+  sbas,
+  irnss,
+};
+
+struct GNSSSatellite {
+  GNSSSystem system;
+  int id;
+  int elevation;
+  int azimuth;
+  int snr;
+  String signal;
+};
+
 extern String gnss_quality_strings[];
 
 /// Parser for GGA - Global Positioning System Fix Data.
@@ -89,6 +109,18 @@ class VTGSentenceParser : public SentenceParser {
 
   ObservableValue<float> true_course_;
   ObservableValue<float> speed_;
+};
+
+/// Parser for GSV - GNSS Satellites in View
+class GSVSentenceParser : public SentenceParser {
+ public:
+  GSVSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "G.GSV"; }
+
+  ObservableValue<int> num_satellites_;
+  ObservableValue<std::vector<GNSSSatellite>> satellites_;
 };
 
 /// Parser for SkyTraq proprietary STI,030 - Recommended Minimum 3D GNSS Data

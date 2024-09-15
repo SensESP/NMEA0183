@@ -2,6 +2,7 @@
 #include "gnss_sentence_parser.h"
 
 #include <functional>
+#include <vector>
 
 #include "Arduino.h"
 
@@ -20,7 +21,8 @@ String gnss_quality_strings[] = {"no GPS",
                                  "Simulator mode",
                                  "Error"};
 
-static bool ParseSkyTraqPSTI030Mode(SkyTraqGNSSQuality* quality, const char* s) {
+static bool ParseSkyTraqPSTI030Mode(SkyTraqGNSSQuality* quality,
+                                    const char* s) {
   switch (*s) {
     case 'N':
       *quality = SkyTraqGNSSQuality::no_gps;
@@ -347,9 +349,203 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
+bool GSVSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
+  bool ok = true;
+
+  // True if NMEA 0183 v4.10 format with separate system ID is used
+  static int num_sentences = 0;
+  int sentence_number = 0;
+  static bool new_message_format = false;
+  static int collected_num_satellites = 0;
+  int num_satellites = 0;
+  static std::vector<GNSSSatellite> satellites;
+  GNSSSatellite sentence_satellites[4] = {{GNSSSystem::unknown, 0, 0, 0, 0}};
+  char signal_id = '0';
+  static int first_sentence_type = 0;  // Combination of system and signal ID
+  String signal = "";
+  GNSSSystem system = GNSSSystem::unknown;
+
+  if (num_fields == 20) {
+    new_message_format = false;
+  } else if (num_fields == 21) {
+    new_message_format = true;
+  } else {
+    return false;
+  }
+
+  // Get the system from the sentence talker ID
+  switch (field_strings[2]) {
+    case 'G':
+      system = GNSSSystem::gps;
+      break;
+    case 'L':
+      system = GNSSSystem::glonass;
+      break;
+    case 'A':
+      system = GNSSSystem::galileo;
+      break;
+    case 'B':
+      system = GNSSSystem::beidou;
+      break;
+    default:
+      system = GNSSSystem::unknown;
+  }
+
+  std::function<bool(const char*)> fps[] = {
+      // 1   Number of messages of this type in this cycle
+      FLDP(Int, &num_satellites),
+      // 2   Message number
+      FLDP(Int, nullptr),
+      // 3   Number of satellites in view
+      FLDP(Int, nullptr),
+      // 4   Satellite PRN number
+      FLDP(Int, &sentence_satellites[0].id),
+      // 5   Elevation in degrees, 90 maximum
+      FLDP(Int, &sentence_satellites[0].elevation),
+      // 6   Azimuth, degrees from true north, 000 to 359
+      FLDP(Int, &sentence_satellites[0].azimuth),
+      // 7   SNR, 00-99 dB (null when not tracking)
+      FLDP(Int, &sentence_satellites[0].snr),
+      // 8   Satellite PRN number
+      FLDP_OPT(Int, &sentence_satellites[1].id),
+      // 9   Elevation in degrees, 90 maximum
+      FLDP_OPT(Int, &sentence_satellites[1].elevation),
+      // 10  Azimuth, degrees from true north, 000 to 359
+      FLDP_OPT(Int, &sentence_satellites[1].azimuth),
+      // 11  SNR, 00-99 dB (null when not tracking)
+      FLDP_OPT(Int, &sentence_satellites[1].snr),
+      // 12  Satellite PRN number
+      FLDP_OPT(Int, &sentence_satellites[2].id),
+      // 13  Elevation in degrees, 90 maximum
+      FLDP_OPT(Int, &sentence_satellites[2].elevation),
+      // 14  Azimuth, degrees from true north, 000 to 359
+      FLDP_OPT(Int, &sentence_satellites[2].azimuth),
+      // 15  SNR, 00-99 dB (null when not tracking)
+      FLDP_OPT(Int, &sentence_satellites[2].snr),
+      // 16  Satellite PRN number
+      FLDP_OPT(Int, &sentence_satellites[3].id),
+      // 17  Elevation in degrees, 90 maximum
+      FLDP_OPT(Int, &sentence_satellites[3].elevation),
+      // 18  Azimuth, degrees from true north
+      FLDP_OPT(Int, &sentence_satellites[3].azimuth),
+      // 19  SNR, 00-99 dB (null when not tracking)
+      FLDP_OPT(Int, &sentence_satellites[3].snr),
+      // 21  Signal ID (only in new message format)
+      FLDP(Char, &signal_id, -1)};
+
+  int range = new_message_format ? 21 : 20;
+  // Loop from 1 to range to skip the first field
+
+  for (int i = 1; i < range; i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
+  }
+
+  if (!ok) {
+    return false;
+  }
+
+  // Convert the signal_id hex character to an integer
+  if (signal_id >= 'A') {
+    signal_id -= 'A' - 10;
+  } else {
+    signal_id -= '0';
+  }
+
+  int sentence_type = static_cast<int>(system) * 16 + signal_id;
+
+  // If the sentence type equals to the first sentence type, we have received
+  // all GSV sentences in the cycle. Notify the observers.
+
+  if (sentence_type == first_sentence_type) {
+    num_satellites_.set(collected_num_satellites);
+    satellites_.set(satellites);
+    collected_num_satellites = 0;
+    satellites.clear();
+  }
+
+  if (first_sentence_type == 0) {
+    // At the first sentence, set the first_sentence_type. This is used to
+    // determine whether we have received all GSV sentences in the cycle.
+    first_sentence_type = sentence_type;
+  }
+
+  // Names and IDs below copied from this document:
+  // https://docs.fixposition.com/fd/nmea-gp-gsv
+
+  if (new_message_format) {
+    switch (system) {
+      case GNSSSystem::gps:
+        switch (signal_id) {
+          case 1:
+            signal = "GPS L1 C/A";
+            break;
+          case 6:
+            signal = "GPS L2C-L";
+            break;
+          default:
+            signal = "unknown";
+        }
+        break;
+      case GNSSSystem::glonass:
+        switch (signal_id) {
+          case 1:
+            signal = "GLONASS G1 C/A";
+            break;
+          case 3:
+            signal = "GLONASS G2 C/A";
+            break;
+          default:
+            signal = "unknown";
+        }
+        break;
+      case GNSSSystem::galileo:
+        switch (signal_id) {
+          case 7:
+            signal = "Galileo L1-BC";
+            break;
+          case 2:
+            signal = "Galileo E5b";
+            break;
+          default:
+            signal = "unknown";
+        }
+        break;
+      case GNSSSystem::beidou:
+        switch (signal_id) {
+          case 1:
+            signal = "Beidou B1I";
+            break;
+          case 0xB:
+            signal = "Beidou B2I";
+            break;
+          default:
+            signal = "unknown";
+        }
+        break;
+      default:
+        signal = "unknown";
+    }
+  }
+
+  // Collect the satellites in the sentence
+
+  for (int i=0; i<4; i++) {
+    if (sentence_satellites[i].id != 0) {
+      sentence_satellites[i].system = system;
+      sentence_satellites[i].signal = signal;
+      satellites.push_back(sentence_satellites[i]);
+      collected_num_satellites++;
+    }
+  }
+
+  return true;
+};
+
 bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
-                                         const int field_offsets[],
-                                         int num_fields) {
+                                                const int field_offsets[],
+                                                int num_fields) {
   bool ok = true;
 
   struct tm time;
@@ -449,8 +645,8 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
 }
 
 bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
-                                         const int field_offsets[],
-                                         int num_fields) {
+                                                const int field_offsets[],
+                                                int num_fields) {
   bool ok = true;
 
   struct tm time;
@@ -534,8 +730,8 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
 }
 
 bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
-                                         const int field_offsets[],
-                                         int num_fields) {
+                                                const int field_offsets[],
+                                                int num_fields) {
   bool ok = true;
 
   struct tm time;
