@@ -347,7 +347,7 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
-bool PSTI030SentenceParser::parse_fields(const char* field_strings,
+bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
                                          const int field_offsets[],
                                          int num_fields) {
   bool ok = true;
@@ -415,7 +415,7 @@ bool PSTI030SentenceParser::parse_fields(const char* field_strings,
       // integers
       // ‘R’ = Real Time Kinematic. System used in RTK mode with fixed
       // integers
-      FLDP(PSTI030Mode, &quality),
+      FLDP(SkyTraqPSTI030Mode, &quality),
       // 13  RTK Age  1.2  Age of differential
       FLDP(Float, &rtk_age),
       // 14  RTK Ratio  4.2  AR ratio factor for validation
@@ -448,7 +448,7 @@ bool PSTI030SentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
-bool PSTI032SentenceParser::parse_fields(const char* field_strings,
+bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
                                          const int field_offsets[],
                                          int num_fields) {
   bool ok = true;
@@ -457,7 +457,7 @@ bool PSTI032SentenceParser::parse_fields(const char* field_strings,
   float second;
   bool is_valid = false;
   ENUVector projection;
-  SkyTraQGNSSQuality quality;
+  SkyTraqGNSSQuality quality;
   float baseline_length;
   float baseline_course;
 
@@ -533,7 +533,7 @@ bool PSTI032SentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
-bool PQTMTARSentenceParser::parse_fields(const char* field_strings,
+bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
                                          const int field_offsets[],
                                          int num_fields) {
   bool ok = true;

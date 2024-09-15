@@ -86,9 +86,9 @@ class VTGSentenceParser : public SentenceParser {
 };
 
 /// Parser for SkyTraq proprietary STI,030 - Recommended Minimum 3D GNSS Data
-class PSTI030SentenceParser : public SentenceParser {
+class SkyTraqPSTI030SentenceParser : public SentenceParser {
  public:
-  PSTI030SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  SkyTraqPSTI030SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
@@ -103,9 +103,9 @@ class PSTI030SentenceParser : public SentenceParser {
 };
 
 /// Parser for SkyTraq proprietary STI,032 - RTK Baseline Data
-class PSTI032SentenceParser : public SentenceParser {
+class SkyTraqPSTI032SentenceParser : public SentenceParser {
  public:
-  PSTI032SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  SkyTraqPSTI032SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
@@ -125,9 +125,9 @@ struct AttitudeVector {
 };
 
 /// Parser for Quectel proprietary PQTMTAR - Time and Attitude
-class PQTMTARSentenceParser : public SentenceParser {
+class QuectelPQTMTARSentenceParser : public SentenceParser {
  public:
-  PQTMTARSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  QuectelPQTMTARSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
