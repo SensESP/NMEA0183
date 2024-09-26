@@ -11,8 +11,7 @@
 #include "sensesp_nmea0183/wiring.h"
 
 using namespace sensesp;
-
-ReactESP app;
+using namespace sensesp::nmea0183;
 
 constexpr int kGNSSBitRate = 9600;
 constexpr int kGNSSRxPin = 15;
@@ -42,4 +41,4 @@ void setup() {
   ConnectGNSS(nmea, new GNSSData());
 }
 
-void loop() { app.tick(); }
+void loop() { SensESPBaseApp::get_event_loop()->tick(); }
