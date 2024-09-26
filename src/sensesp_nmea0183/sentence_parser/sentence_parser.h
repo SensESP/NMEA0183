@@ -3,10 +3,9 @@
 
 #include <map>
 
-#include "sensesp/signalk/signalk_position.h"
 #include "sensesp_nmea0183/nmea0183.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 class NMEA0183;
 

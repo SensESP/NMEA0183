@@ -5,7 +5,7 @@
 #include "sensesp_nmea0183/nmea0183.h"
 #include "sensesp_nmea0183/data/wind_data.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 /**
  * @brief GNSSData observable members to SK outputs.
@@ -15,12 +15,20 @@ namespace sensesp {
 void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data);
 
 /**
- * @brief Wire the RTKData observable members to SK outputs.
+ * @brief Wire the SkyTraq RTK Data observable members to SK outputs.
  *
  * @param nmea_input
  * @param rtk_data
  */
-void ConnectRTK(NMEA0183* nmea_input, RTKData* rtk_data);
+void ConnectSkyTraqRTK(NMEA0183* nmea_input, RTKData* rtk_data);
+
+/**
+ * @brief Wire the Quectel RTK Data observable members to SK outputs.
+ *
+ * @param nmea_input
+ * @param rtk_data
+ */
+void ConnectQuectelRTK(NMEA0183* nmea_input, RTKData* rtk_data);
 
 /**
  * @brief Wire the ApparentWindData observable members to SK outputs.

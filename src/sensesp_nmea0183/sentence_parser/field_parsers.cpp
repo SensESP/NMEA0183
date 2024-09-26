@@ -7,7 +7,7 @@
 
 #include "sensesp.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 bool ParseString(String* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
@@ -113,7 +113,7 @@ bool ParseEW(float* value, const char* s, bool allow_empty) {
 
 #include <cstring>
 
-bool ParseChar(char* value, const char* s, char expected, bool allow_empty) {
+bool ParseChar(char* value, const char expected, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     *value = 0;
     return allow_empty;
@@ -168,4 +168,8 @@ bool ParseDate(int* year, int* month, int* day, const char* s, bool allow_empty)
   return retval == 3;
 }
 
-}  // namespace sensesp
+bool ParseEmpty(const char* s) {
+  return s[0] == 0;
+}
+
+}  // namespace sensesp::nmea0183

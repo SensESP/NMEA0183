@@ -4,7 +4,7 @@
 #include "sensesp/system/observablevalue.h"
 #include "sensesp/types/position.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 /**
  * @brief Container for all decoded apparent wind data.

@@ -4,12 +4,13 @@
 #include "field_parsers.h"
 #include "sensesp/system/observablevalue.h"
 #include "sensesp/types/position.h"
+#include "sensesp_nmea0183/data/gnss_data.h"
 #include "sensesp_nmea0183/nmea0183.h"
 #include "sensesp_nmea0183/sentence_parser/sentence_parser.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
-enum GNSSQuality {
+enum SkyTraqGNSSQuality {
   no_gps,
   gnss_fix,
   dgnss_fix,
@@ -22,13 +23,19 @@ enum GNSSQuality {
   error
 };
 
+enum QuectelRTKHeadingStatus {
+  invalid,
+  rtk = 4,
+  dead_reckoning = 6,
+};
+
 extern String gnss_quality_strings[];
 
 /// Parser for GGA - Global Positioning System Fix Data.
 class GGASentenceParser : public SentenceParser {
  public:
   GGASentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.GGA"; }
 
@@ -45,7 +52,7 @@ class GGASentenceParser : public SentenceParser {
 class GLLSentenceParser : public SentenceParser {
  public:
   GLLSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.GLL"; }
 
@@ -56,7 +63,7 @@ class GLLSentenceParser : public SentenceParser {
 class RMCSentenceParser : public SentenceParser {
  public:
   RMCSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.RMC"; }
 
@@ -71,7 +78,7 @@ class RMCSentenceParser : public SentenceParser {
 class VTGSentenceParser : public SentenceParser {
  public:
   VTGSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "..VTG"; }
 
@@ -79,12 +86,25 @@ class VTGSentenceParser : public SentenceParser {
   ObservableValue<float> speed_;
 };
 
-/// Parser for proprietary STI,030 - Recommended Minimum 3D GNSS Data
-class PSTI030SentenceParser : public SentenceParser {
+/// Parser for GSV - GNSS Satellites in View
+class GSVSentenceParser : public SentenceParser {
  public:
-  PSTI030SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  GSVSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "G.GSV"; }
 
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  ObservableValue<int> num_satellites_;
+  ObservableValue<std::vector<GNSSSatellite>> satellites_;
+  ObservableValue<GNSSSatellite> first_satellite_;
+};
+
+/// Parser for SkyTraq proprietary STI,030 - Recommended Minimum 3D GNSS Data
+class SkyTraqPSTI030SentenceParser : public SentenceParser {
+ public:
+  SkyTraqPSTI030SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "PSTI,030"; }
 
@@ -96,12 +116,12 @@ class PSTI030SentenceParser : public SentenceParser {
   ObservableValue<float> rtk_ratio_;
 };
 
-/// Parser for proprietary STI,032 - RTK Baseline Data
-class PSTI032SentenceParser : public SentenceParser {
+/// Parser for SkyTraq proprietary STI,032 - RTK Baseline Data
+class SkyTraqPSTI032SentenceParser : public SentenceParser {
  public:
-  PSTI032SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  SkyTraqPSTI032SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
 
-  bool parse_fields(const char* buffer, const int field_offsets[],
+  bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "PSTI,032"; }
 
@@ -112,6 +132,23 @@ class PSTI032SentenceParser : public SentenceParser {
   ObservableValue<String> gnss_quality_;
 };
 
-}  // namespace sensesp
+/// Parser for Quectel proprietary PQTMTAR - Time and Attitude
+class QuectelPQTMTARSentenceParser : public SentenceParser {
+ public:
+  QuectelPQTMTARSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "PQTMTAR"; }
+
+  ObservableValue<time_t> datetime_;
+  ObservableValue<QuectelRTKHeadingStatus> heading_status_;
+  ObservableValue<float> baseline_length_;
+  ObservableValue<AttitudeVector> attitude_;
+  ObservableValue<AttitudeVector> attitude_accuracy_;
+  ObservableValue<int> hdg_num_satellites_;
+};
+
+}  // namespace sensesp::nmea0183
 
 #endif  // _SENSESP_NMEA0183_GNSS_SENTENCE_PARSER_H_

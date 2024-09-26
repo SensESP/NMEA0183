@@ -4,7 +4,7 @@
 
 #include "sensesp.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 /**
  * @brief String comparision with a maximum length and wildcard support.
@@ -29,7 +29,8 @@ static int strncmpwc(const char* s1, const char* s2, int n) {
 
 int CalculateChecksum(const char* buffer, char seed) {
   int checksum = seed;
-  for (const char* p = buffer; *p != '*' && *p != 0; p++) {
+  // Skip the sentence start character
+  for (const char* p = buffer + 1; *p != '*' && *p != 0; p++) {
     checksum ^= *p;
   }
   return checksum;
@@ -54,12 +55,15 @@ void NMEA0183::set(const String& line) {
 }
 
 void NMEA0183::parse_sentence(const String& sentence) {
+  const char* sentence_str = sentence.c_str();
   const char* tail = sentence.c_str();
 
   // Check that the sentence starts with a dollar or an exclamation sign
+  // (AIS sentences only)
   if (tail[0] != '$' && tail[0] != '!') {
     return;
   }
+  // Move the tail pointer past the sentence begin character
   tail++;
 
   // Loop through sentence parsers and find the one that matches the sentence.
@@ -71,26 +75,14 @@ void NMEA0183::parse_sentence(const String& sentence) {
       if (tail[address_length] != ',') {
         continue;
       }
-      tail += address_length + 1;
-      bool result = parser->parse(tail);
+      bool result = parser->parse(sentence_str);
       ESP_LOGV("SensESP/NMEA0183", "Parsed sentence %s with result %s",
-               sentence.c_str(), result ? "true" : "false");
+               sentence_str, result ? "true" : "false");
       return;
     }
   }
-
-  // Get the address field, max 5 characters, delimited by a comma
-  char address[6];
-  int i = 0;
-  while (tail[i] != ',' && i < 5) {
-    address[i] = tail[i];
-    i++;
-  }
-  address[i] = '\0';
-  // Verify that the address field is not empty and that a comma follows
-  if (i == 0 || tail[i] != ',') {
-    return;
-  }
+  ESP_LOGV("SensESP/NMEA0183", "No parser found for sentence %s",
+           sentence_str);
 }
 
 void ReportFailure(bool ok, const char* sentence) {
@@ -104,4 +96,4 @@ void NMEA0183::register_sentence_parser(SentenceParser* parser) {
   sentence_parsers.push_back(parser);
 }
 
-}  // namespace sensesp
+}  // namespace sensesp::nmea0183

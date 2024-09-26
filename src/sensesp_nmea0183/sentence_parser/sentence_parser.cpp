@@ -2,7 +2,7 @@
 
 #include "sensesp_nmea0183/nmea0183.h"
 
-namespace sensesp {
+namespace sensesp::nmea0183 {
 
 SentenceParser::SentenceParser(NMEA0183* nmea_io) : ignore_checksum_{false} {
   nmea_io->register_sentence_parser(this);
@@ -11,8 +11,7 @@ SentenceParser::SentenceParser(NMEA0183* nmea_io) : ignore_checksum_{false} {
 bool SentenceParser::parse(const char* buffer) {
   if (!ignore_checksum_) {
     if (!validate_checksum(buffer)) {
-      ESP_LOGW("SensESP/NMEA0183", "Invalid checksum in sentence %s,%s",
-               sentence_address(), buffer);
+      ESP_LOGW("SensESP/NMEA0183", "Invalid checksum in sentence: %s", buffer);
       return false;
     }
   }
@@ -40,14 +39,14 @@ bool SentenceParser::parse(const char* buffer) {
   // Split the sentence into fields. field_strings is otherwise a copy
   // of buffer, but the commas are replaced with 0s. field_offsets
   // contains the offsets of the beginning of each field in buffer.
-  // Since the first field starts at the beginning of the buffer,
-  // the first offset is 0.
+  // Since the first field starts after the first comma,
+  // the first field offset is 1. The sentence start character and the
+  // sentence name are in the zeroth field.
 
   int num_fields = 0;
   for (i = 0; field_strings[i] != 0; i++) {
     if (num_fields >= kNMEA0183MaxFields) {
-      ESP_LOGW("SensESP/NMEA0183", "Too many fields in sentence %s,%s",
-               sentence_address(), field_strings);
+      ESP_LOGW("SensESP/NMEA0183", "Too many fields in sentence: %s", buffer);
       return false;
     }
     if (field_strings[i] == ',') {
@@ -84,13 +83,10 @@ bool SentenceParser::validate_checksum(const char* buffer) {
     return false;
   }
   // Calculate the checksum. The checksum is the XOR of all bytes between '$'
-  // and '*'. Our buffer doesn't include the address field and the first comma,
-  // so start with XORing them.
-  int chksum = CalculateChecksum(sentence_address());
-  chksum = CalculateChecksum(",", chksum);
-  chksum = CalculateChecksum(buffer, chksum);
+  // and '*'.
+  int chksum = CalculateChecksum(buffer);
 
   return chksum == checksum;
 }
 
-}  // namespace sensesp
+}  // namespace sensesp::nmea0183
