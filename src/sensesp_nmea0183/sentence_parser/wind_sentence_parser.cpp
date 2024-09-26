@@ -24,22 +24,20 @@ bool WIMWVSentenceParser::parse_fields(const char* field_strings,
   char units;
   char a_value;
 
-  std::function<bool(const char*)> fps[] = {
-    // 1 a.a = Apparent wind angle
-    FLDP_OPT(Float, &wind_angle),
-    // 2 R = Relative wind speed
-    FLDP_OPT(Char, &r_value, 'R'),
-    // 3 s.s = Wind speed
-    FLDP_OPT(Float, &wind_speed),
-    // 4 N = Wind speed units
-    FLDP_OPT(Char, &units, 255),
-    // 5 A = Valid
-    FLDP_OPT(Char, &a_value, 'A')
-  };
+  std::function<bool(const char*)> fps[] = {// 1 a.a = Apparent wind angle
+                                            FLDP_OPT(Float, &wind_angle),
+                                            // 2 R = Relative wind speed
+                                            FLDP_OPT(Char, &r_value, 'R'),
+                                            // 3 s.s = Wind speed
+                                            FLDP_OPT(Float, &wind_speed),
+                                            // 4 N = Wind speed units
+                                            FLDP_OPT(Char, &units, 255),
+                                            // 5 A = Valid
+                                            FLDP_OPT(Char, &a_value, 'A')};
 
-  int i = 1;
-  for (auto& fp : fps) {
-    ok &= fp(field_strings + field_offsets[i++]);
+  for (int i = 1; i <= sizeof(fps) / sizeof(std::function<bool(const char*)>);
+       i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
   }
 
   if (!ok) {

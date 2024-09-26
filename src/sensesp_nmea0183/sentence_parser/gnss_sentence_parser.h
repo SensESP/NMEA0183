@@ -4,6 +4,7 @@
 #include "field_parsers.h"
 #include "sensesp/system/observablevalue.h"
 #include "sensesp/types/position.h"
+#include "sensesp_nmea0183/data/gnss_data.h"
 #include "sensesp_nmea0183/nmea0183.h"
 #include "sensesp_nmea0183/sentence_parser/sentence_parser.h"
 
@@ -26,32 +27,6 @@ enum QuectelRTKHeadingStatus {
   invalid,
   rtk = 4,
   dead_reckoning = 6,
-};
-
-struct AttitudeVector {
-  float yaw;  // heading
-  float pitch;
-  float roll;
-};
-
-enum class GNSSSystem {
-  unknown,
-  gps,
-  glonass,
-  galileo,
-  beidou,
-  qzss,
-  sbas,
-  irnss,
-};
-
-struct GNSSSatellite {
-  GNSSSystem system;
-  int id;
-  int elevation;
-  int azimuth;
-  int snr;
-  String signal;
 };
 
 extern String gnss_quality_strings[];
@@ -121,6 +96,7 @@ class GSVSentenceParser : public SentenceParser {
 
   ObservableValue<int> num_satellites_;
   ObservableValue<std::vector<GNSSSatellite>> satellites_;
+  ObservableValue<GNSSSatellite> first_satellite_;
 };
 
 /// Parser for SkyTraq proprietary STI,030 - Recommended Minimum 3D GNSS Data
@@ -167,7 +143,7 @@ class QuectelPQTMTARSentenceParser : public SentenceParser {
 
   ObservableValue<time_t> datetime_;
   ObservableValue<QuectelRTKHeadingStatus> heading_status_;
-  ObservableValue<float> base_line_length_;
+  ObservableValue<float> baseline_length_;
   ObservableValue<AttitudeVector> attitude_;
   ObservableValue<AttitudeVector> attitude_accuracy_;
   ObservableValue<int> hdg_num_satellites_;

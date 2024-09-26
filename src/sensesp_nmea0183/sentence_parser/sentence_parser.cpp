@@ -83,11 +83,10 @@ bool SentenceParser::validate_checksum(const char* buffer) {
     return false;
   }
   // Calculate the checksum. The checksum is the XOR of all bytes between '$'
-  // and '*'. Our buffer doesn't include the address field and the first comma,
-  // so start with XORing them.
+  // and '*'.
   int chksum = CalculateChecksum(buffer);
 
   return chksum == checksum;
 }
 
-}  // namespace sensesp
+}  // namespace sensesp::nmea0183

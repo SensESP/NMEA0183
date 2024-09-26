@@ -114,9 +114,8 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
       // 14   = Diff. reference station ID#
       FLDP(Int, &dgps_id)};
 
-  int i = 1;
-  for (auto f : fps) {
-    ok &= f(field_strings + field_offsets[i++]);
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
   }
 
   if (!ok) {
@@ -158,7 +157,7 @@ bool GLLSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  Position position;
+  Position position{kInvalidDouble, kInvalidDouble, kPositionInvalidAltitude};
 
   // eg.  $GPGLL,5133.81   ,N,00042.25   ,W              *75
   // eg2. $GNGLL,4916.45   ,N,12311.12   ,W,225444   ,A
@@ -171,19 +170,18 @@ bool GLLSentenceParser::parse_fields(const char* field_strings,
 
   std::function<bool(const char*)> fps[] = {
       // 1    5133.81   Current latitude
-      FLDP(LatLon, &position.latitude),
+      FLDP_OPT(LatLon, &position.latitude),
       // 2    N         North/South
-      FLDP(NS, &position.latitude),
+      FLDP_OPT(NS, &position.latitude),
       // 3    00042.25  Current longitude
-      FLDP(LatLon, &position.longitude),
+      FLDP_OPT(LatLon, &position.longitude),
       // 4    W         East/West
-      FLDP(EW, &position.longitude)
+      FLDP_OPT(EW, &position.longitude)
       // ignore the UTC time of the fix and the status of the fix for now
   };
 
-  int i = 1;
-  for (auto f : fps) {
-    ok &= f(field_strings + field_offsets[i++]);
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
   }
 
   if (!ok) {
@@ -253,9 +251,8 @@ bool RMCSentenceParser::parse_fields(const char* field_strings,
       // let's ignore it for now.
   };
 
-  int i = 1;
-  for (auto f : fps) {
-    ok &= f(field_strings + field_offsets[i++]);
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
   }
 
   if (!ok) {
@@ -327,9 +324,8 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
       // ignore the remaining fields for now
   };
 
-  int i = 1;
-  for (auto f : fps) {
-    ok &= f(field_strings + field_offsets[i++]);
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
   }
 
   if (!ok) {
@@ -361,15 +357,21 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
   static int collected_num_satellites = 0;
   int num_satellites = 0;
   static std::vector<GNSSSatellite> satellites;
-  GNSSSatellite sentence_satellites[4] = {{GNSSSystem::unknown, 0, 0, 0, 0}};
+  GNSSSatellite sentence_satellites[4];
   char signal_id = '0';
   static int first_sentence_type = 0;  // Combination of system and signal ID
   String signal = "";
   GNSSSystem system = GNSSSystem::unknown;
 
-  if (num_fields == 20) {
+  if (num_fields < 4 || num_fields > 21) {
+    return false;
+  }
+
+  int num_blocks = (num_fields - 4) / 4;
+
+  if ((num_fields - 4) % 4 == 0) {
     new_message_format = false;
-  } else if (num_fields == 21) {
+  } else if ((num_fields - 4) % 4 == 1) {
     new_message_format = true;
   } else {
     return false;
@@ -377,7 +379,7 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
 
   // Get the system from the sentence talker ID
   switch (field_strings[2]) {
-    case 'G':
+    case 'P':
       system = GNSSSystem::gps;
       break;
     case 'L':
@@ -393,53 +395,45 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
       system = GNSSSystem::unknown;
   }
 
+  // First fields always present
+
   std::function<bool(const char*)> fps[] = {
       // 1   Number of messages of this type in this cycle
-      FLDP(Int, &num_satellites),
+      FLDP(Int, &num_sentences),
       // 2   Message number
-      FLDP(Int, nullptr),
+      FLDP(Int, &sentence_number),
       // 3   Number of satellites in view
-      FLDP(Int, nullptr),
-      // 4   Satellite PRN number
-      FLDP(Int, &sentence_satellites[0].id),
-      // 5   Elevation in degrees, 90 maximum
-      FLDP(Int, &sentence_satellites[0].elevation),
-      // 6   Azimuth, degrees from true north, 000 to 359
-      FLDP(Int, &sentence_satellites[0].azimuth),
-      // 7   SNR, 00-99 dB (null when not tracking)
-      FLDP(Int, &sentence_satellites[0].snr),
-      // 8   Satellite PRN number
-      FLDP_OPT(Int, &sentence_satellites[1].id),
-      // 9   Elevation in degrees, 90 maximum
-      FLDP_OPT(Int, &sentence_satellites[1].elevation),
-      // 10  Azimuth, degrees from true north, 000 to 359
-      FLDP_OPT(Int, &sentence_satellites[1].azimuth),
-      // 11  SNR, 00-99 dB (null when not tracking)
-      FLDP_OPT(Int, &sentence_satellites[1].snr),
-      // 12  Satellite PRN number
-      FLDP_OPT(Int, &sentence_satellites[2].id),
-      // 13  Elevation in degrees, 90 maximum
-      FLDP_OPT(Int, &sentence_satellites[2].elevation),
-      // 14  Azimuth, degrees from true north, 000 to 359
-      FLDP_OPT(Int, &sentence_satellites[2].azimuth),
-      // 15  SNR, 00-99 dB (null when not tracking)
-      FLDP_OPT(Int, &sentence_satellites[2].snr),
-      // 16  Satellite PRN number
-      FLDP_OPT(Int, &sentence_satellites[3].id),
-      // 17  Elevation in degrees, 90 maximum
-      FLDP_OPT(Int, &sentence_satellites[3].elevation),
-      // 18  Azimuth, degrees from true north
-      FLDP_OPT(Int, &sentence_satellites[3].azimuth),
-      // 19  SNR, 00-99 dB (null when not tracking)
-      FLDP_OPT(Int, &sentence_satellites[3].snr),
-      // 21  Signal ID (only in new message format)
-      FLDP(Char, &signal_id, -1)};
+      FLDP(Int, &num_satellites),
+  };
 
-  int range = new_message_format ? 21 : 20;
-  // Loop from 1 to range to skip the first field
-
-  for (int i = 1; i < range; i++) {
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
     ok &= fps[i - 1](field_strings + field_offsets[i]);
+  }
+
+  // This block of fields repeated 0..4 times
+
+  for (int j = 0; j < num_blocks; j++) {
+    std::function<bool(const char*)> rep_fps[] = {
+        // 4   Satellite PRN number
+        FLDP_OPT(Int, &sentence_satellites[j].id),
+        // 5   Elevation in degrees, 90 maximum
+        FLDP_OPT(Float, sentence_satellites[j].elevation.ptr()),
+        // 6   Azimuth, degrees from true north, 000 to 359
+        FLDP_OPT(Float, sentence_satellites[j].azimuth.ptr()),
+        // 7   SNR, 00-99 dB (null when not tracking)
+        FLDP_OPT(Int, &sentence_satellites[j].snr),
+    };
+
+    for (int i = 0; i < 4; i++) {
+      ok &= rep_fps[i](field_strings + field_offsets[4 + j * 4 + i]);
+    }
+  }
+
+  // Last field only present in new message format
+
+  if (new_message_format) {
+    ok &= FLDP_OPT(Char, &signal_id,
+                   -1)(field_strings + field_offsets[4 + num_blocks * 4]);
   }
 
   if (!ok) {
@@ -464,6 +458,8 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
     collected_num_satellites = 0;
     satellites.clear();
   }
+
+  // Finish parsing the current sentence.
 
   if (first_sentence_type == 0) {
     // At the first sentence, set the first_sentence_type. This is used to
@@ -531,13 +527,11 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
 
   // Collect the satellites in the sentence
 
-  for (int i=0; i<4; i++) {
-    if (sentence_satellites[i].id != 0) {
-      sentence_satellites[i].system = system;
-      sentence_satellites[i].signal = signal;
-      satellites.push_back(sentence_satellites[i]);
-      collected_num_satellites++;
-    }
+  for (int i = 0; i < num_blocks; i++) {
+    sentence_satellites[i].system = system;
+    sentence_satellites[i].signal = signal;
+    satellites.push_back(sentence_satellites[i]);
+    collected_num_satellites++;
   }
 
   return true;
@@ -617,9 +611,8 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
       // 14  RTK Ratio  4.2  AR ratio factor for validation
       FLDP(Float, &rtk_ratio)};
 
-  int i = 1;
-  for (auto f : fps) {
-    ok &= f(field_strings + field_offsets[i++]);
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
   }
 
   if (!ok) {
@@ -706,9 +699,8 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
       // 14  Reserve    Reserve
   };
 
-  int i = 1;
-  for (auto f : fps) {
-    ok &= f(field_strings + field_offsets[i++]);
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
   }
 
   if (!ok) {
@@ -745,8 +737,10 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
 
   // Example:
   // $PQTMTAR,1,165331.000,6,,0.232,2.321340,-6.849396,80.410065,0.081330,0.045079,0.054334,00*72
+  // $PQTMTAR,1,140702.000,0,,0.000,-0.527020,3.732500,         ,0.003242,0.003225,        ,00*40
 
-  if (num_fields < 14) {
+
+  if (num_fields < 13) {
     return false;
   }
 
@@ -777,9 +771,8 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
       // 12 Number of satellites used for heading calculation
       FLDP(Int, &hdg_num_satellites)};
 
-  int i = 1;
-  for (auto f : fps) {
-    ok &= f(field_strings + field_offsets[i++]);
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
   }
 
   if (!ok) {
@@ -790,12 +783,12 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
   time.tm_isdst = 0;
 
   datetime_.set(mktime(&time));
-  base_line_length_.set(base_line_length);
   heading_status_.set(static_cast<QuectelRTKHeadingStatus>(heading_status));
-  if (heading_status > 0) {
+  hdg_num_satellites_.set(hdg_num_satellites);
+  if (heading_status == 4) {
+    baseline_length_.set(base_line_length);
     attitude_.set(attitude_degree);
     attitude_accuracy_.set(attitude_accuracy_degree);
-    hdg_num_satellites_.set(hdg_num_satellites);
   }
 
   return true;

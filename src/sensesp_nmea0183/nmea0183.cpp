@@ -29,7 +29,8 @@ static int strncmpwc(const char* s1, const char* s2, int n) {
 
 int CalculateChecksum(const char* buffer, char seed) {
   int checksum = seed;
-  for (const char* p = buffer; *p != '*' && *p != 0; p++) {
+  // Skip the sentence start character
+  for (const char* p = buffer + 1; *p != '*' && *p != 0; p++) {
     checksum ^= *p;
   }
   return checksum;
