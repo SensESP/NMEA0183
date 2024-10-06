@@ -25,9 +25,9 @@ void AddChecksum(String& sentence);
  * @param stream Pointer to the Stream of incoming NMEA0183 data over
  * a serial connection.
  **/
-class NMEA0183 : public ValueConsumer<String> {
+class NMEA0183Parser : public ValueConsumer<String> {
  public:
-  NMEA0183() : ValueConsumer<String>() {}
+  NMEA0183Parser() : ValueConsumer<String>() {}
 
   void register_sentence_parser(SentenceParser* parser);
   virtual void set(const String& line) override;

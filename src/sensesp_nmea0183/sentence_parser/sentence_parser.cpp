@@ -4,7 +4,7 @@
 
 namespace sensesp::nmea0183 {
 
-SentenceParser::SentenceParser(NMEA0183* nmea_io) : ignore_checksum_{false} {
+SentenceParser::SentenceParser(NMEA0183Parser* nmea_io) : ignore_checksum_{false} {
   nmea_io->register_sentence_parser(this);
 }
 

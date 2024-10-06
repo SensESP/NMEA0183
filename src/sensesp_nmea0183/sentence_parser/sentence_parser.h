@@ -7,7 +7,7 @@
 
 namespace sensesp::nmea0183 {
 
-class NMEA0183;
+class NMEA0183Parser;
 
 /**
  * @brief NMEA 0183 sentence parser base class.
@@ -18,7 +18,7 @@ class NMEA0183;
  */
 class SentenceParser : public ValueProducer<bool> {
  public:
-  SentenceParser(NMEA0183* nmea);
+  SentenceParser(NMEA0183Parser* nmea);
   void ignore_checksum(bool ignore) { ignore_checksum_ = ignore; }
 
   virtual const char* sentence_address() = 0;

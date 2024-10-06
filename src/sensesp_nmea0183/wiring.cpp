@@ -12,7 +12,7 @@
 
 namespace sensesp::nmea0183 {
 
-void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
+void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
   GGASentenceParser* gga_sentence_parser = new GGASentenceParser(nmea_input);
 
   GLLSentenceParser* gll_sentence_parser = new GLLSentenceParser(nmea_input);
@@ -74,7 +74,7 @@ void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
       "navigation.gnss.satellitesInView", "/SK Path/Satellites in View"));
 }
 
-void ConnectSkyTraqRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
+void ConnectSkyTraqRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data) {
   SkyTraqPSTI030SentenceParser* psti030_sentence_parser =
       new SkyTraqPSTI030SentenceParser(nmea_input);
 
@@ -119,7 +119,7 @@ void ConnectSkyTraqRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
                                      "/SK Path/RTK Heading True"));
 }
 
-void ConnectQuectelRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
+void ConnectQuectelRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data) {
   QuectelPQTMTARSentenceParser* pqtmtar_sentence_parser =
       new QuectelPQTMTARSentenceParser(nmea_input);
 
@@ -149,7 +149,7 @@ void ConnectQuectelRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
                      "RTK Ratio", 30)));
 }
 
-void ConnectApparentWind(NMEA0183* nmea_input,
+void ConnectApparentWind(NMEA0183Parser* nmea_input,
                          ApparentWindData* apparent_wind_data) {
   WIMWVSentenceParser* wind_sentence_parser =
       new WIMWVSentenceParser(nmea_input);

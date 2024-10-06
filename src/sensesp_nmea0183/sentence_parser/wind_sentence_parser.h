@@ -11,7 +11,7 @@ namespace sensesp::nmea0183 {
 /// Parser for WIMWV (Wind Speed and Angle) sentences
 class WIMWVSentenceParser : public SentenceParser {
  public:
-  WIMWVSentenceParser(NMEA0183* nmea)
+  WIMWVSentenceParser(NMEA0183Parser* nmea)
       : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;

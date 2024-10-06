@@ -27,6 +27,16 @@ static int strncmpwc(const char* s1, const char* s2, int n) {
   return 0;
 }
 
+/**
+ * @brief Calculate the NMEA 0183 checksum for the given buffer.
+ *
+ * The buffer should contain the sentence start character '$' (which is
+ * ignored).
+ *
+ * @param buffer
+ * @param seed
+ * @return int
+ */
 int CalculateChecksum(const char* buffer, char seed) {
   int checksum = seed;
   // Skip the sentence start character
@@ -43,18 +53,17 @@ void AddChecksum(String& sentence) {
   sentence += "*" + String(checksum_str);
 }
 
-void NMEA0183::set(const String& line) {
+void NMEA0183Parser::set(const String& line) {
+  // Trim trailing whitespace
+  String trimmed = line;
+  trimmed.trim();
 
-    // Trim trailing whitespace
-    String trimmed = line;
-    trimmed.trim();
-
-    // Parse the sentence
-    parse_sentence(trimmed);
-    return;
+  // Parse the sentence
+  parse_sentence(trimmed);
+  return;
 }
 
-void NMEA0183::parse_sentence(const String& sentence) {
+void NMEA0183Parser::parse_sentence(const String& sentence) {
   const char* sentence_str = sentence.c_str();
   const char* tail = sentence.c_str();
 
@@ -81,8 +90,7 @@ void NMEA0183::parse_sentence(const String& sentence) {
       return;
     }
   }
-  ESP_LOGV("SensESP/NMEA0183", "No parser found for sentence %s",
-           sentence_str);
+  ESP_LOGV("SensESP/NMEA0183", "No parser found for sentence %s", sentence_str);
 }
 
 void ReportFailure(bool ok, const char* sentence) {
@@ -92,7 +100,7 @@ void ReportFailure(bool ok, const char* sentence) {
   }
 }
 
-void NMEA0183::register_sentence_parser(SentenceParser* parser) {
+void NMEA0183Parser::register_sentence_parser(SentenceParser* parser) {
   sentence_parsers.push_back(parser);
 }
 
