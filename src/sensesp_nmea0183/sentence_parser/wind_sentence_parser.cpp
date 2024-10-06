@@ -12,6 +12,7 @@ bool WIMWVSentenceParser::parse_fields(const char* field_strings,
   float wind_speed;
   float wind_angle;
 
+  //      0,  1,2,  3,4,5
   // $WIMWV,a.a,R,s.s,N,A*hhhh<CR><LF>
   // where a.a is the apparent wind angle in degrees
   //       s.s is the relative wind speed in knots
@@ -35,7 +36,7 @@ bool WIMWVSentenceParser::parse_fields(const char* field_strings,
                                             // 5 A = Valid
                                             FLDP_OPT(Char, &a_value, 'A')};
 
-  for (int i = 1; i <= sizeof(fps) / sizeof(std::function<bool(const char*)>);
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]);
        i++) {
     ok &= fps[i - 1](field_strings + field_offsets[i]);
   }
