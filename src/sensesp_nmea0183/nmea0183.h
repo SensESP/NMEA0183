@@ -22,8 +22,6 @@ void AddChecksum(String& sentence);
 /**
  * @brief NMEA 0183 parser class.
  *
- * @param stream Pointer to the Stream of incoming NMEA0183 data over
- * a serial connection.
  **/
 class NMEA0183Parser : public ValueConsumer<String> {
  public:
@@ -33,7 +31,6 @@ class NMEA0183Parser : public ValueConsumer<String> {
   virtual void set(const String& line) override;
 
  protected:
-  Stream* stream_;
   // offset for each sentence field in the buffer
   int field_offsets[kNMEA0183MaxFields];
   void parse_sentence(const String& sentence);
