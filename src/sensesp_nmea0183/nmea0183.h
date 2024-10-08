@@ -61,7 +61,6 @@ class NMEA0183IOTask : public ValueConsumer<String> {
         new TaskQueueProducer<String>("", task_event_loop_, 10);
     task_input_producer_->connect_to(
         new LambdaConsumer<String>([this](const String& line) {
-          ESP_LOGD("NMEA0183IOTask", "Sending: %s", line.c_str());
           stream_->println(line);
         }));
 
@@ -69,8 +68,6 @@ class NMEA0183IOTask : public ValueConsumer<String> {
     line_producer_ = new StreamLineProducer(stream_, task_event_loop_);
 
     sentence_filter_ = new Filter<String>([](const String& line) {
-      ESP_LOGV("NMEA0183IOTask", "In sentence filter");
-      ESP_LOGV("NMEA0183IOTask", "Line: %s", line.c_str());
       return line.startsWith("!") || line.startsWith("$");
     });
 
