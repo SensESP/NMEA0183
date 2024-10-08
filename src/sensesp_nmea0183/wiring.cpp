@@ -1,5 +1,7 @@
 #include "wiring.h"
 
+#include <memory>
+
 #include "sensesp/signalk/signalk_output.h"
 #include "sensesp/signalk/signalk_time.h"
 #include "sensesp/transforms/angle_correction.h"
@@ -157,8 +159,8 @@ void ConnectApparentWind(NMEA0183Parser* nmea_input,
   // Use TaskQueueProducers to ensure that the data is processed in the consumer
   // task.
 
-  auto apparent_wind_speed_tqp = new TaskQueueProducer<float>(0);
-  auto apparent_wind_angle_tqp = new TaskQueueProducer<float>(0);
+  auto apparent_wind_speed_tqp = std::make_shared<TaskQueueProducer<float>>(0);
+  auto apparent_wind_angle_tqp = std::make_shared<TaskQueueProducer<float>>(0);
 
   wind_sentence_parser->apparent_wind_speed_.connect_to(
       apparent_wind_speed_tqp);
