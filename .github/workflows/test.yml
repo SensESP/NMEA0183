@@ -1,6 +1,6 @@
 name: SensESP/NMEA0183 Automatic Build
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
