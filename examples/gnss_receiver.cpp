@@ -5,9 +5,7 @@
  */
 
 #include "sensesp_app_builder.h"
-#include "sensesp/system/stream_producer.h"
-#include "sensesp/transforms/filter.h"
-
+#include "sensesp_nmea0183/nmea0183.h"
 #include "sensesp_nmea0183/wiring.h"
 
 using namespace sensesp;
@@ -27,18 +25,9 @@ void setup() {
   HardwareSerial* serial = &Serial1;
   serial->begin(kGNSSBitRate, SERIAL_8N1, kGNSSRxPin, kGNSSTxPin);
 
-  StreamLineProducer* ais_line_producer = new StreamLineProducer(serial);
+  NMEA0183IOTask* nmea0183_io_task = new NMEA0183IOTask(serial);
 
-  Filter<String>* sentence_filter = new Filter<String>([](const String& line) {
-    return line.startsWith("!") || line.startsWith("$");
-  });
-
-  ais_line_producer->connect_to(sentence_filter);
-
-  NMEA0183* nmea = new NMEA0183();
-  sentence_filter->connect_to(nmea);
-
-  ConnectGNSS(nmea, new GNSSData());
+  ConnectGNSS(&nmea0183_io_task->parser_, new GNSSData());
 }
 
-void loop() { SensESPBaseApp::get_event_loop()->tick(); }
+void loop() { event_loop()->tick(); }
