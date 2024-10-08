@@ -154,10 +154,22 @@ void ConnectApparentWind(NMEA0183Parser* nmea_input,
   WIMWVSentenceParser* wind_sentence_parser =
       new WIMWVSentenceParser(nmea_input);
 
+  // Use TaskQueueProducers to ensure that the data is processed in the consumer
+  // task.
+
+  auto apparent_wind_speed_tqp = new TaskQueueProducer<float>(0);
+  auto apparent_wind_angle_tqp = new TaskQueueProducer<float>(0);
+
   wind_sentence_parser->apparent_wind_speed_.connect_to(
-      &apparent_wind_data->speed);
+      apparent_wind_speed_tqp);
   wind_sentence_parser->apparent_wind_angle_.connect_to(
-      &apparent_wind_data->angle);
+      apparent_wind_angle_tqp);
+
+  // Above connections are processed in the producer task. The following
+  // connections are processed in the consumer task.
+
+  apparent_wind_speed_tqp->connect_to(&apparent_wind_data->speed);
+  apparent_wind_angle_tqp->connect_to(&apparent_wind_data->angle);
 
   apparent_wind_data->angle.connect_to(new SKOutputFloat(
       "environment.wind.angleApparent", "/SK Path/Apparent Wind Angle"));
