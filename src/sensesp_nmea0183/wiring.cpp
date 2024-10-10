@@ -1,5 +1,7 @@
 #include "wiring.h"
 
+#include <memory>
+
 #include "sensesp/signalk/signalk_output.h"
 #include "sensesp/signalk/signalk_time.h"
 #include "sensesp/transforms/angle_correction.h"
@@ -12,7 +14,7 @@
 
 namespace sensesp::nmea0183 {
 
-void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
+void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
   GGASentenceParser* gga_sentence_parser = new GGASentenceParser(nmea_input);
 
   GLLSentenceParser* gll_sentence_parser = new GLLSentenceParser(nmea_input);
@@ -24,7 +26,7 @@ void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
   GSVSentenceParser* gsv_sentence_parser = new GSVSentenceParser(nmea_input);
 
   gga_sentence_parser->position_.connect_to(&location_data->position);
-  gga_sentence_parser->gnss_quality_.connect_to(&location_data->gnss_quality);
+  gga_sentence_parser->gnss_quality_.connect_to(&location_data->rtk_quality);
   gga_sentence_parser->num_satellites_.connect_to(
       &location_data->num_satellites);
   gga_sentence_parser->horizontal_dilution_.connect_to(
@@ -49,7 +51,7 @@ void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
 
   location_data->position.connect_to(
       new SKOutput<Position>("navigation.position", "/SK Path/Position"));
-  location_data->gnss_quality.connect_to(new SKOutputString(
+  location_data->rtk_quality.connect_to(new SKOutputString(
       "navigation.gnss.methodQuality", "/SK Path/Fix Quality"));
   location_data->num_satellites.connect_to(new SKOutputInt(
       "navigation.gnss.satellites", "/SK Path/Number of Satellites"));
@@ -74,7 +76,7 @@ void ConnectGNSS(NMEA0183* nmea_input, GNSSData* location_data) {
       "navigation.gnss.satellitesInView", "/SK Path/Satellites in View"));
 }
 
-void ConnectSkyTraqRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
+void ConnectSkyTraqRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data) {
   SkyTraqPSTI030SentenceParser* psti030_sentence_parser =
       new SkyTraqPSTI030SentenceParser(nmea_input);
 
@@ -84,7 +86,7 @@ void ConnectSkyTraqRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
   psti030_sentence_parser->position_.connect_to(&rtk_data->position);
   psti030_sentence_parser->datetime_.connect_to(&rtk_data->datetime);
   psti030_sentence_parser->enu_velocity_.connect_to(&rtk_data->enu_velocity);
-  psti030_sentence_parser->gnss_quality_.connect_to(&rtk_data->gnss_quality);
+  psti030_sentence_parser->gnss_quality_.connect_to(&rtk_data->rtk_quality);
   psti030_sentence_parser->rtk_age_.connect_to(&rtk_data->rtk_age);
   psti030_sentence_parser->rtk_ratio_.connect_to(&rtk_data->rtk_ratio);
 
@@ -119,12 +121,12 @@ void ConnectSkyTraqRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
                                      "/SK Path/RTK Heading True"));
 }
 
-void ConnectQuectelRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
+void ConnectQuectelRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data) {
   QuectelPQTMTARSentenceParser* pqtmtar_sentence_parser =
       new QuectelPQTMTARSentenceParser(nmea_input);
 
   pqtmtar_sentence_parser->datetime_.connect_to(&rtk_data->datetime);
-  pqtmtar_sentence_parser->heading_status_.connect_to(&rtk_data->gnss_quality);
+  pqtmtar_sentence_parser->rtk_quality_.connect_to(&rtk_data->rtk_quality);
   pqtmtar_sentence_parser->baseline_length_.connect_to(
       &rtk_data->baseline_length);
   pqtmtar_sentence_parser->attitude_
@@ -149,15 +151,27 @@ void ConnectQuectelRTK(NMEA0183* nmea_input, RTKData* rtk_data) {
                      "RTK Ratio", 30)));
 }
 
-void ConnectApparentWind(NMEA0183* nmea_input,
+void ConnectApparentWind(NMEA0183Parser* nmea_input,
                          ApparentWindData* apparent_wind_data) {
   WIMWVSentenceParser* wind_sentence_parser =
       new WIMWVSentenceParser(nmea_input);
 
+  // Use TaskQueueProducers to ensure that the data is processed in the consumer
+  // task.
+
+  auto apparent_wind_speed_tqp = std::make_shared<TaskQueueProducer<float>>(0);
+  auto apparent_wind_angle_tqp = std::make_shared<TaskQueueProducer<float>>(0);
+
   wind_sentence_parser->apparent_wind_speed_.connect_to(
-      &apparent_wind_data->speed);
+      apparent_wind_speed_tqp);
   wind_sentence_parser->apparent_wind_angle_.connect_to(
-      &apparent_wind_data->angle);
+      apparent_wind_angle_tqp);
+
+  // Above connections are processed in the producer task. The following
+  // connections are processed in the consumer task.
+
+  apparent_wind_speed_tqp->connect_to(&apparent_wind_data->speed);
+  apparent_wind_angle_tqp->connect_to(&apparent_wind_data->angle);
 
   apparent_wind_data->angle.connect_to(new SKOutputFloat(
       "environment.wind.angleApparent", "/SK Path/Apparent Wind Angle"));

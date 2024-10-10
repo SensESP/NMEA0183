@@ -34,7 +34,7 @@ extern String gnss_quality_strings[];
 /// Parser for GGA - Global Positioning System Fix Data.
 class GGASentenceParser : public SentenceParser {
  public:
-  GGASentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  GGASentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.GGA"; }
@@ -51,7 +51,7 @@ class GGASentenceParser : public SentenceParser {
 /// Parser for GLL - Geographic position, latitude / longitude
 class GLLSentenceParser : public SentenceParser {
  public:
-  GLLSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  GLLSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.GLL"; }
@@ -62,7 +62,7 @@ class GLLSentenceParser : public SentenceParser {
 /// Parser for RMC - Recommended minimum specific GPS/Transit data
 class RMCSentenceParser : public SentenceParser {
  public:
-  RMCSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  RMCSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.RMC"; }
@@ -77,7 +77,7 @@ class RMCSentenceParser : public SentenceParser {
 /// Parser for VTG - Track made good and ground speed
 class VTGSentenceParser : public SentenceParser {
  public:
-  VTGSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  VTGSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "..VTG"; }
@@ -89,7 +89,7 @@ class VTGSentenceParser : public SentenceParser {
 /// Parser for GSV - GNSS Satellites in View
 class GSVSentenceParser : public SentenceParser {
  public:
-  GSVSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  GSVSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "G.GSV"; }
@@ -102,7 +102,7 @@ class GSVSentenceParser : public SentenceParser {
 /// Parser for SkyTraq proprietary STI,030 - Recommended Minimum 3D GNSS Data
 class SkyTraqPSTI030SentenceParser : public SentenceParser {
  public:
-  SkyTraqPSTI030SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  SkyTraqPSTI030SentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
@@ -119,7 +119,7 @@ class SkyTraqPSTI030SentenceParser : public SentenceParser {
 /// Parser for SkyTraq proprietary STI,032 - RTK Baseline Data
 class SkyTraqPSTI032SentenceParser : public SentenceParser {
  public:
-  SkyTraqPSTI032SentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  SkyTraqPSTI032SentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
@@ -135,14 +135,14 @@ class SkyTraqPSTI032SentenceParser : public SentenceParser {
 /// Parser for Quectel proprietary PQTMTAR - Time and Attitude
 class QuectelPQTMTARSentenceParser : public SentenceParser {
  public:
-  QuectelPQTMTARSentenceParser(NMEA0183* nmea) : SentenceParser(nmea) {}
+  QuectelPQTMTARSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() { return "PQTMTAR"; }
 
   ObservableValue<time_t> datetime_;
-  ObservableValue<QuectelRTKHeadingStatus> heading_status_;
+  ObservableValue<String> rtk_quality_;
   ObservableValue<float> baseline_length_;
   ObservableValue<AttitudeVector> attitude_;
   ObservableValue<AttitudeVector> attitude_accuracy_;
