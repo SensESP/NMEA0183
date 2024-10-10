@@ -783,7 +783,8 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
   time.tm_isdst = 0;
 
   datetime_.set(mktime(&time));
-  heading_status_.set(static_cast<QuectelRTKHeadingStatus>(heading_status));
+  String quality = gnss_quality_strings[heading_status];
+  rtk_quality_.set(quality);
   hdg_num_satellites_.set(hdg_num_satellites);
   if (heading_status == 4) {
     baseline_length_.set(base_line_length);

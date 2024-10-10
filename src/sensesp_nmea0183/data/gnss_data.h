@@ -41,7 +41,7 @@ bool convertToJson(const GNSSSystem& value, JsonVariant& dst);
  */
 struct GNSSData {
   ObservableValue<Position> position;
-  ObservableValue<String> gnss_quality;
+  ObservableValue<String> rtk_quality;
   ObservableValue<int> num_satellites;
   ObservableValue<std::vector<GNSSSatellite>> satellites;
   ObservableValue<float> horizontal_dilution;
@@ -64,7 +64,7 @@ struct RTKData {
   ObservableValue<Position> position;
   ObservableValue<time_t> datetime;
   ObservableValue<ENUVector> enu_velocity;
-  ObservableValue<String> gnss_quality;
+  ObservableValue<String> rtk_quality;
   ObservableValue<float> rtk_age;
   ObservableValue<float> rtk_ratio;
   ObservableValue<ENUVector> baseline_projection;

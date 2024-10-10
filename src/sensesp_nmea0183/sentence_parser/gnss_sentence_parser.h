@@ -142,7 +142,7 @@ class QuectelPQTMTARSentenceParser : public SentenceParser {
   const char* sentence_address() { return "PQTMTAR"; }
 
   ObservableValue<time_t> datetime_;
-  ObservableValue<QuectelRTKHeadingStatus> heading_status_;
+  ObservableValue<String> rtk_quality_;
   ObservableValue<float> baseline_length_;
   ObservableValue<AttitudeVector> attitude_;
   ObservableValue<AttitudeVector> attitude_accuracy_;

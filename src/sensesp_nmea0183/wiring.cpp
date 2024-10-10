@@ -26,7 +26,7 @@ void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
   GSVSentenceParser* gsv_sentence_parser = new GSVSentenceParser(nmea_input);
 
   gga_sentence_parser->position_.connect_to(&location_data->position);
-  gga_sentence_parser->gnss_quality_.connect_to(&location_data->gnss_quality);
+  gga_sentence_parser->gnss_quality_.connect_to(&location_data->rtk_quality);
   gga_sentence_parser->num_satellites_.connect_to(
       &location_data->num_satellites);
   gga_sentence_parser->horizontal_dilution_.connect_to(
@@ -51,7 +51,7 @@ void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
 
   location_data->position.connect_to(
       new SKOutput<Position>("navigation.position", "/SK Path/Position"));
-  location_data->gnss_quality.connect_to(new SKOutputString(
+  location_data->rtk_quality.connect_to(new SKOutputString(
       "navigation.gnss.methodQuality", "/SK Path/Fix Quality"));
   location_data->num_satellites.connect_to(new SKOutputInt(
       "navigation.gnss.satellites", "/SK Path/Number of Satellites"));
@@ -86,7 +86,7 @@ void ConnectSkyTraqRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data) {
   psti030_sentence_parser->position_.connect_to(&rtk_data->position);
   psti030_sentence_parser->datetime_.connect_to(&rtk_data->datetime);
   psti030_sentence_parser->enu_velocity_.connect_to(&rtk_data->enu_velocity);
-  psti030_sentence_parser->gnss_quality_.connect_to(&rtk_data->gnss_quality);
+  psti030_sentence_parser->gnss_quality_.connect_to(&rtk_data->rtk_quality);
   psti030_sentence_parser->rtk_age_.connect_to(&rtk_data->rtk_age);
   psti030_sentence_parser->rtk_ratio_.connect_to(&rtk_data->rtk_ratio);
 
@@ -126,7 +126,7 @@ void ConnectQuectelRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data) {
       new QuectelPQTMTARSentenceParser(nmea_input);
 
   pqtmtar_sentence_parser->datetime_.connect_to(&rtk_data->datetime);
-  pqtmtar_sentence_parser->heading_status_.connect_to(&rtk_data->gnss_quality);
+  pqtmtar_sentence_parser->rtk_quality_.connect_to(&rtk_data->rtk_quality);
   pqtmtar_sentence_parser->baseline_length_.connect_to(
       &rtk_data->baseline_length);
   pqtmtar_sentence_parser->attitude_
