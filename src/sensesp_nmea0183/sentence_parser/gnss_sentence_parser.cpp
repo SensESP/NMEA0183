@@ -84,38 +84,41 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
   }
 
   std::function<bool(const char*)> fps[] = {
-      // 1    = UTC of Position
+       // 1    = UTC of Position (Required)
       FLDP(Time, &hour, &minute, &second),
-      // 2    = Latitude
-      FLDP(LatLon, &position.latitude),
-      // 3    = N or S
-      FLDP(NS, &position.latitude),
-      // 4    = Longitude
-      FLDP(LatLon, &position.longitude),
-      // 5    = E or W
-      FLDP(EW, &position.longitude),
-      // 6    = GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
+      // 2    = Latitude (Optional - empty if no fix)
+      FLDP_OPT(LatLon, &position.latitude),
+      // 3    = N or S (Optional - empty if no fix)
+      FLDP_OPT(NS, &position.latitude),
+      // 4    = Longitude (Optional - empty if no fix)
+      FLDP_OPT(LatLon, &position.longitude),
+      // 5    = E or W (Optional - empty if no fix)
+      FLDP_OPT(EW, &position.longitude),
+      // 6    = GPS quality indicator (Required)
       FLDP(Int, &quality),
-      // 7    = Number of satellites in use [not those in view]
+      // 7    = Number of satellites in use (Required)
       FLDP(Int, &num_satellites),
-      // 8    = Horizontal dilution of position
-      FLDP(Float, &horizontal_dilution),
-      // 9    = Antenna altitude above/below mean sea level (geoid)
-      FLDP(Float, &position.altitude),
-      // 10   = Meters  (Antenna height unit)
-      FLDP(Char, &antenna_height_unit, 'M'),  // M = meters
-      // 11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
-      //        mean sea level.  -=geoid is below WGS-84 ellipsoid)
-      FLDP(Float, &geoidal_separation),
-      // 12   = Meters  (Units of geoidal separation)
-      FLDP(Char, &geoidal_separation_unit, 'M'),
-      // 13   = Age in seconds since last update from diff. reference station
-      FLDP(Float, &dgps_age),
-      // 14   = Diff. reference station ID#
-      FLDP(Int, &dgps_id)};
+      // 8    = Horizontal dilution of position (Optional - can be empty)
+      FLDP_OPT(Float, &horizontal_dilution),
+      // 9    = Antenna altitude above/below mean sea level (geoid) (Optional)
+      FLDP_OPT(Float, &position.altitude),
+      // 10   = Meters  (Antenna height unit) (Optional)
+      FLDP_OPT(Char, &antenna_height_unit, 'M'),  // M = meters
+      // 11   = Geoidal separation (Optional)
+      FLDP_OPT(Float, &geoidal_separation),
+      // 12   = Meters  (Units of geoidal separation) (Optional)
+      FLDP_OPT(Char, &geoidal_separation_unit, 'M'),
+      // 13   = Age in seconds since last update from diff. reference station (Optional)
+      FLDP_OPT(Float, &dgps_age),
+      // 14   = Diff. reference station ID# (Optional)
+      FLDP_OPT(Int, &dgps_id)};
 
-  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
-    ok &= fps[i - 1](field_strings + field_offsets[i]);
+
+  int num_parsers = sizeof(fps) / sizeof(fps[0]);
+  for (int i = 1; i <= num_parsers; i++) {
+    const char* field_str = field_strings + field_offsets[i];
+    bool field_ok = fps[i - 1](field_str);
+    ok &= field_ok; // Accumulate the results. If any field fails, ok becomes false.
   }
 
   if (!ok) {
@@ -224,28 +227,28 @@ bool RMCSentenceParser::parse_fields(const char* field_strings,
   }
 
   std::function<bool(const char*)> fps[] = {
-      // 1   220516     Time Stamp
+      // 1   220516     Time Stamp (Required)
       FLDP(Time, &time.tm_hour, &time.tm_min, &second),
-      // 2   A          validity - A-ok, V-invalid
+      // 2   A          validity - A-ok, V-invalid (Required)
       FLDP(AV, &is_valid),
-      // 3   5133.82    current Latitude
-      FLDP(LatLon, &position.latitude),
-      // 4   N          North/South
-      FLDP(NS, &position.latitude),
-      // 5   00042.24   current Longitude
-      FLDP(LatLon, &position.longitude),
-      // 6   W          East/West
-      FLDP(EW, &position.longitude),
-      // 7   173.8      Speed in knots
-      FLDP(Float, &speed),
-      // 8   231.8      True course
-      FLDP(Float, &true_course),
-      // 9   130694     Date Stamp
+      // 3   5133.82    current Latitude (Optional)
+      FLDP_OPT(LatLon, &position.latitude),
+      // 4   N          North/South (Optional)
+      FLDP_OPT(NS, &position.latitude),
+      // 5   00042.24   current Longitude (Optional)
+      FLDP_OPT(LatLon, &position.longitude),
+      // 6   W          East/West (Optional)
+      FLDP_OPT(EW, &position.longitude),
+      // 7   173.8      Speed in knots (Optional)
+      FLDP_OPT(Float, &speed),
+      // 8   231.8      True course (Optional)
+      FLDP_OPT(Float, &true_course),
+      // 9   130694     Date Stamp (Required)
       FLDP(Date, &time.tm_year, &time.tm_mon, &time.tm_mday),
-      // 10  004.2      Variation
-      FLDP(Float, &variation),
-      // 11  W          East/West
-      FLDP(EW, &variation)
+      // 10  004.2      Variation (Optional)
+      FLDP_OPT(Float, &variation),
+      // 11  W          East/West for Variation (Optional)
+      FLDP_OPT(EW, &variation)
 
       // Positioning system mode indicator might be available as field 12, but
       // let's ignore it for now.
@@ -309,17 +312,17 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
   }
 
   std::function<bool(const char*)> fps[] = {
-      // 1   True track made good
-      FLDP(Float, &true_track),
-      // 2   T
+      // 1   True track made good (Optional)
+      FLDP_OPT(Float, &true_track),
+      // 2   T (Required character)
       FLDP(Char, &true_track_symbol, 'T'),
-      // 3   Magnetic track made good
-      FLDP(Float, &magnetic_track),
-      // 4   M
+      // 3   Magnetic track made good (Optional)
+      FLDP_OPT(Float, &magnetic_track),
+      // 4   M (Required character)
       FLDP(Char, &magnetic_track_symbol, 'M'),
-      // 5   Ground speed, knots
-      FLDP(Float, &ground_speed),
-      // 6   N
+      // 5   Ground speed, knots (Optional)
+      FLDP_OPT(Float, &ground_speed),
+      // 6   N (Required character)
       FLDP(Char, &ground_speed_knots_unit, 'N')
       // ignore the remaining fields for now
   };
