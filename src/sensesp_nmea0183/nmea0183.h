@@ -54,20 +54,19 @@ class NMEA0183IOTask : public ValueConsumer<String> {
  public:
   NMEA0183IOTask(Stream* stream) : stream_(stream) {
     // Event loop for the task.
-    task_event_loop_ = new reactesp::EventLoop();
+    task_event_loop_ = std::make_shared<reactesp::EventLoop>();
 
     // Consume strings and output them on the stream.
     task_input_producer_ =
-        new TaskQueueProducer<String>("", task_event_loop_, 10);
-    task_input_producer_->connect_to(
-        new LambdaConsumer<String>([this](const String& line) {
-          stream_->println(line);
-        }));
+        std::make_shared<TaskQueueProducer<String>>("", task_event_loop_, 10);
+    task_input_producer_->connect_to(std::make_shared<LambdaConsumer<String>>(
+        [this](const String& line) { stream_->println(line); }));
 
     // Produce strings from the stream.
-    line_producer_ = new StreamLineProducer(stream_, task_event_loop_);
+    line_producer_ =
+        std::make_shared<StreamLineProducer>(stream_, task_event_loop_);
 
-    sentence_filter_ = new Filter<String>([](const String& line) {
+    sentence_filter_ = std::make_shared<Filter<String>>([](const String& line) {
       return line.startsWith("!") || line.startsWith("$");
     });
 
@@ -89,10 +88,11 @@ class NMEA0183IOTask : public ValueConsumer<String> {
  protected:
   Stream* stream_;
   TaskHandle_t nmea_task_;
-  reactesp::EventLoop* task_event_loop_;
-  TaskQueueProducer<String>* task_input_producer_;
-  StreamLineProducer* line_producer_;  // Raw lines produced by the stream
-  Filter<String>* sentence_filter_;
+  std::shared_ptr<reactesp::EventLoop> task_event_loop_;
+  std::shared_ptr<TaskQueueProducer<String>> task_input_producer_;
+  std::shared_ptr<StreamLineProducer>
+      line_producer_;  // Raw lines produced by the stream
+  std::shared_ptr<Filter<String>> sentence_filter_;
 
   static void start(void* this_task) {
     auto task = static_cast<NMEA0183IOTask*>(this_task);
