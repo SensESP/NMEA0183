@@ -130,6 +130,7 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
   }
   if (quality != kInvalidInt) {
     gnss_quality_.set(gnss_quality_strings[quality]);
+    quality_.set(quality);
   }
 
   num_satellites_.set(num_satellites);
@@ -356,6 +357,7 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
   static bool new_message_format = false;
   static int collected_num_satellites = 0;
   int num_satellites = 0;
+  static int total_svs_in_view = 0;  // Accumulated from field 3
   static std::vector<GNSSSatellite> satellites;
   GNSSSatellite sentence_satellites[4];
   char signal_id = '0';
@@ -454,8 +456,10 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
 
   if (sentence_type == first_sentence_type) {
     num_satellites_.set(collected_num_satellites);
+    total_svs_in_view_.set(total_svs_in_view);
     satellites_.set(satellites);
     collected_num_satellites = 0;
+    total_svs_in_view = 0;
     satellites.clear();
   }
 
@@ -533,6 +537,9 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
     satellites.push_back(sentence_satellites[i]);
     collected_num_satellites++;
   }
+
+  // Store the total SVs in view from field 3 (same value in all sentences)
+  total_svs_in_view = num_satellites;
 
   return true;
 };
