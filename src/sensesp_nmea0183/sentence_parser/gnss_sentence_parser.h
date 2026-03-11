@@ -41,6 +41,7 @@ class GGASentenceParser : public SentenceParser {
 
   ObservableValue<Position> position_;
   ObservableValue<String> gnss_quality_;
+  ObservableValue<int> quality_;  // Raw GGA quality indicator (0-8)
   ObservableValue<int> num_satellites_;
   ObservableValue<float> horizontal_dilution_;
   ObservableValue<float> geoidal_separation_;
@@ -94,7 +95,10 @@ class GSVSentenceParser : public SentenceParser {
                     int num_fields) override final;
   const char* sentence_address() { return "G.GSV"; }
 
+  /// Number of satellites with data blocks received in the GSV cycle
   ObservableValue<int> num_satellites_;
+  /// Total number of SVs in view (from GSV header field 3)
+  ObservableValue<int> total_svs_in_view_;
   ObservableValue<std::vector<GNSSSatellite>> satellites_;
   ObservableValue<GNSSSatellite> first_satellite_;
 };
