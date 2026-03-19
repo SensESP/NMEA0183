@@ -80,6 +80,8 @@ class NMEA0183IOTask : public ValueConsumer<String> {
   }
 
   NMEA0183Parser parser_;
+  std::shared_ptr<StreamLineProducer> line_producer_;
+  std::shared_ptr<Filter<String>> sentence_filter_;
 
   virtual void set(const String& line) override {
     task_input_producer_->set(line);
@@ -90,9 +92,6 @@ class NMEA0183IOTask : public ValueConsumer<String> {
   TaskHandle_t nmea_task_;
   std::shared_ptr<reactesp::EventLoop> task_event_loop_;
   std::shared_ptr<TaskQueueProducer<String>> task_input_producer_;
-  std::shared_ptr<StreamLineProducer>
-      line_producer_;  // Raw lines produced by the stream
-  std::shared_ptr<Filter<String>> sentence_filter_;
 
   static void start(void* this_task) {
     auto task = static_cast<NMEA0183IOTask*>(this_task);
