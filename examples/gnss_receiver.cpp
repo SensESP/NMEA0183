@@ -25,9 +25,9 @@ void setup() {
   HardwareSerial* serial = &Serial1;
   serial->begin(kGNSSBitRate, SERIAL_8N1, kGNSSRxPin, kGNSSTxPin);
 
-  NMEA0183IOTask* nmea0183_io_task = new NMEA0183IOTask(serial);
+  NMEA0183IO* nmea0183_io = new NMEA0183IO(serial);
 
-  ConnectGNSS(&nmea0183_io_task->parser_, new GNSSData());
+  ConnectGNSS(&nmea0183_io->parser_, new GNSSData());
 }
 
 void loop() { event_loop()->tick(); }

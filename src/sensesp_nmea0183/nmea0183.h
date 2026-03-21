@@ -2,9 +2,7 @@
 #define SENSESP_NMEA0183_NMEA0183_H_
 
 #include "sensesp/sensors/sensor.h"
-#include "sensesp/system/lambda_consumer.h"
 #include "sensesp/system/stream_producer.h"
-#include "sensesp/system/task_queue_producer.h"
 #include "sensesp/transforms/filter.h"
 #include "sensesp_nmea0183/sentence_parser/sentence_parser.h"
 
@@ -42,41 +40,21 @@ class NMEA0183Parser : public ValueConsumer<String> {
 };
 
 /**
- * @brief NMEA 0183 I/O task class.
+ * @brief NMEA 0183 I/O class.
  *
- * This class is responsible for writing and reading NMEA 0183 sentences from
- * a stream and parsing the read sentences. A task is created to run the
- * NMEA 0183 I/O operations. Parser output should be connected to consumers
- * using TaskQueueProducers.
- *
+ * Reads NMEA 0183 sentences from a stream using the main event loop,
+ * parses them, and allows writing sentences to the stream.
  */
-class NMEA0183IOTask : public ValueConsumer<String> {
+class NMEA0183IO : public ValueConsumer<String> {
  public:
-  NMEA0183IOTask(Stream* stream) : stream_(stream) {
-    // Event loop for the task.
-    task_event_loop_ = std::make_shared<reactesp::EventLoop>();
-
-    // Consume strings and output them on the stream.
-    task_input_producer_ =
-        std::make_shared<TaskQueueProducer<String>>("", task_event_loop_, 10);
-    task_input_producer_->connect_to(std::make_shared<LambdaConsumer<String>>(
-        [this](const String& line) { stream_->println(line); }));
-
-    // Produce strings from the stream.
-    line_producer_ =
-        std::make_shared<StreamLineProducer>(stream_, task_event_loop_);
+  NMEA0183IO(Stream* stream) : stream_(stream) {
+    line_producer_ = std::make_shared<StreamLineProducer>(stream);
 
     sentence_filter_ = std::make_shared<Filter<String>>([](const String& line) {
       return line.startsWith("!") || line.startsWith("$");
     });
 
     line_producer_->connect_to(sentence_filter_)->connect_to(&parser_);
-
-    // Start the task after the event loop is running.
-    event_loop()->onDelay(0, [this]() {
-      xTaskCreatePinnedToCore(NMEA0183IOTask::start, "NMEA0183Task", 4096, this,
-                              1, &nmea_task_, 0);
-    });
   }
 
   NMEA0183Parser parser_;
@@ -84,28 +62,15 @@ class NMEA0183IOTask : public ValueConsumer<String> {
   std::shared_ptr<Filter<String>> sentence_filter_;
 
   virtual void set(const String& line) override {
-    task_input_producer_->set(line);
+    stream_->println(line);
   }
 
  protected:
   Stream* stream_;
-  TaskHandle_t nmea_task_;
-  std::shared_ptr<reactesp::EventLoop> task_event_loop_;
-  std::shared_ptr<TaskQueueProducer<String>> task_input_producer_;
-
-  static void start(void* this_task) {
-    auto task = static_cast<NMEA0183IOTask*>(this_task);
-    task->run();
-  }
-
-  void run() {
-    while (true) {
-      task_event_loop_->tick();
-      // Reset watchdog
-      vTaskDelay(1);
-    }
-  }
 };
+
+/// @deprecated Use NMEA0183IO instead.
+using NMEA0183IOTask = NMEA0183IO;
 
 }  // namespace sensesp::nmea0183
 
