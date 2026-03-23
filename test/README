@@ -1,11 +1,18 @@
 
-This directory is intended for PlatformIO Unit Testing and project tests.
+PlatformIO Unit Tests for SensESP NMEA0183
 
-Unit Testing is a software testing method by which individual units of
-source code, sets of one or more MCU program modules together with associated
-control data, usage procedures, and operating procedures, are tested to
-determine whether they are fit for use. Unit testing finds problems early
-in the development cycle.
+Tests are organized by component under test/ subdirectories:
 
-More information about PlatformIO Unit Testing:
-- https://docs.platformio.org/page/plus/unit-testing.html
+  test/test_sentence_parser/  - Sentence parser tests
+
+Building tests (no hardware required):
+
+  pio test -e pioarduino_esp32 --without-uploading --without-testing
+
+Running tests on device:
+
+  pio test -e pioarduino_esp32
+
+Tests compile for the ESP32 target and use the Unity test framework. Each test
+file creates NMEA0183Parser instances, registers sentence parsers, feeds known
+NMEA sentences, and asserts the parsed output values.
