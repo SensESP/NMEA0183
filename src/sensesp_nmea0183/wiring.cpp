@@ -11,6 +11,7 @@
 #include "sensesp_nmea0183/data/wind_data.h"
 #include "sensesp_nmea0183/sentence_parser/gnss_sentence_parser.h"
 #include "sensesp_nmea0183/sentence_parser/navigation_sentence_parser.h"
+#include "sensesp_nmea0183/sentence_parser/waypoint_sentence_parser.h"
 #include "sensesp_nmea0183/sentence_parser/weather_sentence_parser.h"
 #include "sensesp_nmea0183/sentence_parser/wind_sentence_parser.h"
 
@@ -246,6 +247,48 @@ void ConnectWeather(NMEA0183Parser* nmea_input, WeatherData* data) {
       "environment.wind.directionTrue", "/SK Path/True Wind Direction (MDA)"));
   data->true_wind_speed.connect_to(new SKOutputFloat(
       "environment.wind.speedTrue", "/SK Path/True Wind Speed (MDA)"));
+}
+
+void ConnectWaypoint(NMEA0183Parser* nmea_input, WaypointData* data) {
+  auto* rmb = new RMBSentenceParser(nmea_input);
+  auto* bwc = new BWCSentenceParser(nmea_input);
+  auto* apb = new APBSentenceParser(nmea_input);
+  new WPLSentenceParser(nmea_input);  // registered but not wired to SK
+
+  rmb->cross_track_error_.connect_to(&data->cross_track_error);
+  rmb->bearing_to_destination_.connect_to(&data->bearing_to_destination);
+  rmb->range_to_destination_.connect_to(&data->range_to_destination);
+  rmb->destination_closing_velocity_.connect_to(
+      &data->destination_closing_velocity);
+  rmb->destination_waypoint_id_.connect_to(&data->destination_waypoint_id);
+
+  bwc->bearing_true_.connect_to(&data->gc_bearing_true);
+  bwc->distance_.connect_to(&data->gc_distance);
+  bwc->waypoint_position_.connect_to(&data->waypoint_position);
+
+  apb->heading_to_steer_.connect_to(&data->heading_to_steer);
+
+  data->cross_track_error.connect_to(new SKOutputFloat(
+      "navigation.courseRhumbline.crossTrackError",
+      "/SK Path/Cross Track Error"));
+  data->bearing_to_destination.connect_to(new SKOutputFloat(
+      "navigation.courseRhumbline.bearingTrackTrue",
+      "/SK Path/Bearing to Destination"));
+  data->range_to_destination.connect_to(new SKOutputFloat(
+      "navigation.courseRhumbline.nextPoint.distance",
+      "/SK Path/Range to Destination"));
+  data->destination_closing_velocity.connect_to(new SKOutputFloat(
+      "navigation.courseRhumbline.nextPoint.velocityMadeGood",
+      "/SK Path/Closing Velocity"));
+  data->heading_to_steer.connect_to(new SKOutputFloat(
+      "steering.autopilot.target.headingTrue",
+      "/SK Path/Heading to Steer"));
+  data->gc_bearing_true.connect_to(new SKOutputFloat(
+      "navigation.courseGreatCircle.bearingTrackTrue",
+      "/SK Path/GC Bearing True"));
+  data->gc_distance.connect_to(new SKOutputFloat(
+      "navigation.courseGreatCircle.nextPoint.distance",
+      "/SK Path/GC Distance"));
 }
 
 }  // namespace sensesp::nmea0183
