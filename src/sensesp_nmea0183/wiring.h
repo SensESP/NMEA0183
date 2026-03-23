@@ -49,6 +49,11 @@ void ConnectDepthTemperature(NMEA0183Parser* nmea_input,
  */
 void ConnectHeading(NMEA0183Parser* nmea_input, HeadingData* data);
 
+/**
+ * @brief Wire MWD parser to Signal K outputs for true wind data.
+ */
+void ConnectTrueWind(NMEA0183Parser* nmea_input, TrueWindData* data);
+
 }  // namespace sensesp
 
 #endif  // SENSEP_NMEA0183_WIRING_H

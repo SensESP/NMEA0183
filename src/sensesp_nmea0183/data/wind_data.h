@@ -14,6 +14,14 @@ struct ApparentWindData {
   ObservableValue<float> angle;
 };
 
+/**
+ * @brief Container for all decoded true wind data.
+ */
+struct TrueWindData {
+  ObservableValue<float> direction;  // radians (true, meteorological: where FROM)
+  ObservableValue<float> speed;      // m/s
+};
+
 }  // namespace sensesp
 
 #endif  // SENESP_NMEA0183_WIND_DATA_H

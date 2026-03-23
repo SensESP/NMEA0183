@@ -197,4 +197,16 @@ void ConnectHeading(NMEA0183Parser* nmea_input, HeadingData* data) {
       "navigation.headingTrue", "/SK Path/Heading True"));
 }
 
+void ConnectTrueWind(NMEA0183Parser* nmea_input, TrueWindData* data) {
+  auto* mwd = new MWDSentenceParser(nmea_input);
+
+  mwd->true_wind_direction_.connect_to(&data->direction);
+  mwd->true_wind_speed_.connect_to(&data->speed);
+
+  data->direction.connect_to(new SKOutputFloat(
+      "environment.wind.directionTrue", "/SK Path/True Wind Direction"));
+  data->speed.connect_to(new SKOutputFloat(
+      "environment.wind.speedTrue", "/SK Path/True Wind Speed"));
+}
+
 }  // namespace sensesp::nmea0183
