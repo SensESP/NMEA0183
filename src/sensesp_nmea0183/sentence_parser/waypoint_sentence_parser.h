@@ -15,7 +15,7 @@ class RMBSentenceParser : public SentenceParser {
   RMBSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..RMB"; }
+  const char* sentence_address() override { return "..RMB"; }
 
   ObservableValue<float> cross_track_error_;           // meters (signed)
   ObservableValue<float> bearing_to_destination_;      // radians (true)
@@ -30,7 +30,7 @@ class APBSentenceParser : public SentenceParser {
   APBSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..APB"; }
+  const char* sentence_address() override { return "..APB"; }
 
   ObservableValue<float> cross_track_error_;  // meters (signed)
   ObservableValue<float> heading_to_steer_;   // radians (true)
@@ -42,7 +42,7 @@ class BWCSentenceParser : public SentenceParser {
   BWCSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..BWC"; }
+  const char* sentence_address() override { return "..BWC"; }
 
   ObservableValue<float> bearing_true_;      // radians
   ObservableValue<float> bearing_magnetic_;  // radians
@@ -57,7 +57,7 @@ class WPLSentenceParser : public SentenceParser {
   WPLSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..WPL"; }
+  const char* sentence_address() override { return "..WPL"; }
 
   ObservableValue<Position> position_;
   ObservableValue<String> waypoint_id_;
@@ -69,7 +69,7 @@ class RTESentenceParser : public SentenceParser {
   RTESentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..RTE"; }
+  const char* sentence_address() override { return "..RTE"; }
 
   ObservableValue<String> route_id_;
   ObservableValue<std::vector<String>> waypoints_;

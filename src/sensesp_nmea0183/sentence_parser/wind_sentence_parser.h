@@ -15,7 +15,7 @@ class WIMWVSentenceParser : public SentenceParser {
       : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "WIMWV"; }
+  const char* sentence_address() override { return "WIMWV"; }
 
   ObservableValue<float> apparent_wind_speed_;
   ObservableValue<float> apparent_wind_angle_;
@@ -27,7 +27,7 @@ class MWDSentenceParser : public SentenceParser {
   MWDSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..MWD"; }
+  const char* sentence_address() override { return "..MWD"; }
 
   ObservableValue<float> true_wind_direction_;  // radians
   ObservableValue<float> true_wind_speed_;      // m/s
@@ -39,7 +39,7 @@ class VWRSentenceParser : public SentenceParser {
   VWRSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..VWR"; }
+  const char* sentence_address() override { return "..VWR"; }
 
   ObservableValue<float> apparent_wind_angle_;  // radians (signed: port < 0)
   ObservableValue<float> apparent_wind_speed_;  // m/s

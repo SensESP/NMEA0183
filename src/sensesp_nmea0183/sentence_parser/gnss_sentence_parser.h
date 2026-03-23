@@ -37,7 +37,7 @@ class GGASentenceParser : public SentenceParser {
   GGASentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "G.GGA"; }
+  const char* sentence_address() override { return "G.GGA"; }
 
   ObservableValue<Position> position_;
   ObservableValue<String> gnss_quality_;
@@ -55,7 +55,7 @@ class GLLSentenceParser : public SentenceParser {
   GLLSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "G.GLL"; }
+  const char* sentence_address() override { return "G.GLL"; }
 
   ObservableValue<Position> position_;
 };
@@ -66,7 +66,7 @@ class RMCSentenceParser : public SentenceParser {
   RMCSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "G.RMC"; }
+  const char* sentence_address() override { return "G.RMC"; }
 
   ObservableValue<Position> position_;
   ObservableValue<time_t> datetime_;
@@ -81,7 +81,7 @@ class VTGSentenceParser : public SentenceParser {
   VTGSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..VTG"; }
+  const char* sentence_address() override { return "..VTG"; }
 
   ObservableValue<float> true_course_;
   ObservableValue<float> speed_;
@@ -93,7 +93,7 @@ class GSVSentenceParser : public SentenceParser {
   GSVSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "G.GSV"; }
+  const char* sentence_address() override { return "G.GSV"; }
 
   /// Number of satellites with data blocks received in the GSV cycle
   ObservableValue<int> num_satellites_;
@@ -110,7 +110,7 @@ class SkyTraqPSTI030SentenceParser : public SentenceParser {
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "PSTI,030"; }
+  const char* sentence_address() override { return "PSTI,030"; }
 
   ObservableValue<Position> position_;
   ObservableValue<time_t> datetime_;
@@ -127,7 +127,7 @@ class SkyTraqPSTI032SentenceParser : public SentenceParser {
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "PSTI,032"; }
+  const char* sentence_address() override { return "PSTI,032"; }
 
   ObservableValue<time_t> datetime_;
   ObservableValue<ENUVector> baseline_projection_;
@@ -143,7 +143,7 @@ class QuectelPQTMTARSentenceParser : public SentenceParser {
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "PQTMTAR"; }
+  const char* sentence_address() override { return "PQTMTAR"; }
 
   ObservableValue<time_t> datetime_;
   ObservableValue<String> rtk_quality_;
@@ -159,7 +159,7 @@ class GSASentenceParser : public SentenceParser {
   GSASentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "G.GSA"; }
+  const char* sentence_address() override { return "G.GSA"; }
 
   ObservableValue<int> fix_type_;     // 1=no fix, 2=2D, 3=3D
   ObservableValue<float> pdop_;
@@ -173,7 +173,7 @@ class ZDASentenceParser : public SentenceParser {
   ZDASentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "G.ZDA"; }
+  const char* sentence_address() override { return "G.ZDA"; }
 
   ObservableValue<time_t> datetime_;
 };
@@ -184,7 +184,7 @@ class GBSSentenceParser : public SentenceParser {
   GBSSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "G.GBS"; }
+  const char* sentence_address() override { return "G.GBS"; }
 
   ObservableValue<float> lat_error_;  // meters
   ObservableValue<float> lon_error_;  // meters

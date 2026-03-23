@@ -14,7 +14,7 @@ class MDASentenceParser : public SentenceParser {
   MDASentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..MDA"; }
+  const char* sentence_address() override { return "..MDA"; }
 
   ObservableValue<float> barometric_pressure_;  // Pascals
   ObservableValue<float> air_temperature_;      // Kelvin

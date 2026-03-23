@@ -72,6 +72,6 @@ void ConnectWaypoint(NMEA0183Parser* nmea_input, WaypointData* data);
 void ConnectGNSSIntegrity(NMEA0183Parser* nmea_input,
                           GNSSIntegrityData* data);
 
-}  // namespace sensesp
+}  // namespace sensesp::nmea0183
 
 #endif  // SENSEP_NMEA0183_WIRING_H

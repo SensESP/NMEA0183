@@ -14,7 +14,7 @@ class HDGSentenceParser : public SentenceParser {
   HDGSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..HDG"; }
+  const char* sentence_address() override { return "..HDG"; }
 
   ObservableValue<float> magnetic_heading_;  // radians
   ObservableValue<float> deviation_;         // radians
@@ -27,7 +27,7 @@ class VHWSentenceParser : public SentenceParser {
   VHWSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..VHW"; }
+  const char* sentence_address() override { return "..VHW"; }
 
   ObservableValue<float> true_heading_;      // radians
   ObservableValue<float> magnetic_heading_;  // radians
@@ -40,7 +40,7 @@ class DPTSentenceParser : public SentenceParser {
   DPTSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..DPT"; }
+  const char* sentence_address() override { return "..DPT"; }
 
   ObservableValue<float> depth_;   // meters (below transducer)
   ObservableValue<float> offset_;  // meters (transducer offset)
@@ -52,7 +52,7 @@ class DBTSentenceParser : public SentenceParser {
   DBTSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..DBT"; }
+  const char* sentence_address() override { return "..DBT"; }
 
   ObservableValue<float> depth_;  // meters
 };
@@ -63,7 +63,7 @@ class MTWSentenceParser : public SentenceParser {
   MTWSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..MTW"; }
+  const char* sentence_address() override { return "..MTW"; }
 
   ObservableValue<float> water_temperature_;  // Kelvin
 };
@@ -74,7 +74,7 @@ class HDMSentenceParser : public SentenceParser {
   HDMSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..HDM"; }
+  const char* sentence_address() override { return "..HDM"; }
 
   ObservableValue<float> magnetic_heading_;  // radians
 };
@@ -85,7 +85,7 @@ class HDTSentenceParser : public SentenceParser {
   HDTSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() { return "..HDT"; }
+  const char* sentence_address() override { return "..HDT"; }
 
   ObservableValue<float> true_heading_;  // radians
 };

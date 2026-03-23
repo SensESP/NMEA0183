@@ -3,8 +3,15 @@ PlatformIO Unit Tests for SensESP NMEA0183
 
 Each test suite lives in its own subdirectory under test/:
 
-  test/test_gga/       - GGA sentence parser tests
-  test/test_dbt_mtw/   - DBT and MTW sentence parser tests
+  test/test_optional_fields/  - Optional field handling (GGA, RMC, VTG)
+  test/test_gga/              - GGA sentence parser
+  test/test_dbt_mtw/          - DBT and MTW (depth, water temperature)
+  test/test_hdm_hdt/          - HDM and HDT (heading magnetic/true)
+  test/test_gsa_zda_gbs/      - GSA, ZDA, GBS (GNSS auxiliary)
+  test/test_mwd_vwr/          - MWD and VWR (wind)
+  test/test_mda/              - MDA (meteorological composite)
+  test/test_waypoint/         - RMB, APB, BWC, WPL (waypoint/autopilot)
+  test/test_rte/              - RTE (multi-sentence routes)
 
 Building tests (no hardware required):
 

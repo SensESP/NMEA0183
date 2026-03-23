@@ -22,6 +22,6 @@ struct TrueWindData {
   ObservableValue<float> speed;      // m/s
 };
 
-}  // namespace sensesp
+}  // namespace sensesp::nmea0183
 
 #endif  // SENESP_NMEA0183_WIND_DATA_H
