@@ -53,6 +53,9 @@ struct GNSSData {
   ObservableValue<float> true_course;
   ObservableValue<float> variation;
   ObservableValue<ENUVector> enu_velocity;
+  ObservableValue<int> fix_type;
+  ObservableValue<float> pdop;
+  ObservableValue<float> vdop;
 };
 
 bool convertToJson(const GNSSSatellite& value, JsonVariant& dst);
@@ -72,6 +75,15 @@ struct RTKData {
   ObservableValue<float> baseline_course;
   ObservableValue<AttitudeVector> attitude;
   ObservableValue<int> rtk_num_satellites;
+};
+
+/**
+ * @brief Container for GNSS integrity/error data from GBS parser.
+ */
+struct GNSSIntegrityData {
+  ObservableValue<float> lat_error;  // meters
+  ObservableValue<float> lon_error;  // meters
+  ObservableValue<float> alt_error;  // meters
 };
 
 }  // namespace sensesp::nmea0183

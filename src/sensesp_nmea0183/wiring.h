@@ -2,8 +2,11 @@
 #define SENSEP_NMEA0183_WIRING_H
 
 #include "sensesp_nmea0183/data/gnss_data.h"
-#include "sensesp_nmea0183/nmea0183.h"
+#include "sensesp_nmea0183/data/navigation_data.h"
+#include "sensesp_nmea0183/data/waypoint_data.h"
+#include "sensesp_nmea0183/data/weather_data.h"
 #include "sensesp_nmea0183/data/wind_data.h"
+#include "sensesp_nmea0183/nmea0183.h"
 
 namespace sensesp::nmea0183 {
 
@@ -37,6 +40,38 @@ void ConnectQuectelRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data);
 void ConnectApparentWind(NMEA0183Parser* nmea_input,
                          ApparentWindData* apparent_wind_data);
 
-}  // namespace sensesp
+/**
+ * @brief Wire DBT and MTW parsers to Signal K outputs.
+ */
+void ConnectDepthTemperature(NMEA0183Parser* nmea_input,
+                             DepthTemperatureData* data);
+
+/**
+ * @brief Wire HDM and HDT parsers to Signal K outputs.
+ */
+void ConnectHeading(NMEA0183Parser* nmea_input, HeadingData* data);
+
+/**
+ * @brief Wire MWD parser to Signal K outputs for true wind data.
+ */
+void ConnectTrueWind(NMEA0183Parser* nmea_input, TrueWindData* data);
+
+/**
+ * @brief Wire MDA parser to Signal K outputs for weather data.
+ */
+void ConnectWeather(NMEA0183Parser* nmea_input, WeatherData* data);
+
+/**
+ * @brief Wire RMB, BWC, and APB parsers to Signal K outputs.
+ */
+void ConnectWaypoint(NMEA0183Parser* nmea_input, WaypointData* data);
+
+/**
+ * @brief Wire GBS parser to Signal K outputs for GNSS error estimates.
+ */
+void ConnectGNSSIntegrity(NMEA0183Parser* nmea_input,
+                          GNSSIntegrityData* data);
+
+}  // namespace sensesp::nmea0183
 
 #endif  // SENSEP_NMEA0183_WIRING_H

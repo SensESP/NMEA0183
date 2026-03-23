@@ -1,11 +1,26 @@
 
-This directory is intended for PlatformIO Unit Testing and project tests.
+PlatformIO Unit Tests for SensESP NMEA0183
 
-Unit Testing is a software testing method by which individual units of
-source code, sets of one or more MCU program modules together with associated
-control data, usage procedures, and operating procedures, are tested to
-determine whether they are fit for use. Unit testing finds problems early
-in the development cycle.
+Each test suite lives in its own subdirectory under test/:
 
-More information about PlatformIO Unit Testing:
-- https://docs.platformio.org/page/plus/unit-testing.html
+  test/test_optional_fields/  - Optional field handling (GGA, RMC, VTG)
+  test/test_gga/              - GGA sentence parser
+  test/test_dbt_mtw/          - DBT and MTW (depth, water temperature)
+  test/test_hdm_hdt/          - HDM and HDT (heading magnetic/true)
+  test/test_gsa_zda_gbs/      - GSA, ZDA, GBS (GNSS auxiliary)
+  test/test_mwd_vwr/          - MWD and VWR (wind)
+  test/test_mda/              - MDA (meteorological composite)
+  test/test_waypoint/         - RMB, APB, BWC, WPL (waypoint/autopilot)
+  test/test_rte/              - RTE (multi-sentence routes)
+
+Building tests (no hardware required):
+
+  pio test -e pioarduino_esp32 --without-uploading --without-testing
+
+Running tests on device:
+
+  pio test -e pioarduino_esp32
+
+Tests compile for the ESP32 target and use the Unity test framework. Each test
+file creates NMEA0183Parser instances, registers sentence parsers, feeds known
+NMEA sentences, and asserts the parsed output values.

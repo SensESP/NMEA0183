@@ -10,6 +10,9 @@
 #include "sensesp_nmea0183/data/gnss_data.h"
 #include "sensesp_nmea0183/data/wind_data.h"
 #include "sensesp_nmea0183/sentence_parser/gnss_sentence_parser.h"
+#include "sensesp_nmea0183/sentence_parser/navigation_sentence_parser.h"
+#include "sensesp_nmea0183/sentence_parser/waypoint_sentence_parser.h"
+#include "sensesp_nmea0183/sentence_parser/weather_sentence_parser.h"
 #include "sensesp_nmea0183/sentence_parser/wind_sentence_parser.h"
 
 namespace sensesp::nmea0183 {
@@ -24,6 +27,10 @@ void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
   VTGSentenceParser* vtg_sentence_parser = new VTGSentenceParser(nmea_input);
 
   GSVSentenceParser* gsv_sentence_parser = new GSVSentenceParser(nmea_input);
+
+  auto* gsa_sentence_parser = new GSASentenceParser(nmea_input);
+
+  auto* zda_sentence_parser = new ZDASentenceParser(nmea_input);
 
   gga_sentence_parser->position_.connect_to(&location_data->position);
   gga_sentence_parser->gnss_quality_.connect_to(&location_data->rtk_quality);
@@ -48,6 +55,13 @@ void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
   gsv_sentence_parser->num_satellites_.connect_to(
       &location_data->num_satellites);
   gsv_sentence_parser->satellites_.connect_to(&location_data->satellites);
+
+  gsa_sentence_parser->fix_type_.connect_to(&location_data->fix_type);
+  gsa_sentence_parser->hdop_.connect_to(&location_data->horizontal_dilution);
+  gsa_sentence_parser->pdop_.connect_to(&location_data->pdop);
+  gsa_sentence_parser->vdop_.connect_to(&location_data->vdop);
+
+  zda_sentence_parser->datetime_.connect_to(&location_data->datetime);
 
   location_data->position.connect_to(
       new SKOutput<Position>("navigation.position", "/SK Path/Position"));
@@ -153,18 +167,148 @@ void ConnectQuectelRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data) {
 
 void ConnectApparentWind(NMEA0183Parser* nmea_input,
                          ApparentWindData* apparent_wind_data) {
-  WIMWVSentenceParser* wind_sentence_parser =
-      new WIMWVSentenceParser(nmea_input);
+  auto* wimwv = new WIMWVSentenceParser(nmea_input);
+  auto* vwr = new VWRSentenceParser(nmea_input);
 
-  wind_sentence_parser->apparent_wind_speed_.connect_to(
-      &apparent_wind_data->speed);
-  wind_sentence_parser->apparent_wind_angle_.connect_to(
-      &apparent_wind_data->angle);
+  wimwv->apparent_wind_speed_.connect_to(&apparent_wind_data->speed);
+  wimwv->apparent_wind_angle_.connect_to(&apparent_wind_data->angle);
+
+  vwr->apparent_wind_speed_.connect_to(&apparent_wind_data->speed);
+  vwr->apparent_wind_angle_.connect_to(&apparent_wind_data->angle);
 
   apparent_wind_data->angle.connect_to(new SKOutputFloat(
       "environment.wind.angleApparent", "/SK Path/Apparent Wind Angle"));
   apparent_wind_data->speed.connect_to(new SKOutputFloat(
       "environment.wind.speedApparent", "/SK Path/Apparent Wind Speed"));
+}
+
+void ConnectDepthTemperature(NMEA0183Parser* nmea_input,
+                             DepthTemperatureData* data) {
+  auto* dbt = new DBTSentenceParser(nmea_input);
+  auto* mtw = new MTWSentenceParser(nmea_input);
+
+  dbt->depth_.connect_to(&data->depth_below_transducer);
+  mtw->water_temperature_.connect_to(&data->water_temperature);
+
+  data->depth_below_transducer.connect_to(new SKOutputFloat(
+      "environment.depth.belowTransducer",
+      "/SK Path/Depth Below Transducer"));
+  data->water_temperature.connect_to(new SKOutputFloat(
+      "environment.water.temperature",
+      "/SK Path/Water Temperature"));
+}
+
+void ConnectHeading(NMEA0183Parser* nmea_input, HeadingData* data) {
+  auto* hdm = new HDMSentenceParser(nmea_input);
+  auto* hdt = new HDTSentenceParser(nmea_input);
+
+  hdm->magnetic_heading_.connect_to(&data->magnetic_heading);
+  hdt->true_heading_.connect_to(&data->true_heading);
+
+  data->magnetic_heading.connect_to(new SKOutputFloat(
+      "navigation.headingMagnetic", "/SK Path/Heading Magnetic"));
+  data->true_heading.connect_to(new SKOutputFloat(
+      "navigation.headingTrue", "/SK Path/Heading True"));
+}
+
+void ConnectTrueWind(NMEA0183Parser* nmea_input, TrueWindData* data) {
+  auto* mwd = new MWDSentenceParser(nmea_input);
+
+  mwd->true_wind_direction_.connect_to(&data->direction);
+  mwd->true_wind_speed_.connect_to(&data->speed);
+
+  data->direction.connect_to(new SKOutputFloat(
+      "environment.wind.directionTrue", "/SK Path/True Wind Direction"));
+  data->speed.connect_to(new SKOutputFloat(
+      "environment.wind.speedTrue", "/SK Path/True Wind Speed"));
+}
+
+void ConnectWeather(NMEA0183Parser* nmea_input, WeatherData* data) {
+  auto* mda = new MDASentenceParser(nmea_input);
+
+  mda->barometric_pressure_.connect_to(&data->barometric_pressure);
+  mda->air_temperature_.connect_to(&data->air_temperature);
+  mda->water_temperature_.connect_to(&data->water_temperature);
+  mda->relative_humidity_.connect_to(&data->relative_humidity);
+  mda->dew_point_.connect_to(&data->dew_point);
+  mda->true_wind_direction_.connect_to(&data->true_wind_direction);
+  mda->true_wind_speed_.connect_to(&data->true_wind_speed);
+
+  data->barometric_pressure.connect_to(new SKOutputFloat(
+      "environment.outside.pressure", "/SK Path/Barometric Pressure"));
+  data->air_temperature.connect_to(new SKOutputFloat(
+      "environment.outside.temperature", "/SK Path/Air Temperature"));
+  data->water_temperature.connect_to(new SKOutputFloat(
+      "environment.water.temperature", "/SK Path/Water Temperature (MDA)"));
+  data->relative_humidity.connect_to(new SKOutputFloat(
+      "environment.outside.humidity", "/SK Path/Relative Humidity"));
+  data->dew_point.connect_to(new SKOutputFloat(
+      "environment.outside.dewPointTemperature", "/SK Path/Dew Point"));
+  data->true_wind_direction.connect_to(new SKOutputFloat(
+      "environment.wind.directionTrue", "/SK Path/True Wind Direction (MDA)"));
+  data->true_wind_speed.connect_to(new SKOutputFloat(
+      "environment.wind.speedTrue", "/SK Path/True Wind Speed (MDA)"));
+}
+
+void ConnectWaypoint(NMEA0183Parser* nmea_input, WaypointData* data) {
+  auto* rmb = new RMBSentenceParser(nmea_input);
+  auto* bwc = new BWCSentenceParser(nmea_input);
+  auto* apb = new APBSentenceParser(nmea_input);
+  new WPLSentenceParser(nmea_input);  // registered but not wired to SK
+
+  rmb->cross_track_error_.connect_to(&data->cross_track_error);
+  rmb->bearing_to_destination_.connect_to(&data->bearing_to_destination);
+  rmb->range_to_destination_.connect_to(&data->range_to_destination);
+  rmb->destination_closing_velocity_.connect_to(
+      &data->destination_closing_velocity);
+  rmb->destination_waypoint_id_.connect_to(&data->destination_waypoint_id);
+
+  bwc->bearing_true_.connect_to(&data->gc_bearing_true);
+  bwc->distance_.connect_to(&data->gc_distance);
+  bwc->waypoint_position_.connect_to(&data->waypoint_position);
+
+  apb->heading_to_steer_.connect_to(&data->heading_to_steer);
+
+  data->cross_track_error.connect_to(new SKOutputFloat(
+      "navigation.courseRhumbline.crossTrackError",
+      "/SK Path/Cross Track Error"));
+  data->bearing_to_destination.connect_to(new SKOutputFloat(
+      "navigation.courseRhumbline.bearingTrackTrue",
+      "/SK Path/Bearing to Destination"));
+  data->range_to_destination.connect_to(new SKOutputFloat(
+      "navigation.courseRhumbline.nextPoint.distance",
+      "/SK Path/Range to Destination"));
+  data->destination_closing_velocity.connect_to(new SKOutputFloat(
+      "navigation.courseRhumbline.nextPoint.velocityMadeGood",
+      "/SK Path/Closing Velocity"));
+  data->heading_to_steer.connect_to(new SKOutputFloat(
+      "steering.autopilot.target.headingTrue",
+      "/SK Path/Heading to Steer"));
+  data->gc_bearing_true.connect_to(new SKOutputFloat(
+      "navigation.courseGreatCircle.bearingTrackTrue",
+      "/SK Path/GC Bearing True"));
+  data->gc_distance.connect_to(new SKOutputFloat(
+      "navigation.courseGreatCircle.nextPoint.distance",
+      "/SK Path/GC Distance"));
+}
+
+void ConnectGNSSIntegrity(NMEA0183Parser* nmea_input,
+                          GNSSIntegrityData* data) {
+  auto* gbs = new GBSSentenceParser(nmea_input);
+
+  gbs->lat_error_.connect_to(&data->lat_error);
+  gbs->lon_error_.connect_to(&data->lon_error);
+  gbs->alt_error_.connect_to(&data->alt_error);
+
+  data->lat_error.connect_to(new SKOutputFloat(
+      "navigation.gnss.integrity.latitudeError",
+      "/SK Path/GNSS Latitude Error"));
+  data->lon_error.connect_to(new SKOutputFloat(
+      "navigation.gnss.integrity.longitudeError",
+      "/SK Path/GNSS Longitude Error"));
+  data->alt_error.connect_to(new SKOutputFloat(
+      "navigation.gnss.integrity.altitudeError",
+      "/SK Path/GNSS Altitude Error"));
 }
 
 }  // namespace sensesp::nmea0183

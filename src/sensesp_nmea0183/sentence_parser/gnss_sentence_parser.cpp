@@ -802,4 +802,136 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
+bool GSASentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
+  bool ok = true;
+
+  char mode;
+  int fix_type;
+  float pdop;
+  float hdop;
+  float vdop;
+
+  // $xxGSA,mode,fix_type,sv1,sv2,...,sv12,pdop,hdop,vdop[,systemId]*cs
+  // eg. $GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*39
+  // Fields: 0=addr, 1=mode, 2=fix, 3-14=SVs, 15=PDOP, 16=HDOP, 17=VDOP
+
+  if (num_fields < 18) {
+    return false;
+  }
+
+  // Parse mode (A=auto, M=manual) — field 1
+  ok &= FLDP_OPT(Char, &mode, 255)(field_strings + field_offsets[1]);
+  // Parse fix type — field 2
+  ok &= FLDP(Int, &fix_type)(field_strings + field_offsets[2]);
+  // Skip satellite IDs (fields 3-14)
+  // Parse DOP values — fields 15-17
+  ok &= FLDP_OPT(Float, &pdop)(field_strings + field_offsets[15]);
+  ok &= FLDP_OPT(Float, &hdop)(field_strings + field_offsets[16]);
+  ok &= FLDP_OPT(Float, &vdop)(field_strings + field_offsets[17]);
+
+  if (!ok) {
+    return false;
+  }
+
+  fix_type_.set(fix_type);
+  if (pdop != kInvalidFloat) {
+    pdop_.set(pdop);
+  }
+  if (hdop != kInvalidFloat) {
+    hdop_.set(hdop);
+  }
+  if (vdop != kInvalidFloat) {
+    vdop_.set(vdop);
+  }
+
+  return true;
+}
+
+bool ZDASentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
+  bool ok = true;
+
+  int hour;
+  int minute;
+  float second;
+  int day;
+  int month;
+  int year;
+
+  // $xxZDA,hhmmss.ss,dd,mm,yyyy,ltzh,ltzn*cs
+  // eg. $GPZDA,160012.71,11,03,2004,-1,00*7D
+
+  if (num_fields < 5) {
+    return false;
+  }
+
+  ok &= FLDP(Time, &hour, &minute, &second)(
+      field_strings + field_offsets[1]);
+  ok &= FLDP(Int, &day)(field_strings + field_offsets[2]);
+  ok &= FLDP(Int, &month)(field_strings + field_offsets[3]);
+  ok &= FLDP(Int, &year)(field_strings + field_offsets[4]);
+
+  if (!ok) {
+    return false;
+  }
+
+  struct tm time = {};
+  time.tm_hour = hour;
+  time.tm_min = minute;
+  time.tm_sec = (int)second;
+  time.tm_mday = day;
+  time.tm_mon = month - 1;     // tm_mon is 0-based
+  time.tm_year = year - 1900;  // tm_year is years since 1900
+  time.tm_isdst = 0;
+
+  datetime_.set(mktime(&time));
+
+  return true;
+}
+
+bool GBSSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
+  bool ok = true;
+
+  int hour;
+  int minute;
+  float second;
+  float lat_error;
+  float lon_error;
+  float alt_error;
+
+  // $xxGBS,hhmmss.ss,lat_err,lon_err,alt_err,svid,prob,bias,stddev*cs
+  // eg. $GPGBS,235458.00,1.4,1.3,3.1,03,,-21.4,3.8*5B
+
+  if (num_fields < 5) {
+    return false;
+  }
+
+  ok &= FLDP(Time, &hour, &minute, &second)(
+      field_strings + field_offsets[1]);
+  ok &= FLDP_OPT(Float, &lat_error)(field_strings + field_offsets[2]);
+  ok &= FLDP_OPT(Float, &lon_error)(field_strings + field_offsets[3]);
+  ok &= FLDP_OPT(Float, &alt_error)(field_strings + field_offsets[4]);
+
+  if (!ok) {
+    return false;
+  }
+
+  if (lat_error != kInvalidFloat) {
+    lat_error_.set(lat_error);
+  }
+  if (lon_error != kInvalidFloat) {
+    lon_error_.set(lon_error);
+  }
+  if (alt_error != kInvalidFloat) {
+    alt_error_.set(alt_error);
+  }
+
+  return true;
+}
+
 }  // namespace sensesp::nmea0183
