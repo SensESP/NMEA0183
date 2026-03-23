@@ -167,11 +167,11 @@ void ConnectQuectelRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data) {
 
 void ConnectApparentWind(NMEA0183Parser* nmea_input,
                          ApparentWindData* apparent_wind_data) {
-  auto* wimwv = new WIMWVSentenceParser(nmea_input);
+  auto* mwv = new MWVSentenceParser(nmea_input);
   auto* vwr = new VWRSentenceParser(nmea_input);
 
-  wimwv->apparent_wind_speed_.connect_to(&apparent_wind_data->speed);
-  wimwv->apparent_wind_angle_.connect_to(&apparent_wind_data->angle);
+  mwv->apparent_wind_speed_.connect_to(&apparent_wind_data->speed);
+  mwv->apparent_wind_angle_.connect_to(&apparent_wind_data->angle);
 
   vwr->apparent_wind_speed_.connect_to(&apparent_wind_data->speed);
   vwr->apparent_wind_angle_.connect_to(&apparent_wind_data->angle);
@@ -213,9 +213,13 @@ void ConnectHeading(NMEA0183Parser* nmea_input, HeadingData* data) {
 
 void ConnectTrueWind(NMEA0183Parser* nmea_input, TrueWindData* data) {
   auto* mwd = new MWDSentenceParser(nmea_input);
+  auto* mwv_true = new TrueWindMWVSentenceParser(nmea_input);
 
   mwd->true_wind_direction_.connect_to(&data->direction);
   mwd->true_wind_speed_.connect_to(&data->speed);
+
+  mwv_true->true_wind_direction_.connect_to(&data->direction);
+  mwv_true->true_wind_speed_.connect_to(&data->speed);
 
   data->direction.connect_to(new SKOutputFloat(
       "environment.wind.directionTrue", "/SK Path/True Wind Direction"));

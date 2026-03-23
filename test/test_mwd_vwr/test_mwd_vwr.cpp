@@ -9,14 +9,20 @@ using namespace sensesp::nmea0183;
 static NMEA0183Parser* parser;
 static MWDSentenceParser* mwd;
 static VWRSentenceParser* vwr;
+static MWVSentenceParser* mwv;
+static TrueWindMWVSentenceParser* mwv_true;
 
 void setUp(void) {
   parser = new NMEA0183Parser();
   mwd = new MWDSentenceParser(parser);
   vwr = new VWRSentenceParser(parser);
+  mwv = new MWVSentenceParser(parser);
+  mwv_true = new TrueWindMWVSentenceParser(parser);
 }
 
 void tearDown(void) {
+  delete mwv_true;
+  delete mwv;
   delete vwr;
   delete mwd;
   delete parser;
@@ -62,6 +68,53 @@ void test_vwr_port(void) {
   TEST_ASSERT_FLOAT_WITHIN(0.01, 5.1, vwr->apparent_wind_speed_.get());
 }
 
+void test_mwv_apparent_non_wi_talker(void) {
+  // MWV with II talker (integrated instruments) should parse as apparent wind
+  parser->set("$IIMWV,045.0,R,12.5,N,A*0A");
+
+  TEST_ASSERT_FLOAT_WITHIN(0.001, 45.0 * DEG_TO_RAD,
+                           mwv->apparent_wind_angle_.get());
+  // 12.5 knots * 0.514444 = 6.4306 m/s
+  TEST_ASSERT_FLOAT_WITHIN(0.01, 6.4306, mwv->apparent_wind_speed_.get());
+  TEST_ASSERT_EQUAL_INT(1, mwv->get_rx_count());
+}
+
+void test_mwv_apparent_rejects_true_wind(void) {
+  // MWV with T (true) reference should be rejected by apparent wind parser
+  parser->set("$IIMWV,225.0,T,6.4,M,A*3F");
+
+  TEST_ASSERT_EQUAL_INT(0, mwv->get_rx_count());
+}
+
+void test_mwv_true_wind(void) {
+  // MWV with T (true) reference should be parsed by true wind parser
+  parser->set("$IIMWV,225.0,T,6.4,M,A*3F");
+
+  TEST_ASSERT_FLOAT_WITHIN(0.001, 225.0 * DEG_TO_RAD,
+                           mwv_true->true_wind_direction_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.01, 6.4, mwv_true->true_wind_speed_.get());
+  TEST_ASSERT_EQUAL_INT(1, mwv_true->get_rx_count());
+}
+
+void test_mwv_true_rejects_apparent_wind(void) {
+  // MWV with R (relative) reference should be rejected by true wind parser
+  parser->set("$IIMWV,045.0,R,12.5,N,A*0A");
+
+  // Apparent parser should get it, not the true wind parser
+  TEST_ASSERT_EQUAL_INT(1, mwv->get_rx_count());
+  TEST_ASSERT_EQUAL_INT(0, mwv_true->get_rx_count());
+}
+
+void test_mwv_true_wind_knots(void) {
+  // MWV true wind in knots — should convert to m/s
+  parser->set("$IIMWV,180.0,T,15.0,N,A*06");
+
+  TEST_ASSERT_FLOAT_WITHIN(0.001, 180.0 * DEG_TO_RAD,
+                           mwv_true->true_wind_direction_.get());
+  // 15.0 knots * 0.514444 = 7.7167 m/s
+  TEST_ASSERT_FLOAT_WITHIN(0.01, 7.7167, mwv_true->true_wind_speed_.get());
+}
+
 #ifdef ARDUINO
 void setup() {
   delay(2000);
@@ -71,6 +124,11 @@ void setup() {
   RUN_TEST(test_mwd_knots_only);
   RUN_TEST(test_vwr_starboard);
   RUN_TEST(test_vwr_port);
+  RUN_TEST(test_mwv_apparent_non_wi_talker);
+  RUN_TEST(test_mwv_apparent_rejects_true_wind);
+  RUN_TEST(test_mwv_true_wind);
+  RUN_TEST(test_mwv_true_rejects_apparent_wind);
+  RUN_TEST(test_mwv_true_wind_knots);
 
   UNITY_END();
 }
@@ -84,6 +142,11 @@ int main(int argc, char** argv) {
   RUN_TEST(test_mwd_knots_only);
   RUN_TEST(test_vwr_starboard);
   RUN_TEST(test_vwr_port);
+  RUN_TEST(test_mwv_apparent_non_wi_talker);
+  RUN_TEST(test_mwv_apparent_rejects_true_wind);
+  RUN_TEST(test_mwv_true_wind);
+  RUN_TEST(test_mwv_true_rejects_apparent_wind);
+  RUN_TEST(test_mwv_true_wind_knots);
 
   return UNITY_END();
 }

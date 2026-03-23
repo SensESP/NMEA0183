@@ -172,4 +172,26 @@ bool ParseEmpty(const char* s) {
   return s[0] == 0;
 }
 
+bool ConvertSpeedToMs(float* speed, char unit) {
+  float conv_ratio;
+  switch (unit) {
+    case 'K':  // km/h
+      conv_ratio = 0.277778;
+      break;
+    case 'M':  // m/s
+      conv_ratio = 1.0;
+      break;
+    case 'N':  // knots
+      conv_ratio = 0.514444;
+      break;
+    case 'S':  // statute miles/h
+      conv_ratio = 0.44704;
+      break;
+    default:
+      return false;
+  }
+  *speed *= conv_ratio;
+  return true;
+}
+
 }  // namespace sensesp::nmea0183

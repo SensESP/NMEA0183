@@ -32,6 +32,10 @@ bool ParseDate(int* year, int* month, int* day, const char* s,
 
 bool ParseEmpty(const char* s);
 
+/// Convert a speed value to m/s given its NMEA unit character.
+/// Returns false if the unit is unrecognized.
+bool ConvertSpeedToMs(float* speed, char unit);
+
 // Field parser macro that can be used to define sentence parsers as arrays of
 // field parsers.
 
