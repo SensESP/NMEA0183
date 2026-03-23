@@ -2,6 +2,7 @@
 
 #include "sensesp_nmea0183/nmea0183.h"
 #include "sensesp_nmea0183/sentence_parser/gnss_sentence_parser.h"
+#include "sensesp_nmea0183/sentence_parser/navigation_sentence_parser.h"
 
 using namespace sensesp;
 using namespace sensesp::nmea0183;
@@ -10,15 +11,30 @@ static NMEA0183Parser* parser;
 static GGASentenceParser* gga;
 static RMCSentenceParser* rmc;
 static VTGSentenceParser* vtg;
+static GLLSentenceParser* gll;
+static GSVSentenceParser* gsv;
+static HDGSentenceParser* hdg;
+static VHWSentenceParser* vhw;
+static DPTSentenceParser* dpt;
 
 void setUp(void) {
   parser = new NMEA0183Parser();
   gga = new GGASentenceParser(parser);
   rmc = new RMCSentenceParser(parser);
   vtg = new VTGSentenceParser(parser);
+  gll = new GLLSentenceParser(parser);
+  gsv = new GSVSentenceParser(parser);
+  hdg = new HDGSentenceParser(parser);
+  vhw = new VHWSentenceParser(parser);
+  dpt = new DPTSentenceParser(parser);
 }
 
 void tearDown(void) {
+  delete dpt;
+  delete vhw;
+  delete hdg;
+  delete gsv;
+  delete gll;
   delete vtg;
   delete rmc;
   delete gga;
@@ -76,6 +92,47 @@ void test_gga_valid_still_works(void) {
   TEST_ASSERT_EQUAL_INT(2, gga->quality_.get());
 }
 
+void test_gll_empty_position(void) {
+  // No fix — lat/lon fields empty
+  parser->set("$GNGLL,,,,,121223.00,V,N*55");
+
+  TEST_ASSERT_EQUAL_INT(1, gll->get_rx_count());
+  // position_ should not be updated (lat/lon are sentinel values)
+}
+
+void test_gsv_empty_satellite_data(void) {
+  // One satellite block with valid PRN but empty elevation/azimuth/SNR.
+  // 9 fields triggers v4.10 new-format parsing; the empty 9th field
+  // is interpreted as an empty signal_id (also FLDP_OPT).
+  parser->set("$GPGSV,1,1,01,01,,,,*55");
+
+  TEST_ASSERT_EQUAL_INT(1, gsv->get_rx_count());
+}
+
+void test_hdg_empty_heading_deviation_variation(void) {
+  // All fields empty
+  parser->set("$IIHDG,,,,,*67");
+
+  TEST_ASSERT_EQUAL_INT(1, hdg->get_rx_count());
+  // No observer values should be updated (all fields are sentinel)
+}
+
+void test_vhw_empty_heading_and_speed(void) {
+  // All data fields empty, only unit indicators present
+  parser->set("$IIVHW,,T,,M,,N,,K*55");
+
+  TEST_ASSERT_EQUAL_INT(1, vhw->get_rx_count());
+  // No observer values should be updated
+}
+
+void test_dpt_empty_depth_and_offset(void) {
+  // Empty depth and offset
+  parser->set("$IIDPT,,*40");
+
+  TEST_ASSERT_EQUAL_INT(1, dpt->get_rx_count());
+  // No observer values should be updated
+}
+
 #ifdef ARDUINO
 void setup() {
   delay(2000);
@@ -85,6 +142,11 @@ void setup() {
   RUN_TEST(test_vtg_empty_track);
   RUN_TEST(test_gga_no_fix_empty_position);
   RUN_TEST(test_gga_valid_still_works);
+  RUN_TEST(test_gll_empty_position);
+  RUN_TEST(test_gsv_empty_satellite_data);
+  RUN_TEST(test_hdg_empty_heading_deviation_variation);
+  RUN_TEST(test_vhw_empty_heading_and_speed);
+  RUN_TEST(test_dpt_empty_depth_and_offset);
 
   UNITY_END();
 }
@@ -98,6 +160,11 @@ int main(int argc, char** argv) {
   RUN_TEST(test_vtg_empty_track);
   RUN_TEST(test_gga_no_fix_empty_position);
   RUN_TEST(test_gga_valid_still_works);
+  RUN_TEST(test_gll_empty_position);
+  RUN_TEST(test_gsv_empty_satellite_data);
+  RUN_TEST(test_hdg_empty_heading_deviation_variation);
+  RUN_TEST(test_vhw_empty_heading_and_speed);
+  RUN_TEST(test_dpt_empty_depth_and_offset);
 
   return UNITY_END();
 }
