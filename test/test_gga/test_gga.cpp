@@ -37,14 +37,15 @@ void test_gga_valid_sentence(void) {
   TEST_ASSERT_EQUAL_INT(1, gga->get_rx_count());
 }
 
-void test_gga_no_fix_returns_false(void) {
-  // GGA with no fix has empty position fields — non-optional field parsers
-  // fail, so parse_fields returns false and rx_count does not increment.
-  int rx_before = gga->get_rx_count();
+void test_gga_no_fix_parses_quality(void) {
+  // GGA with no fix has empty position fields — optional field parsers accept
+  // these, so the sentence parses and quality=0 is emitted.
   parser->set(
       "$GNGGA,121224.00,,,,,,0,00,99.99,,,,,,*7E");
 
-  TEST_ASSERT_EQUAL_INT(rx_before, gga->get_rx_count());
+  TEST_ASSERT_EQUAL_INT(1, gga->get_rx_count());
+  TEST_ASSERT_EQUAL_INT(0, gga->quality_.get());
+  TEST_ASSERT_EQUAL_STRING("no GPS", gga->gnss_quality_.get().c_str());
 }
 
 void test_gga_invalid_checksum(void) {
@@ -74,7 +75,7 @@ void setup() {
   UNITY_BEGIN();
 
   RUN_TEST(test_gga_valid_sentence);
-  RUN_TEST(test_gga_no_fix_returns_false);
+  RUN_TEST(test_gga_no_fix_parses_quality);
   RUN_TEST(test_gga_invalid_checksum);
   RUN_TEST(test_gga_rx_count_increments);
 
@@ -87,7 +88,7 @@ int main(int argc, char** argv) {
   UNITY_BEGIN();
 
   RUN_TEST(test_gga_valid_sentence);
-  RUN_TEST(test_gga_no_fix_returns_false);
+  RUN_TEST(test_gga_no_fix_parses_quality);
   RUN_TEST(test_gga_invalid_checksum);
   RUN_TEST(test_gga_rx_count_increments);
 
