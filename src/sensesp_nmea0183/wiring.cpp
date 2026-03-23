@@ -11,6 +11,7 @@
 #include "sensesp_nmea0183/data/wind_data.h"
 #include "sensesp_nmea0183/sentence_parser/gnss_sentence_parser.h"
 #include "sensesp_nmea0183/sentence_parser/navigation_sentence_parser.h"
+#include "sensesp_nmea0183/sentence_parser/weather_sentence_parser.h"
 #include "sensesp_nmea0183/sentence_parser/wind_sentence_parser.h"
 
 namespace sensesp::nmea0183 {
@@ -218,6 +219,33 @@ void ConnectTrueWind(NMEA0183Parser* nmea_input, TrueWindData* data) {
       "environment.wind.directionTrue", "/SK Path/True Wind Direction"));
   data->speed.connect_to(new SKOutputFloat(
       "environment.wind.speedTrue", "/SK Path/True Wind Speed"));
+}
+
+void ConnectWeather(NMEA0183Parser* nmea_input, WeatherData* data) {
+  auto* mda = new MDASentenceParser(nmea_input);
+
+  mda->barometric_pressure_.connect_to(&data->barometric_pressure);
+  mda->air_temperature_.connect_to(&data->air_temperature);
+  mda->water_temperature_.connect_to(&data->water_temperature);
+  mda->relative_humidity_.connect_to(&data->relative_humidity);
+  mda->dew_point_.connect_to(&data->dew_point);
+  mda->true_wind_direction_.connect_to(&data->true_wind_direction);
+  mda->true_wind_speed_.connect_to(&data->true_wind_speed);
+
+  data->barometric_pressure.connect_to(new SKOutputFloat(
+      "environment.outside.pressure", "/SK Path/Barometric Pressure"));
+  data->air_temperature.connect_to(new SKOutputFloat(
+      "environment.outside.temperature", "/SK Path/Air Temperature"));
+  data->water_temperature.connect_to(new SKOutputFloat(
+      "environment.water.temperature", "/SK Path/Water Temperature (MDA)"));
+  data->relative_humidity.connect_to(new SKOutputFloat(
+      "environment.outside.humidity", "/SK Path/Relative Humidity"));
+  data->dew_point.connect_to(new SKOutputFloat(
+      "environment.outside.dewPointTemperature", "/SK Path/Dew Point"));
+  data->true_wind_direction.connect_to(new SKOutputFloat(
+      "environment.wind.directionTrue", "/SK Path/True Wind Direction (MDA)"));
+  data->true_wind_speed.connect_to(new SKOutputFloat(
+      "environment.wind.speedTrue", "/SK Path/True Wind Speed (MDA)"));
 }
 
 }  // namespace sensesp::nmea0183

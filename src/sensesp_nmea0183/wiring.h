@@ -3,6 +3,7 @@
 
 #include "sensesp_nmea0183/data/gnss_data.h"
 #include "sensesp_nmea0183/data/navigation_data.h"
+#include "sensesp_nmea0183/data/weather_data.h"
 #include "sensesp_nmea0183/data/wind_data.h"
 #include "sensesp_nmea0183/nmea0183.h"
 
@@ -53,6 +54,11 @@ void ConnectHeading(NMEA0183Parser* nmea_input, HeadingData* data);
  * @brief Wire MWD parser to Signal K outputs for true wind data.
  */
 void ConnectTrueWind(NMEA0183Parser* nmea_input, TrueWindData* data);
+
+/**
+ * @brief Wire MDA parser to Signal K outputs for weather data.
+ */
+void ConnectWeather(NMEA0183Parser* nmea_input, WeatherData* data);
 
 }  // namespace sensesp
 
