@@ -63,6 +63,18 @@ class WPLSentenceParser : public SentenceParser {
   ObservableValue<String> waypoint_id_;
 };
 
+/// Parser for RTE - Routes (multi-sentence)
+class RTESentenceParser : public SentenceParser {
+ public:
+  RTESentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "..RTE"; }
+
+  ObservableValue<String> route_id_;
+  ObservableValue<std::vector<String>> waypoints_;
+};
+
 }  // namespace sensesp::nmea0183
 
 #endif  // SENSESP_NMEA0183_WAYPOINT_SENTENCE_PARSER_H_

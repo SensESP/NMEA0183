@@ -301,4 +301,58 @@ bool WPLSentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
+bool RTESentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
+  bool ok = true;
+
+  static int total_sentences = 0;
+  int num_sentences;
+  int sentence_number;
+  char route_type;
+  String route_id;
+  static std::vector<String> waypoints;
+
+  // $xxRTE,num_sentences,sentence_number,c/w,route_id,wp1,wp2,...*cs
+  // eg. $GPRTE,2,1,c,0,PBRCPK,## first sentence
+  //     $GPRTE,2,2,c,0,CPNPT,BABRU,FATEA,OCEAI*3A
+
+  if (num_fields < 5) {
+    return false;
+  }
+
+  ok &= FLDP(Int, &num_sentences)(field_strings + field_offsets[1]);
+  ok &= FLDP(Int, &sentence_number)(field_strings + field_offsets[2]);
+  ok &= FLDP(Char, &route_type, 255)(field_strings + field_offsets[3]);
+  ok &= FLDP(String, &route_id)(field_strings + field_offsets[4]);
+
+  if (!ok) {
+    return false;
+  }
+
+  // If this is the first sentence, reset the accumulator
+  if (sentence_number == 1) {
+    waypoints.clear();
+    total_sentences = num_sentences;
+  }
+
+  // Accumulate waypoint IDs from remaining fields
+  for (int i = 5; i < num_fields; i++) {
+    String wp_id;
+    if (FLDP_OPT(String, &wp_id)(field_strings + field_offsets[i])) {
+      if (wp_id.length() > 0) {
+        waypoints.push_back(wp_id);
+      }
+    }
+  }
+
+  // Emit when the last sentence in the cycle is received
+  if (sentence_number == total_sentences) {
+    route_id_.set(route_id);
+    waypoints_.set(waypoints);
+  }
+
+  return true;
+}
+
 }  // namespace sensesp::nmea0183
