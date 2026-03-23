@@ -167,13 +167,14 @@ void ConnectQuectelRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data) {
 
 void ConnectApparentWind(NMEA0183Parser* nmea_input,
                          ApparentWindData* apparent_wind_data) {
-  WIMWVSentenceParser* wind_sentence_parser =
-      new WIMWVSentenceParser(nmea_input);
+  auto* wimwv = new WIMWVSentenceParser(nmea_input);
+  auto* vwr = new VWRSentenceParser(nmea_input);
 
-  wind_sentence_parser->apparent_wind_speed_.connect_to(
-      &apparent_wind_data->speed);
-  wind_sentence_parser->apparent_wind_angle_.connect_to(
-      &apparent_wind_data->angle);
+  wimwv->apparent_wind_speed_.connect_to(&apparent_wind_data->speed);
+  wimwv->apparent_wind_angle_.connect_to(&apparent_wind_data->angle);
+
+  vwr->apparent_wind_speed_.connect_to(&apparent_wind_data->speed);
+  vwr->apparent_wind_angle_.connect_to(&apparent_wind_data->angle);
 
   apparent_wind_data->angle.connect_to(new SKOutputFloat(
       "environment.wind.angleApparent", "/SK Path/Apparent Wind Angle"));
@@ -289,6 +290,25 @@ void ConnectWaypoint(NMEA0183Parser* nmea_input, WaypointData* data) {
   data->gc_distance.connect_to(new SKOutputFloat(
       "navigation.courseGreatCircle.nextPoint.distance",
       "/SK Path/GC Distance"));
+}
+
+void ConnectGNSSIntegrity(NMEA0183Parser* nmea_input,
+                          GNSSIntegrityData* data) {
+  auto* gbs = new GBSSentenceParser(nmea_input);
+
+  gbs->lat_error_.connect_to(&data->lat_error);
+  gbs->lon_error_.connect_to(&data->lon_error);
+  gbs->alt_error_.connect_to(&data->alt_error);
+
+  data->lat_error.connect_to(new SKOutputFloat(
+      "navigation.gnss.integrity.latitudeError",
+      "/SK Path/GNSS Latitude Error"));
+  data->lon_error.connect_to(new SKOutputFloat(
+      "navigation.gnss.integrity.longitudeError",
+      "/SK Path/GNSS Longitude Error"));
+  data->alt_error.connect_to(new SKOutputFloat(
+      "navigation.gnss.integrity.altitudeError",
+      "/SK Path/GNSS Altitude Error"));
 }
 
 }  // namespace sensesp::nmea0183

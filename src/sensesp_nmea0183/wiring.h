@@ -66,6 +66,12 @@ void ConnectWeather(NMEA0183Parser* nmea_input, WeatherData* data);
  */
 void ConnectWaypoint(NMEA0183Parser* nmea_input, WaypointData* data);
 
+/**
+ * @brief Wire GBS parser to Signal K outputs for GNSS error estimates.
+ */
+void ConnectGNSSIntegrity(NMEA0183Parser* nmea_input,
+                          GNSSIntegrityData* data);
+
 }  // namespace sensesp
 
 #endif  // SENSEP_NMEA0183_WIRING_H

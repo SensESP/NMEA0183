@@ -306,12 +306,10 @@ bool RTESentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  static int total_sentences = 0;
   int num_sentences;
   int sentence_number;
   char route_type;
   String route_id;
-  static std::vector<String> waypoints;
 
   // $xxRTE,num_sentences,sentence_number,c/w,route_id,wp1,wp2,...*cs
   // eg. $GPRTE,2,1,c,0,PBRCPK,## first sentence
@@ -332,8 +330,8 @@ bool RTESentenceParser::parse_fields(const char* field_strings,
 
   // If this is the first sentence, reset the accumulator
   if (sentence_number == 1) {
-    waypoints.clear();
-    total_sentences = num_sentences;
+    accumulated_waypoints_.clear();
+    total_sentences_ = num_sentences;
   }
 
   // Accumulate waypoint IDs from remaining fields
@@ -341,15 +339,15 @@ bool RTESentenceParser::parse_fields(const char* field_strings,
     String wp_id;
     if (FLDP_OPT(String, &wp_id)(field_strings + field_offsets[i])) {
       if (wp_id.length() > 0) {
-        waypoints.push_back(wp_id);
+        accumulated_waypoints_.push_back(wp_id);
       }
     }
   }
 
   // Emit when the last sentence in the cycle is received
-  if (sentence_number == total_sentences) {
+  if (sentence_number == total_sentences_) {
     route_id_.set(route_id);
-    waypoints_.set(waypoints);
+    waypoints_.set(accumulated_waypoints_);
   }
 
   return true;

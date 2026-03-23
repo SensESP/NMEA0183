@@ -73,6 +73,10 @@ class RTESentenceParser : public SentenceParser {
 
   ObservableValue<String> route_id_;
   ObservableValue<std::vector<String>> waypoints_;
+
+ private:
+  int total_sentences_ = 0;
+  std::vector<String> accumulated_waypoints_;
 };
 
 }  // namespace sensesp::nmea0183

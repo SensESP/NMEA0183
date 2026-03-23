@@ -77,6 +77,15 @@ struct RTKData {
   ObservableValue<int> rtk_num_satellites;
 };
 
+/**
+ * @brief Container for GNSS integrity/error data from GBS parser.
+ */
+struct GNSSIntegrityData {
+  ObservableValue<float> lat_error;  // meters
+  ObservableValue<float> lon_error;  // meters
+  ObservableValue<float> alt_error;  // meters
+};
+
 }  // namespace sensesp::nmea0183
 
 #endif  // SENESP_NMEA0183_GNSS_DATA_H
