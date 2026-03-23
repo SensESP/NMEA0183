@@ -13,6 +13,14 @@ struct DepthTemperatureData {
   ObservableValue<float> water_temperature;        // Kelvin
 };
 
+/**
+ * @brief Container for heading data from HDM and HDT parsers.
+ */
+struct HeadingData {
+  ObservableValue<float> magnetic_heading;  // radians
+  ObservableValue<float> true_heading;      // radians
+};
+
 }  // namespace sensesp::nmea0183
 
 #endif  // SENSESP_NMEA0183_NAVIGATION_DATA_H_

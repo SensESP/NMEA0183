@@ -68,6 +68,28 @@ class MTWSentenceParser : public SentenceParser {
   ObservableValue<float> water_temperature_;  // Kelvin
 };
 
+/// Parser for HDM - Heading, Magnetic
+class HDMSentenceParser : public SentenceParser {
+ public:
+  HDMSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "..HDM"; }
+
+  ObservableValue<float> magnetic_heading_;  // radians
+};
+
+/// Parser for HDT - Heading, True
+class HDTSentenceParser : public SentenceParser {
+ public:
+  HDTSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "..HDT"; }
+
+  ObservableValue<float> true_heading_;  // radians
+};
+
 }  // namespace sensesp::nmea0183
 
 #endif  // SENSESP_NMEA0183_NAVIGATION_SENTENCE_PARSER_H_

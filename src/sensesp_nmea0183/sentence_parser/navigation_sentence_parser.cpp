@@ -243,4 +243,78 @@ bool MTWSentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
+bool HDMSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
+  bool ok = true;
+
+  float heading;
+  char m_char;
+
+  // $xxHDM,heading,M*cs
+  // eg. $HCHDM,101.1,M*2E
+
+  if (num_fields < 3) {
+    return false;
+  }
+
+  std::function<bool(const char*)> fps[] = {
+      // 1   Heading, degrees magnetic
+      FLDP_OPT(Float, &heading),
+      // 2   M = magnetic
+      FLDP_OPT(Char, &m_char, 'M'),
+  };
+
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
+  }
+
+  if (!ok) {
+    return false;
+  }
+
+  if (heading != kInvalidFloat) {
+    magnetic_heading_.set(heading * DEG_TO_RAD);
+  }
+
+  return true;
+}
+
+bool HDTSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
+  bool ok = true;
+
+  float heading;
+  char t_char;
+
+  // $xxHDT,heading,T*cs
+  // eg. $HCHDT,98.3,T*21
+
+  if (num_fields < 3) {
+    return false;
+  }
+
+  std::function<bool(const char*)> fps[] = {
+      // 1   Heading, degrees true
+      FLDP_OPT(Float, &heading),
+      // 2   T = true
+      FLDP_OPT(Char, &t_char, 'T'),
+  };
+
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
+  }
+
+  if (!ok) {
+    return false;
+  }
+
+  if (heading != kInvalidFloat) {
+    true_heading_.set(heading * DEG_TO_RAD);
+  }
+
+  return true;
+}
+
 }  // namespace sensesp::nmea0183

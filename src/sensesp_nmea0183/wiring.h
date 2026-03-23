@@ -44,6 +44,11 @@ void ConnectApparentWind(NMEA0183Parser* nmea_input,
 void ConnectDepthTemperature(NMEA0183Parser* nmea_input,
                              DepthTemperatureData* data);
 
+/**
+ * @brief Wire HDM and HDT parsers to Signal K outputs.
+ */
+void ConnectHeading(NMEA0183Parser* nmea_input, HeadingData* data);
+
 }  // namespace sensesp
 
 #endif  // SENSEP_NMEA0183_WIRING_H

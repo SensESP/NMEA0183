@@ -184,4 +184,17 @@ void ConnectDepthTemperature(NMEA0183Parser* nmea_input,
       "/SK Path/Water Temperature"));
 }
 
+void ConnectHeading(NMEA0183Parser* nmea_input, HeadingData* data) {
+  auto* hdm = new HDMSentenceParser(nmea_input);
+  auto* hdt = new HDTSentenceParser(nmea_input);
+
+  hdm->magnetic_heading_.connect_to(&data->magnetic_heading);
+  hdt->true_heading_.connect_to(&data->true_heading);
+
+  data->magnetic_heading.connect_to(new SKOutputFloat(
+      "navigation.headingMagnetic", "/SK Path/Heading Magnetic"));
+  data->true_heading.connect_to(new SKOutputFloat(
+      "navigation.headingTrue", "/SK Path/Heading True"));
+}
+
 }  // namespace sensesp::nmea0183
