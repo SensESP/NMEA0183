@@ -153,6 +153,44 @@ class QuectelPQTMTARSentenceParser : public SentenceParser {
   ObservableValue<int> hdg_num_satellites_;
 };
 
+/// Parser for GSA - GPS DOP and Active Satellites
+class GSASentenceParser : public SentenceParser {
+ public:
+  GSASentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "G.GSA"; }
+
+  ObservableValue<int> fix_type_;     // 1=no fix, 2=2D, 3=3D
+  ObservableValue<float> pdop_;
+  ObservableValue<float> hdop_;
+  ObservableValue<float> vdop_;
+};
+
+/// Parser for ZDA - Time & Date
+class ZDASentenceParser : public SentenceParser {
+ public:
+  ZDASentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "G.ZDA"; }
+
+  ObservableValue<time_t> datetime_;
+};
+
+/// Parser for GBS - GNSS Satellite Fault Detection
+class GBSSentenceParser : public SentenceParser {
+ public:
+  GBSSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "G.GBS"; }
+
+  ObservableValue<float> lat_error_;  // meters
+  ObservableValue<float> lon_error_;  // meters
+  ObservableValue<float> alt_error_;  // meters
+};
+
 }  // namespace sensesp::nmea0183
 
 #endif  // _SENSESP_NMEA0183_GNSS_SENTENCE_PARSER_H_

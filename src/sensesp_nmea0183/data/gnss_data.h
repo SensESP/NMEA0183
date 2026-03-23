@@ -53,6 +53,9 @@ struct GNSSData {
   ObservableValue<float> true_course;
   ObservableValue<float> variation;
   ObservableValue<ENUVector> enu_velocity;
+  ObservableValue<int> fix_type;
+  ObservableValue<float> pdop;
+  ObservableValue<float> vdop;
 };
 
 bool convertToJson(const GNSSSatellite& value, JsonVariant& dst);

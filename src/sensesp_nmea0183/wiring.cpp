@@ -26,6 +26,10 @@ void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
 
   GSVSentenceParser* gsv_sentence_parser = new GSVSentenceParser(nmea_input);
 
+  auto* gsa_sentence_parser = new GSASentenceParser(nmea_input);
+
+  auto* zda_sentence_parser = new ZDASentenceParser(nmea_input);
+
   gga_sentence_parser->position_.connect_to(&location_data->position);
   gga_sentence_parser->gnss_quality_.connect_to(&location_data->rtk_quality);
   gga_sentence_parser->num_satellites_.connect_to(
@@ -49,6 +53,13 @@ void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
   gsv_sentence_parser->num_satellites_.connect_to(
       &location_data->num_satellites);
   gsv_sentence_parser->satellites_.connect_to(&location_data->satellites);
+
+  gsa_sentence_parser->fix_type_.connect_to(&location_data->fix_type);
+  gsa_sentence_parser->hdop_.connect_to(&location_data->horizontal_dilution);
+  gsa_sentence_parser->pdop_.connect_to(&location_data->pdop);
+  gsa_sentence_parser->vdop_.connect_to(&location_data->vdop);
+
+  zda_sentence_parser->datetime_.connect_to(&location_data->datetime);
 
   location_data->position.connect_to(
       new SKOutput<Position>("navigation.position", "/SK Path/Position"));
