@@ -3,17 +3,16 @@
 
 #include <Arduino.h>
 
-#include <limits>
+#include <cstdint>
+
+#include "sensesp/types/nullable.h"
 
 namespace sensesp::nmea0183 {
 
-// magic values for invalid data
-constexpr float kInvalidFloat = std::numeric_limits<float>::lowest();
-constexpr double kInvalidDouble = std::numeric_limits<double>::lowest();
-constexpr int kInvalidInt = std::numeric_limits<int>::lowest();
+using sensesp::Nullable;
 
 bool ParseString(String* value, const char* s, bool allow_empty = false);
-bool ParseInt(int* value, const char* s, bool allow_empty = false);
+bool ParseInt(int32_t* value, const char* s, bool allow_empty = false);
 bool ParseFloat(float* value, const char* s, bool allow_empty = false);
 bool ParseDouble(double* value, const char* s, bool allow_empty = false);
 bool ParseLatLon(double* value, const char* s, bool allow_empty = false);
@@ -24,10 +23,10 @@ bool ParseChar(char* value, const char expected, const char* s,
                bool allow_empty = false);
 bool ParseAV(bool* is_valid, const char* s);
 
-bool ParseTime(int* hour, int* minute, float* second, const char* s,
+bool ParseTime(int32_t* hour, int32_t* minute, float* second, const char* s,
                bool allow_empty = false);
 
-bool ParseDate(int* year, int* month, int* day, const char* s,
+bool ParseDate(int32_t* year, int32_t* month, int32_t* day, const char* s,
                bool allow_empty = false);
 
 bool ParseEmpty(const char* s);
