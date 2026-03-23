@@ -154,4 +154,93 @@ bool DPTSentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
+bool DBTSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
+  bool ok = true;
+
+  float depth_feet;
+  float depth_meters;
+  float depth_fathoms;
+  char f_char;
+  char m_char;
+  char F_char;
+
+  // $xxDBT,depth_feet,f,depth_meters,M,depth_fathoms,F*cs
+  // eg. $SDDBT,41.3,f,12.6,M,6.9,F*05
+
+  if (num_fields < 7) {
+    return false;
+  }
+
+  std::function<bool(const char*)> fps[] = {
+      // 1   Depth, feet
+      FLDP_OPT(Float, &depth_feet),
+      // 2   f = feet
+      FLDP_OPT(Char, &f_char, 'f'),
+      // 3   Depth, meters
+      FLDP_OPT(Float, &depth_meters),
+      // 4   M = meters
+      FLDP_OPT(Char, &m_char, 'M'),
+      // 5   Depth, fathoms
+      FLDP_OPT(Float, &depth_fathoms),
+      // 6   F = fathoms
+      FLDP_OPT(Char, &F_char, 'F'),
+  };
+
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
+  }
+
+  if (!ok) {
+    return false;
+  }
+
+  // Prefer meters; fallback to feet or fathoms
+  if (depth_meters != kInvalidFloat) {
+    depth_.set(depth_meters);
+  } else if (depth_feet != kInvalidFloat) {
+    depth_.set(depth_feet * 0.3048);
+  } else if (depth_fathoms != kInvalidFloat) {
+    depth_.set(depth_fathoms * 1.8288);
+  }
+
+  return true;
+}
+
+bool MTWSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
+  bool ok = true;
+
+  float temperature;
+  char c_char;
+
+  // $xxMTW,temperature,C*cs
+  // eg. $YXMTW,17.8,C*1B
+
+  if (num_fields < 3) {
+    return false;
+  }
+
+  std::function<bool(const char*)> fps[] = {
+      // 1   Temperature, Celsius
+      FLDP(Float, &temperature),
+      // 2   C = Celsius
+      FLDP(Char, &c_char, 'C'),
+  };
+
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
+  }
+
+  if (!ok) {
+    return false;
+  }
+
+  water_temperature_.set(temperature + 273.15);
+
+  return true;
+}
+
 }  // namespace sensesp::nmea0183

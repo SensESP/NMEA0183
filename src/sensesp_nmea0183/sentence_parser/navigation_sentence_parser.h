@@ -46,6 +46,28 @@ class DPTSentenceParser : public SentenceParser {
   ObservableValue<float> offset_;  // meters (transducer offset)
 };
 
+/// Parser for DBT - Depth Below Transducer
+class DBTSentenceParser : public SentenceParser {
+ public:
+  DBTSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "..DBT"; }
+
+  ObservableValue<float> depth_;  // meters
+};
+
+/// Parser for MTW - Mean Temperature of Water
+class MTWSentenceParser : public SentenceParser {
+ public:
+  MTWSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() { return "..MTW"; }
+
+  ObservableValue<float> water_temperature_;  // Kelvin
+};
+
 }  // namespace sensesp::nmea0183
 
 #endif  // SENSESP_NMEA0183_NAVIGATION_SENTENCE_PARSER_H_

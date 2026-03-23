@@ -2,8 +2,9 @@
 #define SENSEP_NMEA0183_WIRING_H
 
 #include "sensesp_nmea0183/data/gnss_data.h"
-#include "sensesp_nmea0183/nmea0183.h"
+#include "sensesp_nmea0183/data/navigation_data.h"
 #include "sensesp_nmea0183/data/wind_data.h"
+#include "sensesp_nmea0183/nmea0183.h"
 
 namespace sensesp::nmea0183 {
 
@@ -36,6 +37,12 @@ void ConnectQuectelRTK(NMEA0183Parser* nmea_input, RTKData* rtk_data);
  */
 void ConnectApparentWind(NMEA0183Parser* nmea_input,
                          ApparentWindData* apparent_wind_data);
+
+/**
+ * @brief Wire DBT and MTW parsers to Signal K outputs.
+ */
+void ConnectDepthTemperature(NMEA0183Parser* nmea_input,
+                             DepthTemperatureData* data);
 
 }  // namespace sensesp
 

@@ -1,9 +1,10 @@
 
 PlatformIO Unit Tests for SensESP NMEA0183
 
-Tests are organized by component under test/ subdirectories:
+Each test suite lives in its own subdirectory under test/:
 
-  test/test_sentence_parser/  - Sentence parser tests
+  test/test_gga/       - GGA sentence parser tests
+  test/test_dbt_mtw/   - DBT and MTW sentence parser tests
 
 Building tests (no hardware required):
 

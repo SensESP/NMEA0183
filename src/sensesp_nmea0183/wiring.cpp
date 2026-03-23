@@ -10,6 +10,7 @@
 #include "sensesp_nmea0183/data/gnss_data.h"
 #include "sensesp_nmea0183/data/wind_data.h"
 #include "sensesp_nmea0183/sentence_parser/gnss_sentence_parser.h"
+#include "sensesp_nmea0183/sentence_parser/navigation_sentence_parser.h"
 #include "sensesp_nmea0183/sentence_parser/wind_sentence_parser.h"
 
 namespace sensesp::nmea0183 {
@@ -165,6 +166,22 @@ void ConnectApparentWind(NMEA0183Parser* nmea_input,
       "environment.wind.angleApparent", "/SK Path/Apparent Wind Angle"));
   apparent_wind_data->speed.connect_to(new SKOutputFloat(
       "environment.wind.speedApparent", "/SK Path/Apparent Wind Speed"));
+}
+
+void ConnectDepthTemperature(NMEA0183Parser* nmea_input,
+                             DepthTemperatureData* data) {
+  auto* dbt = new DBTSentenceParser(nmea_input);
+  auto* mtw = new MTWSentenceParser(nmea_input);
+
+  dbt->depth_.connect_to(&data->depth_below_transducer);
+  mtw->water_temperature_.connect_to(&data->water_temperature);
+
+  data->depth_below_transducer.connect_to(new SKOutputFloat(
+      "environment.depth.belowTransducer",
+      "/SK Path/Depth Below Transducer"));
+  data->water_temperature.connect_to(new SKOutputFloat(
+      "environment.water.temperature",
+      "/SK Path/Water Temperature"));
 }
 
 }  // namespace sensesp::nmea0183
