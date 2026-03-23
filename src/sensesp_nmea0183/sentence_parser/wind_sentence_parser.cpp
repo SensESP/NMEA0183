@@ -4,18 +4,18 @@
 
 namespace sensesp::nmea0183 {
 
-bool WIMWVSentenceParser::parse_fields(const char* field_strings,
-                                       const int field_offsets[],
-                                       int num_fields) {
+bool MWVSentenceParser::parse_fields(const char* field_strings,
+                                     const int field_offsets[],
+                                     int num_fields) {
   bool ok = true;
 
   float wind_speed;
   float wind_angle;
 
   //      0,  1,2,  3,4,5
-  // $WIMWV,a.a,R,s.s,N,A*hhhh<CR><LF>
+  // $xxMWV,a.a,R,s.s,N,A*hh
   // where a.a is the apparent wind angle in degrees
-  //       s.s is the relative wind speed in knots
+  //       s.s is the wind speed
 
   if (num_fields < 6) {
     return false;
@@ -45,36 +45,62 @@ bool WIMWVSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  // K = km/hr
-  // M = m/s
-  // N = knots
-  // S = statute miles/hr
-
-  float conv_ratio = 1.0;
-  switch (units) {
-    case 'K':
-      conv_ratio = 0.277778;
-      break;
-    case 'M':
-      conv_ratio = 1.0;
-      break;
-    case 'N':
-      conv_ratio = 0.514444;
-      break;
-    case 'S':
-      conv_ratio = 0.44704;
-      break;
-    default:
-      return false;
+  if (!ConvertSpeedToMs(&wind_speed, units)) {
+    return false;
   }
 
-  wind_speed *= conv_ratio;
-
   apparent_wind_speed_.set(wind_speed);
+  apparent_wind_angle_.set(wind_angle * DEG_TO_RAD);
 
-  // convert wind angle to radians
-  wind_angle = wind_angle * DEG_TO_RAD;
-  apparent_wind_angle_.set(wind_angle);
+  return true;
+}
+
+bool TrueWindMWVSentenceParser::parse_fields(const char* field_strings,
+                                              const int field_offsets[],
+                                              int num_fields) {
+  bool ok = true;
+
+  float wind_speed;
+  float wind_angle;
+
+  //      0,  1,2,  3,4,5
+  // $xxMWV,a.a,T,s.s,N,A*hh
+  // where a.a is the true wind direction in degrees
+  //       s.s is the wind speed
+
+  if (num_fields < 6) {
+    return false;
+  }
+
+  char t_value;
+  char units;
+  char a_value;
+
+  std::function<bool(const char*)> fps[] = {// 1 a.a = True wind direction
+                                            FLDP_OPT(Float, &wind_angle),
+                                            // 2 T = True wind
+                                            FLDP_OPT(Char, &t_value, 'T'),
+                                            // 3 s.s = Wind speed
+                                            FLDP_OPT(Float, &wind_speed),
+                                            // 4 N = Wind speed units
+                                            FLDP_OPT(Char, &units, 255),
+                                            // 5 A = Valid
+                                            FLDP_OPT(Char, &a_value, 'A')};
+
+  for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
+    ok &= fps[i - 1](field_strings + field_offsets[i]);
+  }
+
+  if (!ok) {
+    return false;
+  }
+
+  if (!ConvertSpeedToMs(&wind_speed, units)) {
+    return false;
+  }
+
+  true_wind_speed_.set(wind_speed);
+  true_wind_direction_.set(wind_angle * DEG_TO_RAD);
 
   return true;
 }

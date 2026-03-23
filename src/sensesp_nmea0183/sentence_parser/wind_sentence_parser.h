@@ -8,17 +8,30 @@
 
 namespace sensesp::nmea0183 {
 
-/// Parser for WIMWV (Wind Speed and Angle) sentences
-class WIMWVSentenceParser : public SentenceParser {
+/// Parser for MWV (Wind Speed and Angle) sentences — apparent wind (R reference)
+class MWVSentenceParser : public SentenceParser {
  public:
-  WIMWVSentenceParser(NMEA0183Parser* nmea)
+  MWVSentenceParser(NMEA0183Parser* nmea)
       : SentenceParser(nmea) {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() override { return "WIMWV"; }
+  const char* sentence_address() override { return "..MWV"; }
 
   ObservableValue<float> apparent_wind_speed_;
   ObservableValue<float> apparent_wind_angle_;
+};
+
+/// Parser for MWV (Wind Speed and Angle) sentences — true wind (T reference)
+class TrueWindMWVSentenceParser : public SentenceParser {
+ public:
+  TrueWindMWVSentenceParser(NMEA0183Parser* nmea)
+      : SentenceParser(nmea) {}
+  bool parse_fields(const char* field_strings, const int field_offsets[],
+                    int num_fields) override final;
+  const char* sentence_address() override { return "..MWV"; }
+
+  ObservableValue<float> true_wind_direction_;  // radians
+  ObservableValue<float> true_wind_speed_;      // m/s
 };
 
 /// Parser for MWD (Wind Direction and Speed, True) sentences

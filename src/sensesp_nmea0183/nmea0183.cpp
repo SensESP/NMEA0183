@@ -87,7 +87,7 @@ void NMEA0183Parser::parse_sentence(const String& sentence) {
       bool result = parser->parse(sentence_str);
       ESP_LOGV("SensESP/NMEA0183", "Parsed sentence %s with result %s",
                sentence_str, result ? "true" : "false");
-      return;
+      if (result) return;
     }
   }
   ESP_LOGV("SensESP/NMEA0183", "No parser found for sentence %s", sentence_str);
