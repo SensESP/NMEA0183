@@ -68,24 +68,32 @@ void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
   location_data->rtk_quality.connect_to(new SKOutputString(
       "navigation.gnss.methodQuality", "/SK Path/Fix Quality"));
   location_data->num_satellites.connect_to(new SKOutputInt(
-      "navigation.gnss.satellites", "/SK Path/Number of Satellites"));
+      "navigation.gnss.satellites", "/SK Path/Number of Satellites",
+      new SKMetadata("", "Satellites")));
   location_data->horizontal_dilution.connect_to(new SKOutputFloat(
-      "navigation.gnss.horizontalDilution", "/SK Path/Horizontal Dilution"));
+      "navigation.gnss.horizontalDilution", "/SK Path/Horizontal Dilution",
+      new SKMetadata("", "Horizontal Dilution of Precision")));
   location_data->geoidal_separation.connect_to(new SKOutputFloat(
-      "navigation.gnss.geoidalSeparation", "/SK Path/Geoidal Separation"));
+      "navigation.gnss.geoidalSeparation", "/SK Path/Geoidal Separation",
+      new SKMetadata("m", "Geoidal Separation")));
   location_data->dgps_age.connect_to(new SKOutputFloat(
-      "navigation.gnss.differentialAge", "/SK Path/Differential Age"));
+      "navigation.gnss.differentialAge", "/SK Path/Differential Age",
+      new SKMetadata("s", "Differential Age")));
   location_data->dgps_id.connect_to(
       new SKOutputFloat("navigation.gnss.differentialReference",
-                        "/SK Path/Differential Reference"));
+                        "/SK Path/Differential Reference",
+                        new SKMetadata("", "Differential Reference Station ID")));
   location_data->datetime.connect_to(
       new SKOutputTime("navigation.datetime", "/SK Path/DateTime"));
   location_data->speed.connect_to(new SKOutputFloat(
-      "navigation.speedOverGround", "/SK Path/Speed Over Ground"));
+      "navigation.speedOverGround", "/SK Path/Speed Over Ground",
+      new SKMetadata("m/s", "Speed Over Ground")));
   location_data->true_course.connect_to(new SKOutputFloat(
-      "navigation.courseOverGroundTrue", "/SK Path/True Course Over Ground"));
+      "navigation.courseOverGroundTrue", "/SK Path/True Course Over Ground",
+      new SKMetadata("rad", "Course Over Ground (True)")));
   location_data->variation.connect_to(new SKOutputFloat(
-      "navigation.magneticVariation", "/SK Path/Magnetic Variation"));
+      "navigation.magneticVariation", "/SK Path/Magnetic Variation",
+      new SKMetadata("rad", "Magnetic Variation")));
   location_data->satellites.connect_to(new SKOutput<std::vector<GNSSSatellite>>(
       "navigation.gnss.satellitesInView", "/SK Path/Satellites in View"));
 }
