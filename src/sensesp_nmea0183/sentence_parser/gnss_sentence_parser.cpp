@@ -361,7 +361,8 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
   static std::vector<GNSSSatellite> satellites;
   GNSSSatellite sentence_satellites[4];
   char signal_id = '0';
-  static int first_sentence_type = 0;  // Combination of system and signal ID
+  // (system, signal) types collected since the last cycle boundary.
+  static std::vector<int> seen_types;
   String signal = "";
   GNSSSystem system = GNSSSystem::unknown;
 
@@ -451,24 +452,31 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
 
   int sentence_type = static_cast<int>(system) * 16 + signal_id;
 
-  // If the sentence type equals to the first sentence type, we have received
-  // all GSV sentences in the cycle. Notify the observers.
+  // Each (system, signal) group appears once per cycle, introduced by its
+  // message 1. So the message 1 of a group already collected this cycle means
+  // the cycle has wrapped: emit the merged set and start a new one. Detecting
+  // the boundary by "a group repeats" rather than by a fixed first-sentence
+  // anchor keeps this correct when the receiver's signal mix varies between
+  // cycles or output starts mid-cycle.
 
-  if (sentence_type == first_sentence_type) {
-    num_satellites_.set(collected_num_satellites);
-    total_svs_in_view_.set(total_svs_in_view);
-    satellites_.set(satellites);
-    collected_num_satellites = 0;
-    total_svs_in_view = 0;
-    satellites.clear();
-  }
-
-  // Finish parsing the current sentence.
-
-  if (first_sentence_type == 0) {
-    // At the first sentence, set the first_sentence_type. This is used to
-    // determine whether we have received all GSV sentences in the cycle.
-    first_sentence_type = sentence_type;
+  if (sentence_number == 1) {
+    bool wrapped = false;
+    for (int t : seen_types) {
+      if (t == sentence_type) {
+        wrapped = true;
+        break;
+      }
+    }
+    if (wrapped) {
+      num_satellites_.set(collected_num_satellites);
+      total_svs_in_view_.set(total_svs_in_view);
+      satellites_.set(satellites);
+      collected_num_satellites = 0;
+      total_svs_in_view = 0;
+      satellites.clear();
+      seen_types.clear();
+    }
+    seen_types.push_back(sentence_type);
   }
 
   // Names and IDs below copied from this document:
