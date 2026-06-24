@@ -52,8 +52,9 @@ void ConnectGNSS(NMEA0183Parser* nmea_input, GNSSData* location_data) {
 
   vtg_sentence_parser->true_course_.connect_to(&location_data->true_course);
 
-  gsv_sentence_parser->num_satellites_.connect_to(
-      &location_data->num_satellites);
+  // num_satellites stays sourced from GGA (satellites used in the fix); GSV's
+  // count is satellites in view, already carried by satellitesInView, and wiring
+  // both here makes navigation.gnss.satellites flip between the two meanings.
   gsv_sentence_parser->satellites_.connect_to(&location_data->satellites);
 
   gsa_sentence_parser->fix_type_.connect_to(&location_data->fix_type);
