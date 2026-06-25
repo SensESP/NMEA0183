@@ -477,6 +477,10 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
       seen_types.clear();
     }
     seen_types.push_back(sentence_type);
+    // Field 3 (SVs in view) is per (system, signal) group and repeats in
+    // every sentence of that group, so add it once per group, here at its
+    // message 1.
+    total_svs_in_view += num_satellites;
   }
 
   // Names and IDs below copied from this document:
@@ -545,9 +549,6 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
     satellites.push_back(sentence_satellites[i]);
     collected_num_satellites++;
   }
-
-  // Store the total SVs in view from field 3 (same value in all sentences)
-  total_svs_in_view = num_satellites;
 
   return true;
 };

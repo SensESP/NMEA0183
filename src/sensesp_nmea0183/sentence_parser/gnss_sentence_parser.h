@@ -97,7 +97,9 @@ class GSVSentenceParser : public SentenceParser {
 
   /// Number of satellites with data blocks received in the GSV cycle
   ObservableValue<int> num_satellites_;
-  /// Total number of SVs in view (from GSV header field 3)
+  /// Sum of GSV field 3 (SVs in view) over the cycle's (system, signal)
+  /// groups. Counts per signal like num_satellites_: a satellite tracked on
+  /// several signals is counted once per signal.
   ObservableValue<int> total_svs_in_view_;
   ObservableValue<std::vector<GNSSSatellite>> satellites_;
   ObservableValue<GNSSSatellite> first_satellite_;

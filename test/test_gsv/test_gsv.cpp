@@ -36,6 +36,7 @@ static const int kExpectedTotal = 47;
 
 static int emit_count = 0;
 static std::vector<GNSSSatellite> last_emitted;
+static int last_total_in_view = 0;
 
 static void feed_cycle() {
   for (int i = 0; i < kCycleLen; i++) {
@@ -48,9 +49,11 @@ void setUp(void) {
   gsv = new GSVSentenceParser(parser);
   emit_count = 0;
   last_emitted.clear();
+  last_total_in_view = 0;
   gsv->satellites_.attach([]() {
     emit_count++;
     last_emitted = gsv->satellites_.get();
+    last_total_in_view = gsv->total_svs_in_view_.get();
   });
 }
 
@@ -72,6 +75,10 @@ void test_gsv_one_merged_emit_per_cycle(void) {
 
   TEST_ASSERT_EQUAL_INT(1, emit_count - emits_before);
   TEST_ASSERT_EQUAL_INT(kExpectedTotal, (int)last_emitted.size());
+
+  // total_svs_in_view sums field 3 across the cycle's groups
+  // (13+7+9+10+8); the last-group-only regression reported just 8.
+  TEST_ASSERT_EQUAL_INT(kExpectedTotal, last_total_in_view);
 
   bool gps = false, glonass = false, galileo = false, beidou = false;
   for (const auto& s : last_emitted) {
