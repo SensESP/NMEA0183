@@ -1,5 +1,7 @@
 #include <unity.h>
 
+#include <time.h>
+
 #include "sensesp/types/position.h"
 #include "sensesp_nmea0183/nmea0183.h"
 #include "sensesp_nmea0183/sentence_parser/gnss_sentence_parser.h"
@@ -49,6 +51,14 @@ void test_psti030_full(void) {
   TEST_ASSERT_FLOAT_WITHIN(0.01, 0.0, vel.east);
   TEST_ASSERT_FLOAT_WITHIN(0.01, 0.0, vel.north);
   TEST_ASSERT_FLOAT_WITHIN(0.01, 0.0, vel.up);
+
+  // Date 180915 -> 2015-09-18. datetime_ is built with mktime (local tz), so
+  // read it back with localtime for a timezone-independent round-trip.
+  time_t t = psti030->datetime_.get();
+  struct tm* local = localtime(&t);
+  TEST_ASSERT_EQUAL_INT(2015 - 1900, local->tm_year);
+  TEST_ASSERT_EQUAL_INT(8, local->tm_mon);  // September (0-based)
+  TEST_ASSERT_EQUAL_INT(18, local->tm_mday);
 }
 
 // SkyTraq PSTI,032 — RTK Baseline Data.
@@ -70,6 +80,14 @@ void test_psti032_full(void) {
   TEST_ASSERT_FLOAT_WITHIN(0.001, 0.603, proj.east);
   TEST_ASSERT_FLOAT_WITHIN(0.001, -0.837, proj.north);
   TEST_ASSERT_FLOAT_WITHIN(0.001, -0.089, proj.up);
+
+  // Date 170316 -> 2016-03-17. datetime_ is built with mktime (local tz), so
+  // read it back with localtime for a timezone-independent round-trip.
+  time_t t = psti032->datetime_.get();
+  struct tm* local = localtime(&t);
+  TEST_ASSERT_EQUAL_INT(2016 - 1900, local->tm_year);
+  TEST_ASSERT_EQUAL_INT(2, local->tm_mon);  // March (0-based)
+  TEST_ASSERT_EQUAL_INT(17, local->tm_mday);
 }
 
 // Quectel PQTMTAR — Time and Attitude (heading status 4 = RTK fixed).
