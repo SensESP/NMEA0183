@@ -5,6 +5,8 @@
 #include <vector>
 
 #include "Arduino.h"
+#include "sensesp/types/nullable.h"
+using sensesp::Nullable;
 
 namespace sensesp::nmea0183 {
 
@@ -59,16 +61,18 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int hour;
-  int minute;
+  int32_t hour;
+  int32_t minute;
   float second;
-  Position position;
-  int quality;
-  int num_satellites;
-  float horizontal_dilution;
-  float geoidal_separation;
-  float dgps_age;
-  int dgps_id;
+  Nullable<double> latitude;
+  Nullable<double> longitude;
+  Nullable<float> altitude;
+  int32_t quality;
+  int32_t num_satellites;
+  Nullable<float> horizontal_dilution;
+  Nullable<float> geoidal_separation;
+  Nullable<float> dgps_age;
+  Nullable<int32_t> dgps_id;
   char antenna_height_unit;
   char geoidal_separation_unit;
 
@@ -87,32 +91,32 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
       // 1    = UTC of Position
       FLDP(Time, &hour, &minute, &second),
       // 2    = Latitude (empty when no fix)
-      FLDP_OPT(LatLon, &position.latitude),
+      FLDP_OPT(LatLon, latitude.ptr()),
       // 3    = N or S
-      FLDP_OPT(NS, &position.latitude),
+      FLDP_OPT(NS, latitude.ptr()),
       // 4    = Longitude (empty when no fix)
-      FLDP_OPT(LatLon, &position.longitude),
+      FLDP_OPT(LatLon, longitude.ptr()),
       // 5    = E or W
-      FLDP_OPT(EW, &position.longitude),
+      FLDP_OPT(EW, longitude.ptr()),
       // 6    = GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
       FLDP(Int, &quality),
       // 7    = Number of satellites in use [not those in view]
       FLDP(Int, &num_satellites),
       // 8    = Horizontal dilution of position
-      FLDP_OPT(Float, &horizontal_dilution),
+      FLDP_OPT(Float, horizontal_dilution.ptr()),
       // 9    = Antenna altitude above/below mean sea level (geoid)
-      FLDP_OPT(Float, &position.altitude),
+      FLDP_OPT(Float, altitude.ptr()),
       // 10   = Meters  (Antenna height unit)
       FLDP_OPT(Char, &antenna_height_unit, 'M'),
       // 11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
       //        mean sea level.  -=geoid is below WGS-84 ellipsoid)
-      FLDP_OPT(Float, &geoidal_separation),
+      FLDP_OPT(Float, geoidal_separation.ptr()),
       // 12   = Meters  (Units of geoidal separation)
       FLDP_OPT(Char, &geoidal_separation_unit, 'M'),
       // 13   = Age in seconds since last update from diff. reference station
-      FLDP_OPT(Float, &dgps_age),
+      FLDP_OPT(Float, dgps_age.ptr()),
       // 14   = Diff. reference station ID#
-      FLDP_OPT(Int, &dgps_id)};
+      FLDP_OPT(Int, dgps_id.ptr())};
 
   for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
     ok &= fps[i - 1](field_strings + field_offsets[i]);
@@ -124,28 +128,30 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
 
   // notify relevant observers
 
-  if (position.latitude != kInvalidDouble &&
-      position.longitude != kInvalidDouble) {
+  if (latitude.is_valid() && longitude.is_valid()) {
+    Position position;
+    position.latitude = latitude;
+    position.longitude = longitude;
+    position.altitude =
+        altitude.is_valid() ? (float)altitude : kPositionInvalidAltitude;
     position_.set(position);
   }
-  if (quality != kInvalidInt) {
-    gnss_quality_.set(gnss_quality_strings[quality]);
-    quality_.set(quality);
-  }
+  gnss_quality_.set(gnss_quality_strings[quality]);
+  quality_.set(quality);
 
   num_satellites_.set(num_satellites);
   // remaining fields are relevant only if quality is not invalid (0)
   if (quality != 0) {
-    if (horizontal_dilution != kInvalidFloat) {
+    if (horizontal_dilution.is_valid()) {
       horizontal_dilution_.set(horizontal_dilution);
     }
-    if (geoidal_separation != kInvalidFloat) {
+    if (geoidal_separation.is_valid()) {
       geoidal_separation_.set(geoidal_separation);
     }
-    if (dgps_age != kInvalidFloat) {
+    if (dgps_age.is_valid()) {
       dgps_age_.set(dgps_age);
     }
-    if (dgps_id != kInvalidInt) {
+    if (dgps_id.is_valid()) {
       dgps_id_.set(dgps_id);
     }
   }
@@ -158,7 +164,8 @@ bool GLLSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  Position position{kInvalidDouble, kInvalidDouble, kPositionInvalidAltitude};
+  Nullable<double> latitude;
+  Nullable<double> longitude;
 
   // eg.  $GPGLL,5133.81   ,N,00042.25   ,W              *75
   // eg2. $GNGLL,4916.45   ,N,12311.12   ,W,225444   ,A
@@ -171,13 +178,13 @@ bool GLLSentenceParser::parse_fields(const char* field_strings,
 
   std::function<bool(const char*)> fps[] = {
       // 1    5133.81   Current latitude
-      FLDP_OPT(LatLon, &position.latitude),
+      FLDP_OPT(LatLon, latitude.ptr()),
       // 2    N         North/South
-      FLDP_OPT(NS, &position.latitude),
+      FLDP_OPT(NS, latitude.ptr()),
       // 3    00042.25  Current longitude
-      FLDP_OPT(LatLon, &position.longitude),
+      FLDP_OPT(LatLon, longitude.ptr()),
       // 4    W         East/West
-      FLDP_OPT(EW, &position.longitude)
+      FLDP_OPT(EW, longitude.ptr())
       // ignore the UTC time of the fix and the status of the fix for now
   };
 
@@ -189,12 +196,13 @@ bool GLLSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  position.altitude = kPositionInvalidAltitude;
-
   // notify relevant observers
 
-  if (position.latitude != kInvalidDouble &&
-      position.longitude != kInvalidDouble) {
+  if (latitude.is_valid() && longitude.is_valid()) {
+    Position position;
+    position.latitude = latitude;
+    position.longitude = longitude;
+    position.altitude = kPositionInvalidAltitude;
     position_.set(position);
   }
 
@@ -206,13 +214,18 @@ bool RMCSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  struct tm time;
+  int32_t hour;
+  int32_t minute;
   float second;
   bool is_valid = false;
-  Position position;
-  float speed;
-  float true_course;
-  float variation;
+  Nullable<double> latitude;
+  Nullable<double> longitude;
+  int32_t year;
+  int32_t month;
+  int32_t day;
+  Nullable<float> speed;
+  Nullable<float> true_course;
+  Nullable<float> variation;
 
   // clang-format off
   // eg.  $GPRMC,220516,   A,5133.82,   N,00042.24,   W,173.8,231.8,130694,004.2,W  *70
@@ -226,27 +239,27 @@ bool RMCSentenceParser::parse_fields(const char* field_strings,
 
   std::function<bool(const char*)> fps[] = {
       // 1   220516     Time Stamp
-      FLDP(Time, &time.tm_hour, &time.tm_min, &second),
+      FLDP(Time, &hour, &minute, &second),
       // 2   A          validity - A-ok, V-invalid
       FLDP(AV, &is_valid),
       // 3   5133.82    current Latitude (empty when V)
-      FLDP_OPT(LatLon, &position.latitude),
+      FLDP_OPT(LatLon, latitude.ptr()),
       // 4   N          North/South
-      FLDP_OPT(NS, &position.latitude),
+      FLDP_OPT(NS, latitude.ptr()),
       // 5   00042.24   current Longitude (empty when V)
-      FLDP_OPT(LatLon, &position.longitude),
+      FLDP_OPT(LatLon, longitude.ptr()),
       // 6   W          East/West
-      FLDP_OPT(EW, &position.longitude),
+      FLDP_OPT(EW, longitude.ptr()),
       // 7   173.8      Speed in knots (empty when stationary)
-      FLDP_OPT(Float, &speed),
+      FLDP_OPT(Float, speed.ptr()),
       // 8   231.8      True course (empty when stationary)
-      FLDP_OPT(Float, &true_course),
+      FLDP_OPT(Float, true_course.ptr()),
       // 9   130694     Date Stamp
-      FLDP(Date, &time.tm_year, &time.tm_mon, &time.tm_mday),
+      FLDP(Date, &year, &month, &day),
       // 10  004.2      Variation (empty on some receivers)
-      FLDP_OPT(Float, &variation),
+      FLDP_OPT(Float, variation.ptr()),
       // 11  W          East/West
-      FLDP_OPT(EW, &variation)
+      FLDP_OPT(EW, variation.ptr())
 
       // Positioning system mode indicator might be available as field 12, but
       // let's ignore it for now.
@@ -260,28 +273,34 @@ bool RMCSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  position.altitude = kPositionInvalidAltitude;
+  struct tm time = {};
+  time.tm_hour = hour;
+  time.tm_min = minute;
   time.tm_sec = (int)second;
+  time.tm_year = year;   // ParseDate already adds 100
+  time.tm_mon = month;   // ParseDate already subtracts 1
+  time.tm_mday = day;
   time.tm_isdst = 0;
 
   // notify relevant observers
 
   if (is_valid) {
-    if (position.latitude != kInvalidDouble &&
-        position.longitude != kInvalidDouble) {
+    if (latitude.is_valid() && longitude.is_valid()) {
+      Position position;
+      position.latitude = latitude;
+      position.longitude = longitude;
+      position.altitude = kPositionInvalidAltitude;
       position_.set(position);
     }
-    if (time.tm_year != kInvalidInt && time.tm_hour != kInvalidInt) {
-      datetime_.set(mktime(&time));
+    datetime_.set(mktime(&time));
+    if (speed.is_valid()) {
+      speed_.set(1852. * (float)speed / 3600.);
     }
-    if (speed != kInvalidFloat) {
-      speed_.set(1852. * speed / 3600.);
+    if (true_course.is_valid()) {
+      true_course_.set(2 * PI * (float)true_course / 360.);
     }
-    if (true_course != kInvalidFloat) {
-      true_course_.set(2 * PI * true_course / 360.);
-    }
-    if (variation != kInvalidFloat) {
-      variation_.set(2 * PI * variation / 360.);
+    if (variation.is_valid()) {
+      variation_.set(2 * PI * (float)variation / 360.);
     }
   }
 
@@ -293,9 +312,9 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  float true_track;
-  float magnetic_track;
-  float ground_speed;
+  Nullable<float> true_track;
+  Nullable<float> magnetic_track;
+  Nullable<float> ground_speed;
   char true_track_symbol;
   char magnetic_track_symbol;
   char ground_speed_knots_unit;
@@ -311,15 +330,15 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
 
   std::function<bool(const char*)> fps[] = {
       // 1   True track made good (empty when stationary)
-      FLDP_OPT(Float, &true_track),
+      FLDP_OPT(Float, true_track.ptr()),
       // 2   T
       FLDP_OPT(Char, &true_track_symbol, 'T'),
       // 3   Magnetic track made good (empty when stationary)
-      FLDP_OPT(Float, &magnetic_track),
+      FLDP_OPT(Float, magnetic_track.ptr()),
       // 4   M
       FLDP_OPT(Char, &magnetic_track_symbol, 'M'),
       // 5   Ground speed, knots (empty when stationary)
-      FLDP_OPT(Float, &ground_speed),
+      FLDP_OPT(Float, ground_speed.ptr()),
       // 6   N
       FLDP_OPT(Char, &ground_speed_knots_unit, 'N')
       // ignore the remaining fields for now
@@ -335,12 +354,12 @@ bool VTGSentenceParser::parse_fields(const char* field_strings,
 
   // set observers
 
-  if (true_track != kInvalidFloat) {
-    true_course_.set(2 * PI * true_track / 360.);
+  if (true_track.is_valid()) {
+    true_course_.set(2 * PI * (float)true_track / 360.);
   }
   // ignore magnetic track for now
-  if (ground_speed != kInvalidFloat) {
-    speed_.set(1852. * ground_speed / 3600.);
+  if (ground_speed.is_valid()) {
+    speed_.set(1852. * (float)ground_speed / 3600.);
   }
 
   return true;
@@ -352,11 +371,11 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
   bool ok = true;
 
   // True if NMEA 0183 v4.10 format with separate system ID is used
-  static int num_sentences = 0;
-  int sentence_number = 0;
+  static int32_t num_sentences = 0;
+  int32_t sentence_number = 0;
   static bool new_message_format = false;
   static int collected_num_satellites = 0;
-  int num_satellites = 0;
+  int32_t num_satellites = 0;
   static int total_svs_in_view = 0;  // Accumulated from field 3
   static std::vector<GNSSSatellite> satellites;
   GNSSSatellite sentence_satellites[4];
@@ -558,7 +577,8 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
                                                 int num_fields) {
   bool ok = true;
 
-  struct tm time;
+  int32_t hour;
+  int32_t minute;
   float second;
   bool is_valid = false;
   Position position;
@@ -566,6 +586,9 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
   SkyTraqGNSSQuality quality;
   float rtk_age;
   float rtk_ratio;
+  int32_t year;
+  int32_t month;
+  int32_t day;
 
   // Example:
   // $PSTI,030,044606.000,A,2447.0924110,N,12100.5227860,E,103.323,0.00,0.00,0.00,180915,R,1.2,4.2*02
@@ -581,7 +604,7 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
   std::function<bool(const char*)> fps[] = {
       // 1  UTC time  044606.000  UTC time in hhmmss.sss format (000000.00 ~
       // 235959.999)
-      FLDP(Time, &time.tm_hour, &time.tm_min, &second),
+      FLDP(Time, &hour, &minute, &second),
       // 2  Status  A  Status
       // ‘V’ = Navigation receiver warning
       // ‘A’ = Data Valid
@@ -609,7 +632,7 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
       // 10  Up Velocity  0.00  ‘Up’ component of ENU velocity (m/s)
       FLDP(Float, &velocity.up),
       // 11  UTC Date  180915  UTC date of position fix, ddmmyy format
-      FLDP(Date, &time.tm_year, &time.tm_mon, &time.tm_mday),
+      FLDP(Date, &year, &month, &day),
       // 12  Mode indicator  R  Mode indicator
       // ‘N’ = Data not valid
       // ‘A’ = Autonomous mode
@@ -635,7 +658,13 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
+  struct tm time = {};
+  time.tm_hour = hour;
+  time.tm_min = minute;
   time.tm_sec = (int)second;
+  time.tm_year = year;   // ParseDate already adds 100
+  time.tm_mon = month;   // ParseDate already subtracts 1
+  time.tm_mday = day;
   time.tm_isdst = 0;
 
   // notify relevant observers
@@ -658,8 +687,12 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
                                                 int num_fields) {
   bool ok = true;
 
-  struct tm time;
+  int32_t hour;
+  int32_t minute;
   float second;
+  int32_t year;
+  int32_t month;
+  int32_t day;
   bool is_valid = false;
   ENUVector projection;
   SkyTraqGNSSQuality quality;
@@ -679,9 +712,9 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
   std::function<bool(const char*)> fps[] = {
       // 1  UTC time  041457.000  UTC time in hhmmss.sss format
       // (000000.000~235959.999)
-      FLDP(Time, &time.tm_hour, &time.tm_min, &second),
+      FLDP(Time, &hour, &minute, &second),
       // 2  UTC Date  170316  UTC date of position fix, ddmmyy format
-      FLDP(Date, &time.tm_year, &time.tm_mon, &time.tm_mday),
+      FLDP(Date, &year, &month, &day),
       // 3  Status  A
       // Status
       // ‘V’ = Void
@@ -723,7 +756,13 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
+  struct tm time = {};
+  time.tm_hour = hour;
+  time.tm_min = minute;
   time.tm_sec = (int)second;
+  time.tm_year = year;   // ParseDate already adds 100
+  time.tm_mon = month;   // ParseDate already subtracts 1
+  time.tm_mday = day;
   time.tm_isdst = 0;
 
   if (is_valid) {
@@ -742,13 +781,14 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
                                                 int num_fields) {
   bool ok = true;
 
-  struct tm time;
+  int32_t hour;
+  int32_t minute;
   float second;
   float base_line_length;
-  int heading_status;
+  int32_t heading_status;
   AttitudeVector attitude_degree;
   AttitudeVector attitude_accuracy_degree;
-  int hdg_num_satellites;
+  int32_t hdg_num_satellites;
   char dummy;
 
   // Example:
@@ -765,7 +805,7 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
       FLDP(Char, &dummy, '1'),
       // 2 UTC time 165331.000 UTC time in hhmmss.sss format (000000.000 ~
       // 235959.999)
-      FLDP(Time, &time.tm_hour, &time.tm_min, &second),
+      FLDP(Time, &hour, &minute, &second),
       // 3 Heading status.
       FLDP(Int, &heading_status),
       // 4 Always empty.
@@ -795,6 +835,9 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
+  struct tm time = {};
+  time.tm_hour = hour;
+  time.tm_min = minute;
   time.tm_sec = (int)second;
   time.tm_isdst = 0;
 
@@ -817,10 +860,10 @@ bool GSASentenceParser::parse_fields(const char* field_strings,
   bool ok = true;
 
   char mode;
-  int fix_type;
-  float pdop;
-  float hdop;
-  float vdop;
+  int32_t fix_type;
+  Nullable<float> pdop;
+  Nullable<float> hdop;
+  Nullable<float> vdop;
 
   // $xxGSA,mode,fix_type,sv1,sv2,...,sv12,pdop,hdop,vdop[,systemId]*cs
   // eg. $GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*39
@@ -836,22 +879,22 @@ bool GSASentenceParser::parse_fields(const char* field_strings,
   ok &= FLDP(Int, &fix_type)(field_strings + field_offsets[2]);
   // Skip satellite IDs (fields 3-14)
   // Parse DOP values — fields 15-17
-  ok &= FLDP_OPT(Float, &pdop)(field_strings + field_offsets[15]);
-  ok &= FLDP_OPT(Float, &hdop)(field_strings + field_offsets[16]);
-  ok &= FLDP_OPT(Float, &vdop)(field_strings + field_offsets[17]);
+  ok &= FLDP_OPT(Float, pdop.ptr())(field_strings + field_offsets[15]);
+  ok &= FLDP_OPT(Float, hdop.ptr())(field_strings + field_offsets[16]);
+  ok &= FLDP_OPT(Float, vdop.ptr())(field_strings + field_offsets[17]);
 
   if (!ok) {
     return false;
   }
 
   fix_type_.set(fix_type);
-  if (pdop != kInvalidFloat) {
+  if (pdop.is_valid()) {
     pdop_.set(pdop);
   }
-  if (hdop != kInvalidFloat) {
+  if (hdop.is_valid()) {
     hdop_.set(hdop);
   }
-  if (vdop != kInvalidFloat) {
+  if (vdop.is_valid()) {
     vdop_.set(vdop);
   }
 
@@ -863,12 +906,12 @@ bool ZDASentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int hour;
-  int minute;
+  int32_t hour;
+  int32_t minute;
   float second;
-  int day;
-  int month;
-  int year;
+  int32_t day;
+  int32_t month;
+  int32_t year;
 
   // $xxZDA,hhmmss.ss,dd,mm,yyyy,ltzh,ltzn*cs
   // eg. $GPZDA,160012.71,11,03,2004,-1,00*7D
@@ -906,12 +949,12 @@ bool GBSSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int hour;
-  int minute;
+  int32_t hour;
+  int32_t minute;
   float second;
-  float lat_error;
-  float lon_error;
-  float alt_error;
+  Nullable<float> lat_error;
+  Nullable<float> lon_error;
+  Nullable<float> alt_error;
 
   // $xxGBS,hhmmss.ss,lat_err,lon_err,alt_err,svid,prob,bias,stddev*cs
   // eg. $GPGBS,235458.00,1.4,1.3,3.1,03,,-21.4,3.8*5B
@@ -922,21 +965,21 @@ bool GBSSentenceParser::parse_fields(const char* field_strings,
 
   ok &= FLDP(Time, &hour, &minute, &second)(
       field_strings + field_offsets[1]);
-  ok &= FLDP_OPT(Float, &lat_error)(field_strings + field_offsets[2]);
-  ok &= FLDP_OPT(Float, &lon_error)(field_strings + field_offsets[3]);
-  ok &= FLDP_OPT(Float, &alt_error)(field_strings + field_offsets[4]);
+  ok &= FLDP_OPT(Float, lat_error.ptr())(field_strings + field_offsets[2]);
+  ok &= FLDP_OPT(Float, lon_error.ptr())(field_strings + field_offsets[3]);
+  ok &= FLDP_OPT(Float, alt_error.ptr())(field_strings + field_offsets[4]);
 
   if (!ok) {
     return false;
   }
 
-  if (lat_error != kInvalidFloat) {
+  if (lat_error.is_valid()) {
     lat_error_.set(lat_error);
   }
-  if (lon_error != kInvalidFloat) {
+  if (lon_error.is_valid()) {
     lon_error_.set(lon_error);
   }
-  if (alt_error != kInvalidFloat) {
+  if (alt_error.is_valid()) {
     alt_error_.set(alt_error);
   }
 

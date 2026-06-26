@@ -1,6 +1,8 @@
 #include "navigation_sentence_parser.h"
 
 #include "field_parsers.h"
+#include "sensesp/types/nullable.h"
+using sensesp::Nullable;
 
 namespace sensesp::nmea0183 {
 
@@ -9,9 +11,9 @@ bool HDGSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  float heading;
-  float deviation;
-  float variation;
+  Nullable<float> heading;
+  Nullable<float> deviation;
+  Nullable<float> variation;
 
   // $xxHDG,heading,deviation,E/W,variation,E/W*cs
   // eg. $HCHDG,101.1,,,7.1,W*3C
@@ -22,15 +24,15 @@ bool HDGSentenceParser::parse_fields(const char* field_strings,
 
   std::function<bool(const char*)> fps[] = {
       // 1   Magnetic sensor heading, degrees
-      FLDP_OPT(Float, &heading),
+      FLDP_OPT(Float, heading.ptr()),
       // 2   Magnetic deviation, degrees
-      FLDP_OPT(Float, &deviation),
+      FLDP_OPT(Float, deviation.ptr()),
       // 3   E/W for deviation
-      FLDP_OPT(EW, &deviation),
+      FLDP_OPT(EW, deviation.ptr()),
       // 4   Magnetic variation, degrees
-      FLDP_OPT(Float, &variation),
+      FLDP_OPT(Float, variation.ptr()),
       // 5   E/W for variation
-      FLDP_OPT(EW, &variation),
+      FLDP_OPT(EW, variation.ptr()),
   };
 
   for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
@@ -41,13 +43,13 @@ bool HDGSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  if (heading != kInvalidFloat) {
+  if (heading.is_valid()) {
     magnetic_heading_.set(heading * DEG_TO_RAD);
   }
-  if (deviation != kInvalidFloat) {
+  if (deviation.is_valid()) {
     deviation_.set(deviation * DEG_TO_RAD);
   }
-  if (variation != kInvalidFloat) {
+  if (variation.is_valid()) {
     variation_.set(variation * DEG_TO_RAD);
   }
 
@@ -59,10 +61,10 @@ bool VHWSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  float true_heading;
-  float magnetic_heading;
-  float speed_knots;
-  float speed_kmh;
+  Nullable<float> true_heading;
+  Nullable<float> magnetic_heading;
+  Nullable<float> speed_knots;
+  Nullable<float> speed_kmh;
   char t_char;
   char m_char;
   char n_char;
@@ -77,19 +79,19 @@ bool VHWSentenceParser::parse_fields(const char* field_strings,
 
   std::function<bool(const char*)> fps[] = {
       // 1   True heading, degrees
-      FLDP_OPT(Float, &true_heading),
+      FLDP_OPT(Float, true_heading.ptr()),
       // 2   T = True
       FLDP_OPT(Char, &t_char, 'T'),
       // 3   Magnetic heading, degrees
-      FLDP_OPT(Float, &magnetic_heading),
+      FLDP_OPT(Float, magnetic_heading.ptr()),
       // 4   M = Magnetic
       FLDP_OPT(Char, &m_char, 'M'),
       // 5   Speed, knots
-      FLDP_OPT(Float, &speed_knots),
+      FLDP_OPT(Float, speed_knots.ptr()),
       // 6   N = Knots
       FLDP_OPT(Char, &n_char, 'N'),
       // 7   Speed, km/h
-      FLDP_OPT(Float, &speed_kmh),
+      FLDP_OPT(Float, speed_kmh.ptr()),
       // 8   K = km/h
       FLDP_OPT(Char, &k_char, 'K'),
   };
@@ -102,16 +104,16 @@ bool VHWSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  if (true_heading != kInvalidFloat) {
+  if (true_heading.is_valid()) {
     true_heading_.set(true_heading * DEG_TO_RAD);
   }
-  if (magnetic_heading != kInvalidFloat) {
+  if (magnetic_heading.is_valid()) {
     magnetic_heading_.set(magnetic_heading * DEG_TO_RAD);
   }
   // Prefer knots; convert to m/s
-  if (speed_knots != kInvalidFloat) {
+  if (speed_knots.is_valid()) {
     water_speed_.set(speed_knots * 1852.0 / 3600.0);
-  } else if (speed_kmh != kInvalidFloat) {
+  } else if (speed_kmh.is_valid()) {
     water_speed_.set(speed_kmh * 1000.0 / 3600.0);
   }
 
@@ -123,9 +125,8 @@ bool DPTSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  float depth;
-  float offset;
-  float max_range;
+  Nullable<float> depth;
+  Nullable<float> offset;
 
   // $xxDPT,depth,offset,max_range*cs
   // eg. $SDDPT,12.6,-0.5,100*42
@@ -135,19 +136,19 @@ bool DPTSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  ok &= FLDP_OPT(Float, &depth)(field_strings + field_offsets[1]);
+  ok &= FLDP_OPT(Float, depth.ptr())(field_strings + field_offsets[1]);
   if (num_fields >= 3) {
-    ok &= FLDP_OPT(Float, &offset)(field_strings + field_offsets[2]);
+    ok &= FLDP_OPT(Float, offset.ptr())(field_strings + field_offsets[2]);
   }
 
   if (!ok) {
     return false;
   }
 
-  if (depth != kInvalidFloat) {
+  if (depth.is_valid()) {
     depth_.set(depth);
   }
-  if (offset != kInvalidFloat) {
+  if (offset.is_valid()) {
     offset_.set(offset);
   }
 
@@ -159,9 +160,9 @@ bool DBTSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  float depth_feet;
-  float depth_meters;
-  float depth_fathoms;
+  Nullable<float> depth_feet;
+  Nullable<float> depth_meters;
+  Nullable<float> depth_fathoms;
   char f_char;
   char m_char;
   char F_char;
@@ -175,15 +176,15 @@ bool DBTSentenceParser::parse_fields(const char* field_strings,
 
   std::function<bool(const char*)> fps[] = {
       // 1   Depth, feet
-      FLDP_OPT(Float, &depth_feet),
+      FLDP_OPT(Float, depth_feet.ptr()),
       // 2   f = feet
       FLDP_OPT(Char, &f_char, 'f'),
       // 3   Depth, meters
-      FLDP_OPT(Float, &depth_meters),
+      FLDP_OPT(Float, depth_meters.ptr()),
       // 4   M = meters
       FLDP_OPT(Char, &m_char, 'M'),
       // 5   Depth, fathoms
-      FLDP_OPT(Float, &depth_fathoms),
+      FLDP_OPT(Float, depth_fathoms.ptr()),
       // 6   F = fathoms
       FLDP_OPT(Char, &F_char, 'F'),
   };
@@ -197,11 +198,11 @@ bool DBTSentenceParser::parse_fields(const char* field_strings,
   }
 
   // Prefer meters; fallback to feet or fathoms
-  if (depth_meters != kInvalidFloat) {
+  if (depth_meters.is_valid()) {
     depth_.set(depth_meters);
-  } else if (depth_feet != kInvalidFloat) {
+  } else if (depth_feet.is_valid()) {
     depth_.set(depth_feet * 0.3048);
-  } else if (depth_fathoms != kInvalidFloat) {
+  } else if (depth_fathoms.is_valid()) {
     depth_.set(depth_fathoms * 1.8288);
   }
 
@@ -248,7 +249,7 @@ bool HDMSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  float heading;
+  Nullable<float> heading;
   char m_char;
 
   // $xxHDM,heading,M*cs
@@ -260,7 +261,7 @@ bool HDMSentenceParser::parse_fields(const char* field_strings,
 
   std::function<bool(const char*)> fps[] = {
       // 1   Heading, degrees magnetic
-      FLDP_OPT(Float, &heading),
+      FLDP_OPT(Float, heading.ptr()),
       // 2   M = magnetic
       FLDP_OPT(Char, &m_char, 'M'),
   };
@@ -273,7 +274,7 @@ bool HDMSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  if (heading != kInvalidFloat) {
+  if (heading.is_valid()) {
     magnetic_heading_.set(heading * DEG_TO_RAD);
   }
 
@@ -285,7 +286,7 @@ bool HDTSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  float heading;
+  Nullable<float> heading;
   char t_char;
 
   // $xxHDT,heading,T*cs
@@ -297,7 +298,7 @@ bool HDTSentenceParser::parse_fields(const char* field_strings,
 
   std::function<bool(const char*)> fps[] = {
       // 1   Heading, degrees true
-      FLDP_OPT(Float, &heading),
+      FLDP_OPT(Float, heading.ptr()),
       // 2   T = true
       FLDP_OPT(Char, &t_char, 'T'),
   };
@@ -310,7 +311,7 @@ bool HDTSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  if (heading != kInvalidFloat) {
+  if (heading.is_valid()) {
     true_heading_.set(heading * DEG_TO_RAD);
   }
 
