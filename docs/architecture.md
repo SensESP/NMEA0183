@@ -73,7 +73,10 @@ Parsers register themselves. The `SentenceParser` constructor calls
 4. On success, increment `rx_count_` and `emit(true)`.
 
 Field 0 is the address field (`$GPGGA`), so the first data field is field 1.
-`num_fields` counts field 0, so a sentence with two data fields has
+(Proprietary addresses with an embedded comma, like `$PSTI,030`, consume an
+extra field for the subsentence id, pushing their first data field to field 2 —
+see the contribution guide.) `num_fields` counts field 0, so a sentence with
+two data fields has
 `num_fields == 3`. A sentence may carry at most `kNMEA0183MaxFields` (25) fields
 and `kNMEA0183InputBufferLength` (164) characters.
 

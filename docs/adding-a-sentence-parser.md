@@ -16,7 +16,7 @@ Parsers are grouped by data domain under `src/sensesp_nmea0183/sentence_parser/`
 
 | File | Sentences |
 |------|-----------|
-| `gnss_sentence_parser.{h,cpp}` | Position, time, fix quality (GGA, RMC, VTG, GSV, GSA, ZDA, GBS, proprietary RTK) |
+| `gnss_sentence_parser.{h,cpp}` | Position, time, fix quality (GGA, GLL, RMC, VTG, GSV, GSA, ZDA, GBS, proprietary RTK) |
 | `navigation_sentence_parser.{h,cpp}` | Heading, depth, water speed and temperature (HDG, HDM, HDT, VHW, DPT, DBT, MTW) |
 | `wind_sentence_parser.{h,cpp}` | Apparent and true wind (MWV, MWD, VWR) |
 | `weather_sentence_parser.{h,cpp}` | Meteorological composite (MDA) |
@@ -61,7 +61,11 @@ manufacturer uses one:
 - `"PQTMTAR"` matches `$PQTMTAR,...` (Quectel).
 - `"PSTI,030"` matches `$PSTI,030,...` and is distinct from `"PSTI,032"`
   (SkyTraq). The comma is part of the match, and the dispatcher still requires
-  the following comma, so `030` becomes field 1 after splitting.
+  the following comma, so `030` becomes field 1 after splitting. **The first
+  real data field is therefore field 2, not field 1** — such a parser must
+  offset its field indices by one (read `field_offsets[i + 1]`) and size its
+  `num_fields` guard accordingly. Subclass `ProprietarySentenceParser` for
+  these; its header documents the convention.
 
 ### 4. Implement `parse_fields()`
 
@@ -224,8 +228,9 @@ if (depth.is_valid()) {
 
 `Nullable<T>::ptr()` returns a `T*` to the underlying value, which is what the
 field parsers write to. A `Nullable<T>` converts implicitly to `T`, so
-`depth_.set(depth)` works directly. `Nullable<bool>` is not supported; use a
-plain `bool` with `ParseAV` for validity flags.
+`depth_.set(depth)` works directly. `Nullable<bool>` exists but is not useful:
+its invalid sentinel is `false`, so `is_valid()` cannot tell a missing field
+from a real `false`. Use a plain `bool` with `ParseAV` for validity flags.
 
 ## Conventions
 
