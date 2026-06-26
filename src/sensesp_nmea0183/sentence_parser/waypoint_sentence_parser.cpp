@@ -304,6 +304,11 @@ bool WPLSentenceParser::parse_fields(const char* field_strings,
   return true;
 }
 
+void RTESentenceParser::reset_sequence() {
+  accumulated_waypoints_.clear();
+  expected_sentence_number_ = 0;
+}
+
 bool RTESentenceParser::parse_fields(const char* field_strings,
                                      const int field_offsets[],
                                      int num_fields) {
@@ -331,11 +336,31 @@ bool RTESentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  // If this is the first sentence, reset the accumulator
+  uint32_t now = now_ms_();
+
+  // A sequence that has gone quiet for too long is stale: drop its partial
+  // state so waypoints from a fresh sequence are not appended to it.
+  if (expected_sentence_number_ != 0 &&
+      now - last_sentence_time_ > sequence_timeout_ms_) {
+    reset_sequence();
+  }
+
   if (sentence_number == 1) {
     accumulated_waypoints_.clear();
     total_sentences_ = num_sentences;
+    accumulated_route_id_ = route_id;
+    expected_sentence_number_ = 1;
+  } else if (expected_sentence_number_ == 0 ||
+             sentence_number != expected_sentence_number_ ||
+             num_sentences != total_sentences_ ||
+             route_id != accumulated_route_id_) {
+    // The in-progress sequence is broken (a gap, a conflicting sentence count,
+    // or a different route). Discard it and wait for a fresh first sentence.
+    reset_sequence();
+    return true;
   }
+
+  last_sentence_time_ = now;
 
   // Accumulate waypoint IDs from remaining fields
   for (int i = 5; i < num_fields; i++) {
@@ -347,10 +372,13 @@ bool RTESentenceParser::parse_fields(const char* field_strings,
     }
   }
 
-  // Emit when the last sentence in the cycle is received
+  expected_sentence_number_ = sentence_number + 1;
+
+  // Emit when the last sentence of a complete, consistent sequence is received.
   if (sentence_number == total_sentences_) {
-    route_id_.set(route_id);
+    route_id_.set(accumulated_route_id_);
     waypoints_.set(accumulated_waypoints_);
+    reset_sequence();
   }
 
   return true;
