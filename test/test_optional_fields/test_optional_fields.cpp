@@ -126,11 +126,26 @@ void test_vhw_empty_heading_and_speed(void) {
 }
 
 void test_dpt_empty_depth_and_offset(void) {
-  // Empty depth and offset
+  // Empty depth and offset -> neither observable should be updated.
+  // Pre-set a sentinel so a spurious emit is detectable.
+  dpt->depth_.set(-999.0f);
+  dpt->offset_.set(-999.0f);
   parser->set("$IIDPT,,*40");
 
   TEST_ASSERT_EQUAL_INT(1, dpt->get_rx_count());
-  // No observer values should be updated
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, dpt->depth_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, dpt->offset_.get());
+}
+
+void test_dpt_depth_only(void) {
+  // Depth present, offset field omitted entirely (num_fields == 2).
+  // The offset observable must NOT be published as a fabricated 0.
+  dpt->offset_.set(-999.0f);
+  parser->set("$SDDPT,12.6*60");
+
+  TEST_ASSERT_EQUAL_INT(1, dpt->get_rx_count());
+  TEST_ASSERT_FLOAT_WITHIN(0.01, 12.6, dpt->depth_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, dpt->offset_.get());
 }
 
 #ifdef ARDUINO
@@ -147,6 +162,7 @@ void setup() {
   RUN_TEST(test_hdg_empty_heading_deviation_variation);
   RUN_TEST(test_vhw_empty_heading_and_speed);
   RUN_TEST(test_dpt_empty_depth_and_offset);
+  RUN_TEST(test_dpt_depth_only);
 
   UNITY_END();
 }
@@ -165,6 +181,7 @@ int main(int argc, char** argv) {
   RUN_TEST(test_hdg_empty_heading_deviation_variation);
   RUN_TEST(test_vhw_empty_heading_and_speed);
   RUN_TEST(test_dpt_empty_depth_and_offset);
+  RUN_TEST(test_dpt_depth_only);
 
   return UNITY_END();
 }

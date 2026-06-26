@@ -126,7 +126,9 @@ bool DPTSentenceParser::parse_fields(const char* field_strings,
   bool ok = true;
 
   Nullable<float> depth;
-  Nullable<float> offset;
+  // The offset field is parsed conditionally, so it must start invalid:
+  // a default-constructed Nullable<float> holds 0, which reads as valid.
+  Nullable<float> offset = Nullable<float>::invalid();
 
   // $xxDPT,depth,offset,max_range*cs
   // eg. $SDDPT,12.6,-0.5,100*42
