@@ -41,7 +41,7 @@ void test_gga_no_fix_parses_quality(void) {
   // GGA with no fix has empty position fields — optional field parsers accept
   // these, so the sentence parses and quality=0 is emitted.
   parser->set(
-      "$GNGGA,121224.00,,,,,,0,00,99.99,,,,,,*7E");
+      "$GNGGA,121224.00,,,,,0,00,99.99,,,,,,*7E");
 
   TEST_ASSERT_EQUAL_INT(1, gga->get_rx_count());
   TEST_ASSERT_EQUAL_INT(0, gga->quality_.get());
