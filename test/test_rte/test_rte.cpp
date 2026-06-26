@@ -85,6 +85,20 @@ void test_rte_timeout_discards_partial(void) {
   TEST_ASSERT_EQUAL_STRING("", rte->route_id_.get().c_str());
 }
 
+void test_rte_timeout_boundary_emits(void) {
+  // A gap of exactly the timeout is within tolerance (the check is strict >),
+  // so the sequence must still complete.
+  parser->set("$GPRTE,2,1,c,0,PBRCPK,CPNPT*45");
+  fake_millis += RTESentenceParser::kDefaultSequenceTimeoutMs;
+  parser->set("$GPRTE,2,2,c,0,FATEA,OCEAI*11");
+
+  TEST_ASSERT_EQUAL_STRING("0", rte->route_id_.get().c_str());
+  std::vector<String> wps = rte->waypoints_.get();
+  TEST_ASSERT_EQUAL_INT(4, wps.size());
+  TEST_ASSERT_EQUAL_STRING("PBRCPK", wps[0].c_str());
+  TEST_ASSERT_EQUAL_STRING("OCEAI", wps[3].c_str());
+}
+
 void test_rte_recovers_after_interruption(void) {
   // A broken sequence must not block a subsequent valid route.
   parser->set("$GPRTE,2,1,c,0,PBRCPK,CPNPT*45");
@@ -110,6 +124,7 @@ void setup() {
   RUN_TEST(test_rte_total_mismatch_discards_partial);
   RUN_TEST(test_rte_route_id_change_discards_partial);
   RUN_TEST(test_rte_timeout_discards_partial);
+  RUN_TEST(test_rte_timeout_boundary_emits);
   RUN_TEST(test_rte_recovers_after_interruption);
 
   UNITY_END();
@@ -126,6 +141,7 @@ int main(int argc, char** argv) {
   RUN_TEST(test_rte_total_mismatch_discards_partial);
   RUN_TEST(test_rte_route_id_change_discards_partial);
   RUN_TEST(test_rte_timeout_discards_partial);
+  RUN_TEST(test_rte_timeout_boundary_emits);
   RUN_TEST(test_rte_recovers_after_interruption);
 
   return UNITY_END();

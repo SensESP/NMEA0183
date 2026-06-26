@@ -339,8 +339,9 @@ bool RTESentenceParser::parse_fields(const char* field_strings,
   uint32_t now = now_ms_();
 
   // A sequence that has gone quiet for too long is stale: drop its partial
-  // state so waypoints from a fresh sequence are not appended to it.
-  if (expected_sentence_number_ != 0 &&
+  // state so waypoints from a fresh sequence are not appended to it. A
+  // timeout of 0 disables the check.
+  if (sequence_timeout_ms_ != 0 && expected_sentence_number_ != 0 &&
       now - last_sentence_time_ > sequence_timeout_ms_) {
     reset_sequence();
   }
