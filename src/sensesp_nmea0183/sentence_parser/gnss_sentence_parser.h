@@ -6,6 +6,7 @@
 #include "sensesp/types/position.h"
 #include "sensesp_nmea0183/data/gnss_data.h"
 #include "sensesp_nmea0183/nmea0183.h"
+#include "sensesp_nmea0183/sentence_parser/proprietary_sentence_parser.h"
 #include "sensesp_nmea0183/sentence_parser/sentence_parser.h"
 
 namespace sensesp::nmea0183 {
@@ -106,13 +107,13 @@ class GSVSentenceParser : public SentenceParser {
 };
 
 /// Parser for SkyTraq proprietary STI,030 - Recommended Minimum 3D GNSS Data
-class SkyTraqPSTI030SentenceParser : public SentenceParser {
+class SkyTraqPSTI030SentenceParser : public ProprietarySentenceParser {
  public:
-  SkyTraqPSTI030SentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  SkyTraqPSTI030SentenceParser(NMEA0183Parser* nmea)
+      : ProprietarySentenceParser(nmea, "PSTI,030") {}
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() override { return "PSTI,030"; }
 
   ObservableValue<Position> position_;
   ObservableValue<time_t> datetime_;
@@ -123,13 +124,13 @@ class SkyTraqPSTI030SentenceParser : public SentenceParser {
 };
 
 /// Parser for SkyTraq proprietary STI,032 - RTK Baseline Data
-class SkyTraqPSTI032SentenceParser : public SentenceParser {
+class SkyTraqPSTI032SentenceParser : public ProprietarySentenceParser {
  public:
-  SkyTraqPSTI032SentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  SkyTraqPSTI032SentenceParser(NMEA0183Parser* nmea)
+      : ProprietarySentenceParser(nmea, "PSTI,032") {}
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() override { return "PSTI,032"; }
 
   ObservableValue<time_t> datetime_;
   ObservableValue<ENUVector> baseline_projection_;
@@ -139,13 +140,13 @@ class SkyTraqPSTI032SentenceParser : public SentenceParser {
 };
 
 /// Parser for Quectel proprietary PQTMTAR - Time and Attitude
-class QuectelPQTMTARSentenceParser : public SentenceParser {
+class QuectelPQTMTARSentenceParser : public ProprietarySentenceParser {
  public:
-  QuectelPQTMTARSentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  QuectelPQTMTARSentenceParser(NMEA0183Parser* nmea)
+      : ProprietarySentenceParser(nmea, "PQTMTAR") {}
 
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
-  const char* sentence_address() override { return "PQTMTAR"; }
 
   ObservableValue<time_t> datetime_;
   ObservableValue<String> rtk_quality_;

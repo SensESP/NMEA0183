@@ -593,10 +593,10 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
   // Example:
   // $PSTI,030,044606.000,A,2447.0924110,N,12100.5227860,E,103.323,0.00,0.00,0.00,180915,R,1.2,4.2*02
 
-  // note: field offsets are one larger than in the reference because
-  // the subsentence number is at offset 1
+  // The "030" message subtype occupies comma-separated field 1, so the
+  // data fields numbered 1..14 below are read starting from field 2.
 
-  if (num_fields < 15) {
+  if (num_fields < 16) {
     return false;
   }
 
@@ -651,7 +651,7 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
       FLDP(Float, &rtk_ratio)};
 
   for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
-    ok &= fps[i - 1](field_strings + field_offsets[i]);
+    ok &= fps[i - 1](field_strings + field_offsets[i + 1]);
   }
 
   if (!ok) {
@@ -702,10 +702,10 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
   // Example:
   // $PSTI,032,041457.000,170316,A,R,0.603,‐0.837,‐0.089,1.036,144.22,,,,,*30
 
-  // note: field offsets are one larger than in the reference because
-  // the subsentence number is at offset 1
+  // The "032" message subtype occupies comma-separated field 1, so the
+  // data fields numbered 1..9 below are read starting from field 2.
 
-  if (num_fields < 10) {
+  if (num_fields < 11) {
     return false;
   }
 
@@ -749,7 +749,7 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
   };
 
   for (int i = 1; i <= sizeof(fps) / sizeof(fps[0]); i++) {
-    ok &= fps[i - 1](field_strings + field_offsets[i]);
+    ok &= fps[i - 1](field_strings + field_offsets[i + 1]);
   }
 
   if (!ok) {
