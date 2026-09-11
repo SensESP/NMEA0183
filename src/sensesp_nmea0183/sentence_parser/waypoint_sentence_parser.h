@@ -2,6 +2,7 @@
 #define SENSESP_NMEA0183_WAYPOINT_SENTENCE_PARSER_H_
 
 #include <cstdint>
+#include <functional>
 
 #include "field_parsers.h"
 #include "sensesp/system/observablevalue.h"
@@ -68,7 +69,16 @@ class WPLSentenceParser : public SentenceParser {
 /// Parser for RTE - Routes (multi-sentence)
 class RTESentenceParser : public SentenceParser {
  public:
-  RTESentenceParser(NMEA0183Parser* nmea) : SentenceParser(nmea) {}
+  /// Maximum gap between accepted sentences before a partial sequence is
+  /// considered stale and discarded.
+  static constexpr uint32_t kDefaultSequenceTimeoutMs = 5000;
+
+  RTESentenceParser(NMEA0183Parser* nmea,
+                    uint32_t sequence_timeout_ms = kDefaultSequenceTimeoutMs,
+                    std::function<uint32_t()> clock = millis)
+      : SentenceParser(nmea),
+        sequence_timeout_ms_{sequence_timeout_ms},
+        now_ms_{clock} {}
   bool parse_fields(const char* field_strings, const int field_offsets[],
                     int num_fields) override final;
   const char* sentence_address() override { return "..RTE"; }
@@ -77,8 +87,15 @@ class RTESentenceParser : public SentenceParser {
   ObservableValue<std::vector<String>> waypoints_;
 
  private:
+  void reset_sequence();
+
   int32_t total_sentences_ = 0;
+  int32_t expected_sentence_number_ = 0;
+  String accumulated_route_id_;
   std::vector<String> accumulated_waypoints_;
+  uint32_t last_sentence_time_ = 0;
+  uint32_t sequence_timeout_ms_;
+  std::function<uint32_t()> now_ms_;
 };
 
 }  // namespace sensesp::nmea0183
