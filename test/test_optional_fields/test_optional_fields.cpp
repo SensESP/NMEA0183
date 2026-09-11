@@ -93,11 +93,18 @@ void test_gga_valid_still_works(void) {
 }
 
 void test_gll_empty_position(void) {
-  // No fix — lat/lon fields empty
+  // No fix — lat/lon fields empty -> position_ must not be updated.
+  Position sentinel;
+  sentinel.latitude = -999.0;
+  sentinel.longitude = -999.0;
+  sentinel.altitude = -999.0;
+  gll->position_.set(sentinel);
   parser->set("$GNGLL,,,,,121223.00,V,N*55");
 
   TEST_ASSERT_EQUAL_INT(1, gll->get_rx_count());
-  // position_ should not be updated (lat/lon are sentinel values)
+  Position pos = gll->position_.get();
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, pos.latitude);
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, pos.longitude);
 }
 
 void test_gsv_empty_satellite_data(void) {
@@ -110,19 +117,29 @@ void test_gsv_empty_satellite_data(void) {
 }
 
 void test_hdg_empty_heading_deviation_variation(void) {
-  // All fields empty
+  // All fields empty -> no observable should be updated.
+  hdg->magnetic_heading_.set(-999.0f);
+  hdg->deviation_.set(-999.0f);
+  hdg->variation_.set(-999.0f);
   parser->set("$IIHDG,,,,,*67");
 
   TEST_ASSERT_EQUAL_INT(1, hdg->get_rx_count());
-  // No observer values should be updated (all fields are sentinel)
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, hdg->magnetic_heading_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, hdg->deviation_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, hdg->variation_.get());
 }
 
 void test_vhw_empty_heading_and_speed(void) {
-  // All data fields empty, only unit indicators present
+  // All data fields empty, only unit indicators present -> nothing updated.
+  vhw->true_heading_.set(-999.0f);
+  vhw->magnetic_heading_.set(-999.0f);
+  vhw->water_speed_.set(-999.0f);
   parser->set("$IIVHW,,T,,M,,N,,K*55");
 
   TEST_ASSERT_EQUAL_INT(1, vhw->get_rx_count());
-  // No observer values should be updated
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, vhw->true_heading_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, vhw->magnetic_heading_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, vhw->water_speed_.get());
 }
 
 void test_dpt_empty_depth_and_offset(void) {
