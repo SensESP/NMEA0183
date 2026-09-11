@@ -21,6 +21,9 @@ class MWVSentenceParser : public SentenceParser {
   ObservableValue<float> apparent_wind_angle_;
 };
 
+/// @deprecated Use MWVSentenceParser instead.
+using WIMWVSentenceParser = MWVSentenceParser;
+
 /// Parser for MWV (Wind Speed and Angle) sentences — true wind (T reference)
 class TrueWindMWVSentenceParser : public SentenceParser {
  public:
