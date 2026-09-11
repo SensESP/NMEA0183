@@ -24,7 +24,7 @@ void tearDown(void) {
 
 void test_dbt_all_units(void) {
   // DBT with all three depth units
-  parser->set("$SDDBT,41.3,f,12.6,M,6.9,F*05");
+  parser->set("$SDDBT,41.3,f,12.6,M,6.9,F*0A");
 
   // Should prefer meters
   TEST_ASSERT_FLOAT_WITHIN(0.01, 12.6, dbt->depth_.get());
@@ -33,7 +33,7 @@ void test_dbt_all_units(void) {
 
 void test_dbt_feet_only(void) {
   // DBT with only feet populated (meters field empty)
-  parser->set("$SDDBT,41.3,f,,M,,F*3E");
+  parser->set("$SDDBT,41.3,f,,M,,F*30");
 
   // Should convert feet to meters: 41.3 * 0.3048 = 12.588
   TEST_ASSERT_FLOAT_WITHIN(0.01, 12.588, dbt->depth_.get());
@@ -48,7 +48,7 @@ void test_dbt_invalid_checksum(void) {
 
 void test_mtw_celsius_to_kelvin(void) {
   // MTW: 17.8 C should convert to 290.95 K
-  parser->set("$YXMTW,17.8,C*1B");
+  parser->set("$YXMTW,17.8,C*1C");
 
   TEST_ASSERT_FLOAT_WITHIN(0.01, 290.95, mtw->water_temperature_.get());
   TEST_ASSERT_EQUAL_INT(1, mtw->get_rx_count());
@@ -56,7 +56,7 @@ void test_mtw_celsius_to_kelvin(void) {
 
 void test_mtw_zero_celsius(void) {
   // 0 C = 273.15 K
-  parser->set("$YXMTW,0.0,C*04");
+  parser->set("$YXMTW,0.0,C*22");
 
   TEST_ASSERT_FLOAT_WITHIN(0.01, 273.15, mtw->water_temperature_.get());
 }

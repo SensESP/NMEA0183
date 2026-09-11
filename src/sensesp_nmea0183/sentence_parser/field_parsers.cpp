@@ -6,8 +6,11 @@
 #include <ctime>
 
 #include "sensesp.h"
+#include "sensesp/types/nullable.h"
 
 namespace sensesp::nmea0183 {
+
+using sensesp::Nullable;
 
 bool ParseString(String* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
@@ -18,18 +21,18 @@ bool ParseString(String* value, const char* s, bool allow_empty) {
   return true;
 }
 
-bool ParseInt(int* value, const char* s, bool allow_empty) {
+bool ParseInt(int32_t* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
-    *value = kInvalidInt;
+    *value = Nullable<int32_t>::invalid();
     return allow_empty;
   }
-  int retval = sscanf(s, "%d", value);
+  int retval = sscanf(s, "%" SCNd32, value);
   return retval == 1;
 }
 
 bool ParseFloat(float* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
-    *value = kInvalidFloat;
+    *value = Nullable<float>::invalid();
     return allow_empty;
   }
   int retval = sscanf(s, "%f", value);
@@ -38,7 +41,7 @@ bool ParseFloat(float* value, const char* s, bool allow_empty) {
 
 bool ParseDouble(double* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
-    *value = kInvalidDouble;
+    *value = Nullable<double>::invalid();
     return allow_empty;
   }
   int retval = sscanf(s, "%lf", value);
@@ -48,7 +51,7 @@ bool ParseDouble(double* value, const char* s, bool allow_empty) {
 bool ParseLatLon(double* value, const char* s, bool allow_empty) {
   double degmin;
   if (s[0] == 0) {
-    *value = kInvalidDouble;
+    *value = Nullable<double>::invalid();
     return allow_empty;
   }
   int retval = sscanf(s, "%lf", &degmin);
@@ -66,6 +69,7 @@ bool ParseNS(double* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     return allow_empty;
   }
+  if (*value == Nullable<double>::invalid()) return true;
 
   switch (*s) {
     case 'N':
@@ -83,6 +87,8 @@ bool ParseEW(double* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     return allow_empty;
   }
+  if (*value == Nullable<double>::invalid()) return true;
+
   switch (*s) {
     case 'E':
       break;
@@ -99,6 +105,8 @@ bool ParseEW(float* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
     return allow_empty;
   }
+  if (*value == Nullable<float>::invalid()) return true;
+
   switch (*s) {
     case 'E':
       break;
@@ -142,26 +150,26 @@ bool ParseAV(bool* is_valid, const char* s) {
   return true;
 }
 
-bool ParseTime(int* hour, int* minute, float* second, const char* s,
+bool ParseTime(int32_t* hour, int32_t* minute, float* second, const char* s,
                bool allow_empty) {
   if (s[0] == 0) {
-    *hour = kInvalidInt;
-    *minute = kInvalidInt;
-    *second = kInvalidFloat;
+    *hour = Nullable<int32_t>::invalid();
+    *minute = Nullable<int32_t>::invalid();
+    *second = Nullable<float>::invalid();
     return allow_empty;
   }
-  int retval = sscanf(s, "%2d%2d%f", hour, minute, second);
+  int retval = sscanf(s, "%2" SCNd32 "%2" SCNd32 "%f", hour, minute, second);
   return retval == 3;
 }
 
-bool ParseDate(int* year, int* month, int* day, const char* s, bool allow_empty) {
+bool ParseDate(int32_t* year, int32_t* month, int32_t* day, const char* s, bool allow_empty) {
   if (s[0] == 0) {
-    *year = kInvalidInt;
-    *month = kInvalidInt;
-    *day = kInvalidInt;
+    *year = Nullable<int32_t>::invalid();
+    *month = Nullable<int32_t>::invalid();
+    *day = Nullable<int32_t>::invalid();
     return allow_empty;
   }
-  int retval = sscanf(s, "%2d%2d%2d", day, month, year);
+  int retval = sscanf(s, "%2" SCNd32 "%2" SCNd32 "%2" SCNd32, day, month, year);
   // date expressed as C struct tm
   *year += 100;
   *month -= 1;

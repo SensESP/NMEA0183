@@ -1,6 +1,8 @@
 #ifndef SENSESP_NMEA0183_WAYPOINT_SENTENCE_PARSER_H_
 #define SENSESP_NMEA0183_WAYPOINT_SENTENCE_PARSER_H_
 
+#include <cstdint>
+
 #include "field_parsers.h"
 #include "sensesp/system/observablevalue.h"
 #include "sensesp/types/position.h"
@@ -75,7 +77,7 @@ class RTESentenceParser : public SentenceParser {
   ObservableValue<std::vector<String>> waypoints_;
 
  private:
-  int total_sentences_ = 0;
+  int32_t total_sentences_ = 0;
   std::vector<String> accumulated_waypoints_;
 };
 

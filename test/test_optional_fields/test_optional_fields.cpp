@@ -72,7 +72,7 @@ void test_vtg_empty_track(void) {
 void test_gga_no_fix_empty_position(void) {
   // Position, altitude, geoidal separation, DGPS fields all empty
   parser->set(
-      "$GNGGA,121224.00,,,,,,0,00,99.99,,,,,,*7E");
+      "$GNGGA,121224.00,,,,,0,00,99.99,,,,,,*7E");
 
   TEST_ASSERT_EQUAL_INT(1, gga->get_rx_count());
   TEST_ASSERT_EQUAL_INT(0, gga->quality_.get());
@@ -93,11 +93,18 @@ void test_gga_valid_still_works(void) {
 }
 
 void test_gll_empty_position(void) {
-  // No fix — lat/lon fields empty
+  // No fix — lat/lon fields empty -> position_ must not be updated.
+  Position sentinel;
+  sentinel.latitude = -999.0;
+  sentinel.longitude = -999.0;
+  sentinel.altitude = -999.0;
+  gll->position_.set(sentinel);
   parser->set("$GNGLL,,,,,121223.00,V,N*55");
 
   TEST_ASSERT_EQUAL_INT(1, gll->get_rx_count());
-  // position_ should not be updated (lat/lon are sentinel values)
+  Position pos = gll->position_.get();
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, pos.latitude);
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, pos.longitude);
 }
 
 void test_gsv_empty_satellite_data(void) {
@@ -110,27 +117,52 @@ void test_gsv_empty_satellite_data(void) {
 }
 
 void test_hdg_empty_heading_deviation_variation(void) {
-  // All fields empty
+  // All fields empty -> no observable should be updated.
+  hdg->magnetic_heading_.set(-999.0f);
+  hdg->deviation_.set(-999.0f);
+  hdg->variation_.set(-999.0f);
   parser->set("$IIHDG,,,,,*67");
 
   TEST_ASSERT_EQUAL_INT(1, hdg->get_rx_count());
-  // No observer values should be updated (all fields are sentinel)
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, hdg->magnetic_heading_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, hdg->deviation_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, hdg->variation_.get());
 }
 
 void test_vhw_empty_heading_and_speed(void) {
-  // All data fields empty, only unit indicators present
+  // All data fields empty, only unit indicators present -> nothing updated.
+  vhw->true_heading_.set(-999.0f);
+  vhw->magnetic_heading_.set(-999.0f);
+  vhw->water_speed_.set(-999.0f);
   parser->set("$IIVHW,,T,,M,,N,,K*55");
 
   TEST_ASSERT_EQUAL_INT(1, vhw->get_rx_count());
-  // No observer values should be updated
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, vhw->true_heading_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, vhw->magnetic_heading_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, vhw->water_speed_.get());
 }
 
 void test_dpt_empty_depth_and_offset(void) {
-  // Empty depth and offset
+  // Empty depth and offset -> neither observable should be updated.
+  // Pre-set a sentinel so a spurious emit is detectable.
+  dpt->depth_.set(-999.0f);
+  dpt->offset_.set(-999.0f);
   parser->set("$IIDPT,,*40");
 
   TEST_ASSERT_EQUAL_INT(1, dpt->get_rx_count());
-  // No observer values should be updated
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, dpt->depth_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, dpt->offset_.get());
+}
+
+void test_dpt_depth_only(void) {
+  // Depth present, offset field omitted entirely (num_fields == 2).
+  // The offset observable must NOT be published as a fabricated 0.
+  dpt->offset_.set(-999.0f);
+  parser->set("$SDDPT,12.6*60");
+
+  TEST_ASSERT_EQUAL_INT(1, dpt->get_rx_count());
+  TEST_ASSERT_FLOAT_WITHIN(0.01, 12.6, dpt->depth_.get());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, -999.0, dpt->offset_.get());
 }
 
 #ifdef ARDUINO
@@ -147,6 +179,7 @@ void setup() {
   RUN_TEST(test_hdg_empty_heading_deviation_variation);
   RUN_TEST(test_vhw_empty_heading_and_speed);
   RUN_TEST(test_dpt_empty_depth_and_offset);
+  RUN_TEST(test_dpt_depth_only);
 
   UNITY_END();
 }
@@ -165,6 +198,7 @@ int main(int argc, char** argv) {
   RUN_TEST(test_hdg_empty_heading_deviation_variation);
   RUN_TEST(test_vhw_empty_heading_and_speed);
   RUN_TEST(test_dpt_empty_depth_and_offset);
+  RUN_TEST(test_dpt_depth_only);
 
   return UNITY_END();
 }

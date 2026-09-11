@@ -1,6 +1,9 @@
 #include "waypoint_sentence_parser.h"
 
 #include "field_parsers.h"
+#include "sensesp/types/nullable.h"
+
+using sensesp::Nullable;
 
 namespace sensesp::nmea0183 {
 
@@ -10,15 +13,15 @@ bool RMBSentenceParser::parse_fields(const char* field_strings,
   bool ok = true;
 
   bool is_valid;
-  float xte;
+  Nullable<float> xte;
   char steer_dir;
   String origin_wp;
   String dest_wp;
-  double dest_lat;
-  double dest_lon;
-  float range_nm;
-  float bearing;
-  float closing_velocity;
+  Nullable<double> dest_lat;
+  Nullable<double> dest_lon;
+  Nullable<float> range_nm;
+  Nullable<float> bearing;
+  Nullable<float> closing_velocity;
   char arrival_status;
 
   // $xxRMB,A,xte,L/R,origin_wp,dest_wp,lat,N/S,lon,E/W,range,bearing,
@@ -33,7 +36,7 @@ bool RMBSentenceParser::parse_fields(const char* field_strings,
       // 1   Status A=active, V=void
       FLDP(AV, &is_valid),
       // 2   Cross-track error, nautical miles
-      FLDP_OPT(Float, &xte),
+      FLDP_OPT(Float, xte.ptr()),
       // 3   Direction to steer, L/R
       FLDP_OPT(Char, &steer_dir, 255),
       // 4   Origin waypoint ID
@@ -41,19 +44,19 @@ bool RMBSentenceParser::parse_fields(const char* field_strings,
       // 5   Destination waypoint ID
       FLDP_OPT(String, &dest_wp),
       // 6   Destination latitude
-      FLDP_OPT(LatLon, &dest_lat),
+      FLDP_OPT(LatLon, dest_lat.ptr()),
       // 7   N/S
-      FLDP_OPT(NS, &dest_lat),
+      FLDP_OPT(NS, dest_lat.ptr()),
       // 8   Destination longitude
-      FLDP_OPT(LatLon, &dest_lon),
+      FLDP_OPT(LatLon, dest_lon.ptr()),
       // 9   E/W
-      FLDP_OPT(EW, &dest_lon),
+      FLDP_OPT(EW, dest_lon.ptr()),
       // 10  Range to destination, nautical miles
-      FLDP_OPT(Float, &range_nm),
+      FLDP_OPT(Float, range_nm.ptr()),
       // 11  Bearing to destination, degrees true
-      FLDP_OPT(Float, &bearing),
+      FLDP_OPT(Float, bearing.ptr()),
       // 12  Destination closing velocity, knots
-      FLDP_OPT(Float, &closing_velocity),
+      FLDP_OPT(Float, closing_velocity.ptr()),
       // 13  Arrival status (A=arrived, V=not arrived)
       FLDP_OPT(Char, &arrival_status, 255),
   };
@@ -66,21 +69,21 @@ bool RMBSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  if (xte != kInvalidFloat) {
-    float signed_xte = xte * 1852.0;  // NM to meters
+  if (xte.is_valid()) {
+    float signed_xte = (float)xte * 1852.0;  // NM to meters
     if (steer_dir == 'L') {
       signed_xte = -signed_xte;
     }
     cross_track_error_.set(signed_xte);
   }
-  if (bearing != kInvalidFloat) {
-    bearing_to_destination_.set(bearing * DEG_TO_RAD);
+  if (bearing.is_valid()) {
+    bearing_to_destination_.set((float)bearing * DEG_TO_RAD);
   }
-  if (range_nm != kInvalidFloat) {
-    range_to_destination_.set(range_nm * 1852.0);
+  if (range_nm.is_valid()) {
+    range_to_destination_.set((float)range_nm * 1852.0);
   }
-  if (closing_velocity != kInvalidFloat) {
-    destination_closing_velocity_.set(closing_velocity * 1852.0 / 3600.0);
+  if (closing_velocity.is_valid()) {
+    destination_closing_velocity_.set((float)closing_velocity * 1852.0 / 3600.0);
   }
   if (dest_wp.length() > 0) {
     destination_waypoint_id_.set(dest_wp);
@@ -96,17 +99,17 @@ bool APBSentenceParser::parse_fields(const char* field_strings,
 
   bool status1;
   bool status2;
-  float xte;
+  Nullable<float> xte;
   char steer_dir;
   char xte_units;
   char arrival_circle;
   char perpendicular;
-  float bearing_origin_dest;
+  Nullable<float> bearing_origin_dest;
   char bearing_od_type;
   String dest_wp;
-  float bearing_pos_dest;
+  Nullable<float> bearing_pos_dest;
   char bearing_pd_type;
-  float heading_to_steer;
+  Nullable<float> heading_to_steer;
   char heading_type;
 
   // $xxAPB,A,A,xte,L/R,N,A/V,A/V,bearing_od,M/T,dest_wp,bearing_pd,M/T,
@@ -123,7 +126,7 @@ bool APBSentenceParser::parse_fields(const char* field_strings,
       // 2   Status 2 (A=active)
       FLDP(AV, &status2),
       // 3   Cross-track error magnitude
-      FLDP_OPT(Float, &xte),
+      FLDP_OPT(Float, xte.ptr()),
       // 4   Direction to steer, L/R
       FLDP_OPT(Char, &steer_dir, 255),
       // 5   Cross-track error units, N=nautical miles
@@ -133,17 +136,17 @@ bool APBSentenceParser::parse_fields(const char* field_strings,
       // 7   Perpendicular passed (A/V)
       FLDP_OPT(Char, &perpendicular, 255),
       // 8   Bearing origin to destination
-      FLDP_OPT(Float, &bearing_origin_dest),
+      FLDP_OPT(Float, bearing_origin_dest.ptr()),
       // 9   M/T (magnetic or true)
       FLDP_OPT(Char, &bearing_od_type, 255),
       // 10  Destination waypoint ID
       FLDP_OPT(String, &dest_wp),
       // 11  Bearing, present position to destination
-      FLDP_OPT(Float, &bearing_pos_dest),
+      FLDP_OPT(Float, bearing_pos_dest.ptr()),
       // 12  M/T
       FLDP_OPT(Char, &bearing_pd_type, 255),
       // 13  Heading to steer to destination
-      FLDP_OPT(Float, &heading_to_steer),
+      FLDP_OPT(Float, heading_to_steer.ptr()),
       // 14  M/T
       FLDP_OPT(Char, &heading_type, 255),
   };
@@ -156,15 +159,15 @@ bool APBSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  if (xte != kInvalidFloat) {
-    float signed_xte = xte * 1852.0;  // NM to meters
+  if (xte.is_valid()) {
+    float signed_xte = (float)xte * 1852.0;  // NM to meters
     if (steer_dir == 'L') {
       signed_xte = -signed_xte;
     }
     cross_track_error_.set(signed_xte);
   }
-  if (heading_to_steer != kInvalidFloat) {
-    heading_to_steer_.set(heading_to_steer * DEG_TO_RAD);
+  if (heading_to_steer.is_valid()) {
+    heading_to_steer_.set((float)heading_to_steer * DEG_TO_RAD);
   }
 
   return true;
@@ -175,14 +178,14 @@ bool BWCSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int hour;
-  int minute;
+  int32_t hour;
+  int32_t minute;
   float second;
-  double lat;
-  double lon;
-  float bearing_true;
-  float bearing_mag;
-  float distance_nm;
+  Nullable<double> lat;
+  Nullable<double> lon;
+  Nullable<float> bearing_true;
+  Nullable<float> bearing_mag;
+  Nullable<float> distance_nm;
   String waypoint_id;
   char t_char;
   char m_char;
@@ -200,23 +203,23 @@ bool BWCSentenceParser::parse_fields(const char* field_strings,
       // 1   UTC time
       FLDP_OPT(Time, &hour, &minute, &second),
       // 2   Waypoint latitude
-      FLDP_OPT(LatLon, &lat),
+      FLDP_OPT(LatLon, lat.ptr()),
       // 3   N/S
-      FLDP_OPT(NS, &lat),
+      FLDP_OPT(NS, lat.ptr()),
       // 4   Waypoint longitude
-      FLDP_OPT(LatLon, &lon),
+      FLDP_OPT(LatLon, lon.ptr()),
       // 5   E/W
-      FLDP_OPT(EW, &lon),
+      FLDP_OPT(EW, lon.ptr()),
       // 6   Bearing, true
-      FLDP_OPT(Float, &bearing_true),
+      FLDP_OPT(Float, bearing_true.ptr()),
       // 7   T = true
       FLDP_OPT(Char, &t_char, 'T'),
       // 8   Bearing, magnetic
-      FLDP_OPT(Float, &bearing_mag),
+      FLDP_OPT(Float, bearing_mag.ptr()),
       // 9   M = magnetic
       FLDP_OPT(Char, &m_char, 'M'),
       // 10  Distance, nautical miles
-      FLDP_OPT(Float, &distance_nm),
+      FLDP_OPT(Float, distance_nm.ptr()),
       // 11  N = nautical miles
       FLDP_OPT(Char, &n_char, 'N'),
       // 12  Waypoint ID
@@ -231,22 +234,22 @@ bool BWCSentenceParser::parse_fields(const char* field_strings,
     return false;
   }
 
-  if (bearing_true != kInvalidFloat) {
-    bearing_true_.set(bearing_true * DEG_TO_RAD);
+  if (bearing_true.is_valid()) {
+    bearing_true_.set((float)bearing_true * DEG_TO_RAD);
   }
-  if (bearing_mag != kInvalidFloat) {
-    bearing_magnetic_.set(bearing_mag * DEG_TO_RAD);
+  if (bearing_mag.is_valid()) {
+    bearing_magnetic_.set((float)bearing_mag * DEG_TO_RAD);
   }
-  if (distance_nm != kInvalidFloat) {
-    distance_.set(distance_nm * 1852.0);
+  if (distance_nm.is_valid()) {
+    distance_.set((float)distance_nm * 1852.0);
   }
   if (waypoint_id.length() > 0) {
     waypoint_id_.set(waypoint_id);
   }
-  if (lat != kInvalidDouble && lon != kInvalidDouble) {
+  if (lat.is_valid() && lon.is_valid()) {
     Position pos;
-    pos.latitude = lat;
-    pos.longitude = lon;
+    pos.latitude = (double)lat;
+    pos.longitude = (double)lon;
     pos.altitude = kPositionInvalidAltitude;
     waypoint_position_.set(pos);
   }
@@ -306,8 +309,8 @@ bool RTESentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int num_sentences;
-  int sentence_number;
+  int32_t num_sentences;
+  int32_t sentence_number;
   char route_type;
   String route_id;
 
