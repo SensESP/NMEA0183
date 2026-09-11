@@ -12,3 +12,13 @@ To use the library in your own projects, you have to include it in your `platfor
 See also the [example main file](blob/main/examples/gnss_receiver.cpp).
 
 For more information on using SensESP and external add-on libraries, see the [SensESP documentation](https://signalk.org/SensESP/docs/).
+
+## Contributing
+
+To add support for a new NMEA 0183 sentence, see:
+
+- [docs/architecture.md](docs/architecture.md) -- how raw input flows through
+  the parse pipeline to emitted values.
+- [docs/adding-a-sentence-parser.md](docs/adding-a-sentence-parser.md) -- a
+  step-by-step guide, the field parser reference, and the `parse_fields()`
+  conventions.
