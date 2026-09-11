@@ -1,0 +1,99 @@
+language: en-US
+
+reviews:
+  profile: assertive
+  auto_review:
+    enabled: true
+    drafts: false
+  high_level_summary_instructions: |
+    Write all summaries in present tense.
+    Describe what the code does, not what it did.
+    Example: "This PR adds feature X" instead of "This PR added feature X"
+
+  path_instructions:
+    - path: '**/*'
+      instructions: |
+        ## Contribution guidelines compliance
+        Check that the PR follows the SensESP contribution guidelines:
+        https://github.com/SignalK/SensESP/blob/main/docs/pages/contributing_code/index.md
+        Flag any deviation in PR structure, commit message format, or documentation
+        requirements. In particular: commits should be small and atomic, pure
+        reformatting belongs in its own commit, and the branch should not carry
+        merge commits from upstream.
+
+        ## Echo comments
+        Flag any comment that merely restates what the code already says.
+        Examples of echo comments to flag:
+        - `// Set the offset` above a line that assigns `offset`
+        - `// Loop through the fields` above a `for` loop
+        These add noise without adding meaning. Request removal or replacement
+        with a comment explaining *why*, not *what*.
+        Doxygen blocks are exempt — see below.
+
+        ## Doxygen documentation of public API
+        Public classes and methods in `src/**/*.h` are the library's API surface.
+        Flag a new public class that has no `/** @brief ... */` block, and a
+        documented constructor whose parameters are not covered by `@param`.
+        Never flag a Doxygen block as an echo comment, even when it repeats the
+        class or parameter name — these blocks are required.
+
+        ## Sentence parser field offsets
+        NMEA 0183 fields are numbered from the sentence start, with the address in
+        field 0 and the first data field normally at field 1. A proprietary
+        address with an embedded comma (e.g. `$PSTI,030`) consumes an extra field
+        for the message type, so its first data field is field 2. Flag a new
+        parser whose `field_offsets[]` indexing or `num_fields` guard does not
+        account for this. Subclasses of `ProprietarySentenceParser` document the
+        convention.
+
+        ## Nullable sentinels
+        Optional fields use `Nullable<T>`. A field that is parsed conditionally
+        must be initialized to `Nullable<T>::invalid()`, because a
+        default-constructed value reads as valid and publishes a fabricated
+        reading. Flag a conditionally parsed observable published without an
+        `is_valid()` guard, and flag a raw integer field that can serialize its
+        sentinel value into Signal K instead of being wrapped in `Nullable<T>`.
+
+        ## Leftover crumbs from intermediate commits
+        Check for references to things that existed in earlier commits of this PR
+        but are no longer present — removed variables, old function names, deleted
+        files, superseded approaches. Flag any comments, docs, or code that refer
+        to something not present in the current state of the branch.
+
+        ## Documentation drift risk
+        Flag any .md file that contains detailed implementation steps, specific
+        API call sequences, code snippets, or configuration values that are likely
+        to fall out of sync as the code evolves. Documentation should describe
+        architecture and how things work conceptually — not step-by-step
+        instructions that duplicate or shadow the code itself.
+
+        ## Unchecked items in test plans
+        If a PR description or any .md file contains a checklist with unchecked
+        items, flag it. Either the work is incomplete, or the checklist should be
+        removed before merge. Do not let unchecked boxes pass silently.
+
+        ## Implementation status in documentation
+        Flag any .md file that describes implementation progress, status, or build
+        steps (e.g. "Step 3: implement X", "TODO: add Y"). This belongs in PR
+        descriptions or commit messages, not in documentation. Architecture
+        decisions and design rationale are fine. Build narratives are not.
+
+        ## Secrets and local infrastructure
+        Flag any WiFi credential, Signal K token, hostname, IP address or other
+        site-specific detail committed to source, docs or test fixtures. Vessel
+        names, MMSIs, AIS targets and place names inside NMEA test sentences are
+        ordinary test data and are fine.
+
+        ## What NOT to flag
+        Do not flag the following patterns — they are intentional:
+        - Identifier naming inherited from SensESP: trailing underscore on private
+          and protected members, `k` prefix on constants and enum constants,
+          `lower_case` variables, `CamelCase` types. Do not suggest renames
+          towards other conventions.
+        - Google-style formatting with a 2-space indent, and SensESP's include
+          ordering. Formatting nits are handled by the formatter, not by review.
+
+        ## Scope
+        Focus on files changed since main. Think carefully about how changes
+        interact with existing code and documentation — not just the diff in
+        isolation.
