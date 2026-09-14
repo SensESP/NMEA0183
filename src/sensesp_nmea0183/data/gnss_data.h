@@ -1,8 +1,6 @@
 #ifndef SENESP_NMEA0183_GNSS_DATA_H
 #define SENESP_NMEA0183_GNSS_DATA_H
 
-#include <cstdint>
-
 #include "sensesp/signalk/signalk_output.h"
 #include "sensesp/system/observablevalue.h"
 #include "sensesp/types/nullable.h"
@@ -29,10 +27,10 @@ enum class GNSSSystem {
  */
 struct GNSSSatellite {
   GNSSSystem system;
-  int32_t id;
+  int id;
   sensesp::Nullable<float> elevation;
   sensesp::Nullable<float> azimuth;
-  int32_t snr;
+  int snr;
   String signal;
 };
 

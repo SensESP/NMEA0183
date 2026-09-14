@@ -89,8 +89,8 @@ class RTESentenceParser : public SentenceParser {
  private:
   void reset_sequence();
 
-  int32_t total_sentences_ = 0;
-  int32_t expected_sentence_number_ = 0;
+  int total_sentences_ = 0;
+  int expected_sentence_number_ = 0;
   String accumulated_route_id_;
   std::vector<String> accumulated_waypoints_;
   uint32_t last_sentence_time_ = 0;

@@ -21,12 +21,12 @@ bool ParseString(String* value, const char* s, bool allow_empty) {
   return true;
 }
 
-bool ParseInt(int32_t* value, const char* s, bool allow_empty) {
+bool ParseInt(int* value, const char* s, bool allow_empty) {
   if (s[0] == 0) {
-    *value = Nullable<int32_t>::invalid();
+    *value = Nullable<int>::invalid();
     return allow_empty;
   }
-  int retval = sscanf(s, "%" SCNd32, value);
+  int retval = sscanf(s, "%d", value);
   return retval == 1;
 }
 
@@ -150,26 +150,26 @@ bool ParseAV(bool* is_valid, const char* s) {
   return true;
 }
 
-bool ParseTime(int32_t* hour, int32_t* minute, float* second, const char* s,
+bool ParseTime(int* hour, int* minute, float* second, const char* s,
                bool allow_empty) {
   if (s[0] == 0) {
-    *hour = Nullable<int32_t>::invalid();
-    *minute = Nullable<int32_t>::invalid();
+    *hour = Nullable<int>::invalid();
+    *minute = Nullable<int>::invalid();
     *second = Nullable<float>::invalid();
     return allow_empty;
   }
-  int retval = sscanf(s, "%2" SCNd32 "%2" SCNd32 "%f", hour, minute, second);
+  int retval = sscanf(s, "%2d%2d%f", hour, minute, second);
   return retval == 3;
 }
 
-bool ParseDate(int32_t* year, int32_t* month, int32_t* day, const char* s, bool allow_empty) {
+bool ParseDate(int* year, int* month, int* day, const char* s, bool allow_empty) {
   if (s[0] == 0) {
-    *year = Nullable<int32_t>::invalid();
-    *month = Nullable<int32_t>::invalid();
-    *day = Nullable<int32_t>::invalid();
+    *year = Nullable<int>::invalid();
+    *month = Nullable<int>::invalid();
+    *day = Nullable<int>::invalid();
     return allow_empty;
   }
-  int retval = sscanf(s, "%2" SCNd32 "%2" SCNd32 "%2" SCNd32, day, month, year);
+  int retval = sscanf(s, "%2d%2d%2d", day, month, year);
   // date expressed as C struct tm
   *year += 100;
   *month -= 1;
