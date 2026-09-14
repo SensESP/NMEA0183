@@ -61,18 +61,18 @@ bool GGASentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int32_t hour;
-  int32_t minute;
+  int hour;
+  int minute;
   float second;
   Nullable<double> latitude;
   Nullable<double> longitude;
   Nullable<float> altitude;
-  int32_t quality;
-  int32_t num_satellites;
+  int quality;
+  int num_satellites;
   Nullable<float> horizontal_dilution;
   Nullable<float> geoidal_separation;
   Nullable<float> dgps_age;
-  Nullable<int32_t> dgps_id;
+  Nullable<int> dgps_id;
   char antenna_height_unit;
   char geoidal_separation_unit;
 
@@ -214,15 +214,15 @@ bool RMCSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int32_t hour;
-  int32_t minute;
+  int hour;
+  int minute;
   float second;
   bool is_valid = false;
   Nullable<double> latitude;
   Nullable<double> longitude;
-  int32_t year;
-  int32_t month;
-  int32_t day;
+  int year;
+  int month;
+  int day;
   Nullable<float> speed;
   Nullable<float> true_course;
   Nullable<float> variation;
@@ -371,11 +371,11 @@ bool GSVSentenceParser::parse_fields(const char* field_strings,
   bool ok = true;
 
   // True if NMEA 0183 v4.10 format with separate system ID is used
-  static int32_t num_sentences = 0;
-  int32_t sentence_number = 0;
+  static int num_sentences = 0;
+  int sentence_number = 0;
   static bool new_message_format = false;
   static int collected_num_satellites = 0;
-  int32_t num_satellites = 0;
+  int num_satellites = 0;
   static int total_svs_in_view = 0;  // Accumulated from field 3
   static std::vector<GNSSSatellite> satellites;
   GNSSSatellite sentence_satellites[4];
@@ -577,8 +577,8 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
                                                 int num_fields) {
   bool ok = true;
 
-  int32_t hour;
-  int32_t minute;
+  int hour;
+  int minute;
   float second;
   bool is_valid = false;
   Position position;
@@ -586,9 +586,9 @@ bool SkyTraqPSTI030SentenceParser::parse_fields(const char* field_strings,
   SkyTraqGNSSQuality quality;
   float rtk_age;
   float rtk_ratio;
-  int32_t year;
-  int32_t month;
-  int32_t day;
+  int year;
+  int month;
+  int day;
 
   // Example:
   // $PSTI,030,044606.000,A,2447.0924110,N,12100.5227860,E,103.323,0.00,0.00,0.00,180915,R,1.2,4.2*02
@@ -687,12 +687,12 @@ bool SkyTraqPSTI032SentenceParser::parse_fields(const char* field_strings,
                                                 int num_fields) {
   bool ok = true;
 
-  int32_t hour;
-  int32_t minute;
+  int hour;
+  int minute;
   float second;
-  int32_t year;
-  int32_t month;
-  int32_t day;
+  int year;
+  int month;
+  int day;
   bool is_valid = false;
   ENUVector projection;
   SkyTraqGNSSQuality quality;
@@ -781,14 +781,14 @@ bool QuectelPQTMTARSentenceParser::parse_fields(const char* field_strings,
                                                 int num_fields) {
   bool ok = true;
 
-  int32_t hour;
-  int32_t minute;
+  int hour;
+  int minute;
   float second;
   float base_line_length;
-  int32_t heading_status;
+  int heading_status;
   AttitudeVector attitude_degree;
   AttitudeVector attitude_accuracy_degree;
-  int32_t hdg_num_satellites;
+  int hdg_num_satellites;
   char dummy;
 
   // Example:
@@ -860,7 +860,7 @@ bool GSASentenceParser::parse_fields(const char* field_strings,
   bool ok = true;
 
   char mode;
-  int32_t fix_type;
+  int fix_type;
   Nullable<float> pdop;
   Nullable<float> hdop;
   Nullable<float> vdop;
@@ -906,12 +906,12 @@ bool ZDASentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int32_t hour;
-  int32_t minute;
+  int hour;
+  int minute;
   float second;
-  int32_t day;
-  int32_t month;
-  int32_t year;
+  int day;
+  int month;
+  int year;
 
   // $xxZDA,hhmmss.ss,dd,mm,yyyy,ltzh,ltzn*cs
   // eg. $GPZDA,160012.71,11,03,2004,-1,00*7D
@@ -949,8 +949,8 @@ bool GBSSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int32_t hour;
-  int32_t minute;
+  int hour;
+  int minute;
   float second;
   Nullable<float> lat_error;
   Nullable<float> lon_error;

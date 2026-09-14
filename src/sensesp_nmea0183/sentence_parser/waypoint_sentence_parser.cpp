@@ -178,8 +178,8 @@ bool BWCSentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int32_t hour;
-  int32_t minute;
+  int hour;
+  int minute;
   float second;
   Nullable<double> lat;
   Nullable<double> lon;
@@ -314,8 +314,8 @@ bool RTESentenceParser::parse_fields(const char* field_strings,
                                      int num_fields) {
   bool ok = true;
 
-  int32_t num_sentences;
-  int32_t sentence_number;
+  int num_sentences;
+  int sentence_number;
   char route_type;
   String route_id;
 
