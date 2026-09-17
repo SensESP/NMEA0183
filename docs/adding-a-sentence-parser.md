@@ -161,8 +161,8 @@ fields and invalid checksums too. Add the new suite to `test/README`. Build and
 run:
 
 ```bash
-pio test -e pioarduino_esp32 --without-uploading --without-testing  # compile only
-pio test -e pioarduino_esp32                                        # run on device
+pio test -e espidf_esp32 --without-uploading --without-testing  # compile only
+pio test -e espidf_esp32                                        # run on device
 ```
 
 ## Field parser reference
